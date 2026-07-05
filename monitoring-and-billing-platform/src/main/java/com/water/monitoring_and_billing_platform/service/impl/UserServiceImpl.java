@@ -23,7 +23,13 @@ public class UserServiceImpl implements UserService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new AuthResponse("Email already exists.");
+            return new AuthResponse(
+                    "Email already exists.",
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
         User user = User.builder()
@@ -37,7 +43,13 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        return new AuthResponse("Registration Successful");
+        return new AuthResponse(
+                "Registration Successful",
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
     }
 
     @Override
@@ -47,16 +59,34 @@ public class UserServiceImpl implements UserService {
                 .orElse(null);
 
         if (user == null) {
-            return new AuthResponse("User not found");
+            return new AuthResponse(
+                    "User not found",
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
         )) {
-            return new AuthResponse("Invalid Password");
+            return new AuthResponse(
+                    "Invalid Password",
+                    null,
+                    null,
+                    null,
+                    null
+            );
         }
 
-        return new AuthResponse("Login Successful");
+        return new AuthResponse(
+                "Login Successful",
+                user.getId(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getRole().name()
+        );
     }
 }
