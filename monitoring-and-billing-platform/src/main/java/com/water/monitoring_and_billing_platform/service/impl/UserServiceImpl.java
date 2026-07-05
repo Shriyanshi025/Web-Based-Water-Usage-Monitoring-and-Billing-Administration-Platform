@@ -6,6 +6,9 @@ import com.water.monitoring_and_billing_platform.dto.AuthResponse;
 import com.water.monitoring_and_billing_platform.dto.RegisterRequest;
 import com.water.monitoring_and_billing_platform.entity.User;
 import com.water.monitoring_and_billing_platform.enums.Role;
+import com.water.monitoring_and_billing_platform.exception.EmailAlreadyExistsException;
+import com.water.monitoring_and_billing_platform.exception.InvalidPasswordException;
+import com.water.monitoring_and_billing_platform.exception.UserNotFoundException;
 import com.water.monitoring_and_billing_platform.repository.UserRepository;
 import com.water.monitoring_and_billing_platform.service.UserService;
 import java.time.LocalDateTime;
@@ -23,13 +26,7 @@ public class UserServiceImpl implements UserService {
     public AuthResponse register(RegisterRequest request) {
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            return new AuthResponse(
-                    "Email already exists.",
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            throw new EmailAlreadyExistsException();
         }
 
         User user = User.builder()
@@ -38,17 +35,16 @@ public class UserServiceImpl implements UserService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(Role.USER)
                 .active(true)
-                .createdAt(LocalDateTime.now())
                 .build();
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
         return new AuthResponse(
                 "Registration Successful",
-                user.getId(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getRole().name()
+                savedUser.getId(),
+                savedUser.getFullName(),
+                savedUser.getEmail(),
+                savedUser.getRole().name()
         );
     }
 
@@ -56,30 +52,17 @@ public class UserServiceImpl implements UserService {
     public AuthResponse login(LoginRequest request) {
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElse(null);
-
-        if (user == null) {
-            return new AuthResponse(
-                    "User not found",
-                    null,
-                    null,
-                    null,
-                    null
-            );
-        }
+                .orElseThrow(UserNotFoundException::new);
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword()
         )) {
-            return new AuthResponse(
-                    "Invalid Password",
-                    null,
-                    null,
-                    null,
-                    null
-            );
+            throw new InvalidPasswordException();
         }
+
+        user.setLastLogin(LocalDateTime.now());
+        userRepository.save(user);
 
         return new AuthResponse(
                 "Login Successful",

@@ -1,11 +1,13 @@
 package com.water.monitoring_and_billing_platform.controller;
 
+import com.water.monitoring_and_billing_platform.dto.AuthResponse;
 import com.water.monitoring_and_billing_platform.dto.LoginRequest;
 import com.water.monitoring_and_billing_platform.dto.RegisterRequest;
 import com.water.monitoring_and_billing_platform.service.UserService;
-import com.water.monitoring_and_billing_platform.dto.AuthResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,17 +19,18 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public AuthResponse register(@Valid @RequestBody RegisterRequest request){
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request) {
 
-        return userService.register(request);
-
+        AuthResponse response = userService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PostMapping("/login")
-    public AuthResponse login(@Valid @RequestBody LoginRequest request){
+    public ResponseEntity<AuthResponse> login(
+            @Valid @RequestBody LoginRequest request) {
 
-        return userService.login(request);
-
+        AuthResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
     }
-
 }
