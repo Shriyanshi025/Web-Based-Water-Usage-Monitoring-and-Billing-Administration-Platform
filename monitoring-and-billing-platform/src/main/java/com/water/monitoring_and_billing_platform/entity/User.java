@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.entity;
 
 import com.water.monitoring_and_billing_platform.enums.Role;
+import java.time.LocalDateTime;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,6 +26,12 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+
+    @Column(nullable = false)
+    private boolean active;
+
+    @Column(nullable = false)
+    private LocalDateTime createdAt;
 
     @Enumerated(EnumType.STRING)
     private Role role;

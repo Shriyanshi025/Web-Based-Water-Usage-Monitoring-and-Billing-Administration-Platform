@@ -1,12 +1,16 @@
 package com.water.monitoring_and_billing_platform.dto;
 
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
-public class AuthResponse {
+@Builder
+public class ApiResponse<T> {
+
+    private boolean success;
 
     private String message;
+
+    private T data;
 
 }
