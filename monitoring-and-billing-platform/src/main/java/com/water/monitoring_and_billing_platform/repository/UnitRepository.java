@@ -14,4 +14,7 @@ public interface UnitRepository extends JpaRepository<Unit, Long> {
             String unitNumber
     );
 
+    long count();
+
+    long countByCommunityId(Long communityId);
 }

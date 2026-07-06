@@ -9,4 +9,8 @@ public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
 
     List<WaterUsage> findByWaterMeterId(Long waterMeterId);
 
+    long count();
+
+    long countByWaterMeterResidentProfileCommunityId(Long communityId);
+
 }

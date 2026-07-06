@@ -9,4 +9,6 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
 
     boolean existsByCommunityCode(String communityCode);
 
+    long count();
+
 }

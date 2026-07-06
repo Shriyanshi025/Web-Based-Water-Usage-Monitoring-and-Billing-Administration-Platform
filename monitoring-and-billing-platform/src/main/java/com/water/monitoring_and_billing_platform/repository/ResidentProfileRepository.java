@@ -12,4 +12,8 @@ public interface ResidentProfileRepository
 
     Optional<ResidentProfile> findByOfficialUserId(String officialUserId);
 
+    long count();
+
+    long countByCommunityId(Long communityId);
+
 }

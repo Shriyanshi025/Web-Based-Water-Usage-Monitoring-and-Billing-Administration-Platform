@@ -14,4 +14,8 @@ public interface BlockRepository extends JpaRepository<Block, Long> {
             String blockName
     );
 
+    long count();
+
+    long countByCommunityId(Long communityId);
+
 }

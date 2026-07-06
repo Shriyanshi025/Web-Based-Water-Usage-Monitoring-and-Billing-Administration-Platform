@@ -23,7 +23,8 @@ public class SecurityConfig {
                                 "/api/units/**",
                                 "/api/residents/**",
                                 "/api/water-meters/**",
-                                "/api/water-usage/**"
+                                "/api/water-usage/**",
+                                "/api/dashboard/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
