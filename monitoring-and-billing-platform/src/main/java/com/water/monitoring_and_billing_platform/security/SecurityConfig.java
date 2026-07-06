@@ -18,7 +18,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
                                 "/api/auth/**",
-                                "/api/communities/**"
+                                "/api/communities/**",
+                                "/api/blocks/**",
+                                "/api/units/**",
+                                "/api/residents/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

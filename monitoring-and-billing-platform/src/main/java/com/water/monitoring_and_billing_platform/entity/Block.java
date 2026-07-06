@@ -1,43 +1,37 @@
 package com.water.monitoring_and_billing_platform.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "communities")
+@Table(name = "blocks")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Community {
+public class Block {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 150)
-    private String communityName;
+    @Column(nullable = false, length = 50)
+    private String blockName;
 
-    @Column(nullable = false, unique = true, length = 10)
-    private String communityCode;
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "community_id", nullable = false)
+    @JsonIgnoreProperties({"blocks"})
+    private Community community;
 
-    @Column(nullable = false, length = 250)
-    private String address;
-
-    @Column(nullable = false, length = 100)
-    private String city;
-
-    @Column(nullable = false, length = 100)
-    private String state;
-
-    @Column(nullable = false, length = 10)
-    private String pincode;
+    @OneToMany(mappedBy = "block")
+    @JsonIgnore
+    private List<Unit> units = new ArrayList<>();
 
     @Column(nullable = false)
     private boolean active;
@@ -58,15 +52,4 @@ public class Community {
         updatedAt = LocalDateTime.now();
     }
 
-    @JsonIgnore
-    @OneToMany(
-            mappedBy = "community",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<Block> blocks = new ArrayList<>();
-
-    @OneToMany(mappedBy = "community")
-    @JsonIgnore
-    private List<Unit> units = new ArrayList<>();
 }

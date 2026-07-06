@@ -20,12 +20,15 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     public Community createCommunity(CommunityRequest request) {
 
-        if (communityRepository.existsByCommunityName(request.getCommunityName())) {
+        if (communityRepository.existsByCommunityName(request.getCommunityName())
+                || communityRepository.existsByCommunityCode(request.getCommunityCode())) {
+
             throw new CommunityAlreadyExistsException();
         }
 
         Community community = Community.builder()
                 .communityName(request.getCommunityName())
+                .communityCode(request.getCommunityCode())
                 .address(request.getAddress())
                 .city(request.getCity())
                 .state(request.getState())

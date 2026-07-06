@@ -9,6 +9,9 @@ public class CommunityRequest {
     @NotBlank(message = "Community Name is required")
     private String communityName;
 
+    @NotBlank(message = "Community Code is required")
+    private String communityCode;
+
     @NotBlank(message = "Address is required")
     private String address;
 
