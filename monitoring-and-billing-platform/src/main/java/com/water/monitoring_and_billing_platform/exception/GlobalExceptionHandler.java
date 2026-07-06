@@ -232,4 +232,32 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
+
+    @ExceptionHandler(InvalidMeterReadingException.class)
+    public ResponseEntity<Map<String, Object>> handleInvalidMeterReading(
+            InvalidMeterReadingException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
+    @ExceptionHandler(WaterUsageNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleWaterUsageNotFound(
+            WaterUsageNotFoundException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 }
