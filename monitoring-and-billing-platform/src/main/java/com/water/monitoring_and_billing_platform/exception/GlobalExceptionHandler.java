@@ -204,4 +204,32 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
+
+    @ExceptionHandler(WaterMeterAlreadyExistsException.class)
+    public ResponseEntity<Map<String, Object>> handleWaterMeterAlreadyExists(
+            WaterMeterAlreadyExistsException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.CONFLICT.value());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(WaterMeterNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleWaterMeterNotFound(
+            WaterMeterNotFoundException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.NOT_FOUND.value());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
 }
