@@ -67,7 +67,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                 .build();
 
         resident.setOfficialUserId(
-                IdGenerator.generateOfficialUserId(
+                IdGenerator.generateResidentId(
                         community.getCommunityCode(),
                         block.getBlockName(),
                         unit.getUnitNumber()

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 @Data
-public class CommunityRequest {
+public class CommunityAdminRequest {
 
     @NotBlank(message = "Community Name is required")
     private String communityName;

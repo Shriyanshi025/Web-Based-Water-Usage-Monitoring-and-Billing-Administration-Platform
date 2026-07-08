@@ -1,5 +1,6 @@
 package com.water.monitoring_and_billing_platform.entity;
 
+import com.water.monitoring_and_billing_platform.enums.ApprovalStatus;
 import com.water.monitoring_and_billing_platform.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,6 +42,12 @@ public class User {
     private LocalDateTime updatedAt;
 
     private LocalDateTime lastLogin;
+
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private ApprovalStatus approvalStatus = ApprovalStatus.PENDING;
 
     @PrePersist
     public void prePersist() {

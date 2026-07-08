@@ -1,6 +1,6 @@
 package com.water.monitoring_and_billing_platform.controller;
 
-import com.water.monitoring_and_billing_platform.dto.CommunityDashboardResponse;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
 import com.water.monitoring_and_billing_platform.dto.DashboardResponse;
 import com.water.monitoring_and_billing_platform.dto.UserDashboardResponse;
 import com.water.monitoring_and_billing_platform.service.DashboardService;
@@ -25,7 +25,7 @@ public class DashboardController {
     }
 
     @GetMapping("/community-admin/{communityId}")
-    public ResponseEntity<CommunityDashboardResponse> getCommunityDashboard(
+    public ResponseEntity<CommunityAdminResponse> getCommunityDashboard(
             @PathVariable Long communityId) {
 
         return ResponseEntity.ok(

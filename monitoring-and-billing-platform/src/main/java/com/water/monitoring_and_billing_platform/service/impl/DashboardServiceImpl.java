@@ -1,6 +1,6 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
-import com.water.monitoring_and_billing_platform.dto.CommunityDashboardResponse;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
 import com.water.monitoring_and_billing_platform.dto.DashboardResponse;
 import com.water.monitoring_and_billing_platform.dto.UserDashboardResponse;
 import com.water.monitoring_and_billing_platform.entity.Community;
@@ -40,12 +40,12 @@ public class DashboardServiceImpl implements DashboardService {
     }
 
     @Override
-    public CommunityDashboardResponse getCommunityDashboard(Long communityId) {
+    public CommunityAdminResponse getCommunityDashboard(Long communityId) {
 
         Community community = communityRepository.findById(communityId)
                 .orElseThrow(CommunityNotFoundException::new);
 
-        return CommunityDashboardResponse.builder()
+        return CommunityAdminResponse.builder()
                 .communityName(community.getCommunityName())
                 .totalBlocks(blockRepository.countByCommunityId(communityId))
                 .totalUnits(unitRepository.countByCommunityId(communityId))

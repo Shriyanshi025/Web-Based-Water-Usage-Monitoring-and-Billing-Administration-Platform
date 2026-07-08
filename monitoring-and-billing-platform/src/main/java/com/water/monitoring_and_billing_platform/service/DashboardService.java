@@ -6,7 +6,7 @@ public interface DashboardService {
 
     DashboardResponse getMainAdminDashboard();
 
-    CommunityDashboardResponse getCommunityDashboard(Long communityId);
+    CommunityAdminResponse getCommunityDashboard(Long communityId);
 
     UserDashboardResponse getUserDashboard(Long residentId);
 
