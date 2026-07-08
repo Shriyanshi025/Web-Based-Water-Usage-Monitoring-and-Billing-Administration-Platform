@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface WaterUsageService {
 
-    WaterUsageResponse addReading(WaterUsageRequest request);
+    WaterUsageResponse addReading(String adminEmail, WaterUsageRequest request);
 
-    List<WaterUsageResponse> getAllReadings();
+    List<WaterUsageResponse> getAllReadings(String adminEmail);
 
-    List<WaterUsageResponse> getReadingsByMeter(Long meterId);
+    List<WaterUsageResponse> getReadingsByMeter(String adminEmail, Long meterId);
 
 }

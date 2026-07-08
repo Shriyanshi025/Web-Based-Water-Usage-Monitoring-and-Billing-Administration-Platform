@@ -2,12 +2,13 @@ package com.water.monitoring_and_billing_platform.controller;
 
 import com.water.monitoring_and_billing_platform.dto.ApiResponse;
 import com.water.monitoring_and_billing_platform.dto.ApprovalRequest;
-import com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile;
-import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
-import com.water.monitoring_and_billing_platform.entity.User;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
 import com.water.monitoring_and_billing_platform.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
+@PreAuthorize("hasRole('MAIN_ADMIN')")
 @CrossOrigin(origins = "http://localhost:5173")
 public class AdminController {
 
@@ -38,10 +40,10 @@ public class AdminController {
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<User>>> getPendingUsers() {
+    public ResponseEntity<ApiResponse<List<UserMeResponse>>> getPendingUsers() {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<User>>builder()
+                ApiResponse.<List<UserMeResponse>>builder()
                         .success(true)
                         .message("Pending users fetched successfully.")
                         .data(adminService.getPendingUsers())
@@ -51,10 +53,10 @@ public class AdminController {
     }
 
     @GetMapping("/approved")
-    public ResponseEntity<ApiResponse<List<User>>> getApprovedUsers() {
+    public ResponseEntity<ApiResponse<List<UserMeResponse>>> getApprovedUsers() {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<User>>builder()
+                ApiResponse.<List<UserMeResponse>>builder()
                         .success(true)
                         .message("Approved users fetched successfully.")
                         .data(adminService.getApprovedUsers())
@@ -64,10 +66,10 @@ public class AdminController {
     }
 
     @GetMapping("/rejected")
-    public ResponseEntity<ApiResponse<List<User>>> getRejectedUsers() {
+    public ResponseEntity<ApiResponse<List<UserMeResponse>>> getRejectedUsers() {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<User>>builder()
+                ApiResponse.<List<UserMeResponse>>builder()
                         .success(true)
                         .message("Rejected users fetched successfully.")
                         .data(adminService.getRejectedUsers())
@@ -77,9 +79,9 @@ public class AdminController {
     }
 
     @GetMapping("/pending-residents")
-    public ResponseEntity<ApiResponse<List<ResidentProfile>>> getPendingResidents() {
+    public ResponseEntity<ApiResponse<List<ResidentProfileResponse>>> getPendingResidents() {
         return ResponseEntity.ok(
-                ApiResponse.<List<ResidentProfile>>builder()
+                ApiResponse.<List<ResidentProfileResponse>>builder()
                         .success(true)
                         .message("Pending residents fetched successfully.")
                         .data(adminService.getPendingResidents())
@@ -88,9 +90,9 @@ public class AdminController {
     }
 
     @GetMapping("/pending-community-admins")
-    public ResponseEntity<ApiResponse<List<CommunityAdminProfile>>> getPendingCommunityAdmins() {
+    public ResponseEntity<ApiResponse<List<CommunityAdminProfileResponse>>> getPendingCommunityAdmins() {
         return ResponseEntity.ok(
-                ApiResponse.<List<CommunityAdminProfile>>builder()
+                ApiResponse.<List<CommunityAdminProfileResponse>>builder()
                         .success(true)
                         .message("Pending community admins fetched successfully.")
                         .data(adminService.getPendingCommunityAdmins())

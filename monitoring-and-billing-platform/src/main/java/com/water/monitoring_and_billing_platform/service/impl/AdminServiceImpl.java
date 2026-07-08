@@ -1,6 +1,9 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.ApprovalRequest;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
 import java.util.Objects;
 import com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile;
 import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -101,41 +105,75 @@ public class AdminServiceImpl implements AdminService {
 
     }
 
-    @Override
-    public List<User> getPendingUsers() {
+    private UserMeResponse mapToUserMeResponse(User user) {
+        return UserMeResponse.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .role(user.getRole().name())
+                .approvalStatus(user.getApprovalStatus().name())
+                .build();
+    }
 
-        return userRepository.findByApprovalStatus(
-                ApprovalStatus.PENDING
-        );
+    private ResidentProfileResponse mapToResidentProfileResponse(ResidentProfile resident) {
+        return ResidentProfileResponse.builder()
+                .id(resident.getId())
+                .officialUserId(resident.getOfficialUserId())
+                .fullName(resident.getUser().getFullName())
+                .email(resident.getUser().getEmail())
+                .phoneNumber(resident.getPhoneNumber())
+                .communityName(resident.getCommunity().getCommunityName())
+                .blockName(resident.getBlock().getBlockName())
+                .unitNumber(resident.getUnit().getUnitNumber())
+                .verified(resident.isVerified())
+                .build();
+    }
 
+    private CommunityAdminProfileResponse mapToCommunityAdminProfileResponse(CommunityAdminProfile admin) {
+        return CommunityAdminProfileResponse.builder()
+                .id(admin.getId())
+                .officialAdminId(admin.getOfficialAdminId())
+                .fullName(admin.getUser().getFullName())
+                .email(admin.getUser().getEmail())
+                .phoneNumber(admin.getPhoneNumber())
+                .communityName(admin.getCommunity().getCommunityName())
+                .verified(admin.isVerified())
+                .build();
     }
 
     @Override
-    public List<User> getApprovedUsers() {
-
-        return userRepository.findByApprovalStatus(
-                ApprovalStatus.APPROVED
-        );
-
+    public List<UserMeResponse> getPendingUsers() {
+        return userRepository.findByApprovalStatus(ApprovalStatus.PENDING).stream()
+                .map(this::mapToUserMeResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<User> getRejectedUsers() {
-
-        return userRepository.findByApprovalStatus(
-                ApprovalStatus.REJECTED
-        );
-
+    public List<UserMeResponse> getApprovedUsers() {
+        return userRepository.findByApprovalStatus(ApprovalStatus.APPROVED).stream()
+                .map(this::mapToUserMeResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<ResidentProfile> getPendingResidents() {
-        return residentProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING);
+    public List<UserMeResponse> getRejectedUsers() {
+        return userRepository.findByApprovalStatus(ApprovalStatus.REJECTED).stream()
+                .map(this::mapToUserMeResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public List<CommunityAdminProfile> getPendingCommunityAdmins() {
-        return communityAdminProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING);
+    public List<ResidentProfileResponse> getPendingResidents() {
+        return residentProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING).stream()
+                .map(this::mapToResidentProfileResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CommunityAdminProfileResponse> getPendingCommunityAdmins() {
+        return communityAdminProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING).stream()
+                .map(this::mapToCommunityAdminProfileResponse)
+                .collect(Collectors.toList());
     }
 
 }

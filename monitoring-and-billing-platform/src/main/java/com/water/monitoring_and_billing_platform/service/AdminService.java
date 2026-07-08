@@ -1,9 +1,9 @@
 package com.water.monitoring_and_billing_platform.service;
 
 import com.water.monitoring_and_billing_platform.dto.ApprovalRequest;
-import com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile;
-import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
-import com.water.monitoring_and_billing_platform.entity.User;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
 
 import java.util.List;
 
@@ -14,14 +14,14 @@ public interface AdminService {
             ApprovalRequest request
     );
 
-    List<User> getPendingUsers();
+    List<UserMeResponse> getPendingUsers();
 
-    List<User> getApprovedUsers();
+    List<UserMeResponse> getApprovedUsers();
 
-    List<User> getRejectedUsers();
+    List<UserMeResponse> getRejectedUsers();
 
-    List<ResidentProfile> getPendingResidents();
+    List<ResidentProfileResponse> getPendingResidents();
 
-    List<CommunityAdminProfile> getPendingCommunityAdmins();
+    List<CommunityAdminProfileResponse> getPendingCommunityAdmins();
 
 }

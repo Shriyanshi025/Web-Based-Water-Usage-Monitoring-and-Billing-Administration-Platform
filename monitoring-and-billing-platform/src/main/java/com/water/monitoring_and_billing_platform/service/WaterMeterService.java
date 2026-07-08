@@ -7,10 +7,10 @@ import java.util.List;
 
 public interface WaterMeterService {
 
-    WaterMeterResponse createWaterMeter(WaterMeterRequest request);
+    WaterMeterResponse createWaterMeter(String adminEmail, WaterMeterRequest request);
 
-    WaterMeterResponse getWaterMeterById(Long id);
+    WaterMeterResponse getWaterMeterById(String adminEmail, Long id);
 
-    List<WaterMeterResponse> getAllWaterMeters();
+    List<WaterMeterResponse> getAllWaterMeters(String adminEmail);
 
 }

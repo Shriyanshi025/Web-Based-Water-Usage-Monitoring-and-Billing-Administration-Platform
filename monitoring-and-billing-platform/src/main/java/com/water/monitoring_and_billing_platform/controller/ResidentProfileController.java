@@ -24,27 +24,33 @@ public class ResidentProfileController {
     private final ResidentProfileService residentProfileService;
 
     @PostMapping
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
     public ResponseEntity<ResidentProfileResponse> createResident(
+            @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ResidentProfileRequest request) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(residentProfileService.createResidentProfile(request));
+                .body(residentProfileService.createResidentProfile(userDetails.getUsername(), request));
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
     public ResponseEntity<ResidentProfileResponse> getResidentById(
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id) {
 
         return ResponseEntity.ok(
-                residentProfileService.getResidentById(id)
+                residentProfileService.getResidentById(userDetails.getUsername(), id)
         );
     }
 
     @GetMapping
-    public ResponseEntity<List<ResidentProfileResponse>> getAllResidents() {
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<ResidentProfileResponse>> getAllResidents(
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         return ResponseEntity.ok(
-                residentProfileService.getAllResidents()
+                residentProfileService.getAllResidents(userDetails.getUsername())
         );
     }
 

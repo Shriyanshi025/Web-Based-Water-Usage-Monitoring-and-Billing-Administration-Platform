@@ -2,7 +2,6 @@ package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentSelfProfileUpdateRequest;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
 import com.water.monitoring_and_billing_platform.entity.*;
 import com.water.monitoring_and_billing_platform.exception.*;
@@ -27,14 +26,29 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     private final BlockRepository blockRepository;
 
     private final UnitRepository unitRepository;
+    
+    private final CommunityAdminProfileRepository communityAdminProfileRepository;
+
+    private CommunityAdminProfile getAdminProfile(String adminEmail) {
+        User user = userRepository.findByEmail(adminEmail)
+                .orElseThrow(UserNotFoundException::new);
+        return communityAdminProfileRepository.findByUserId(user.getId())
+                .orElseThrow(() -> new RuntimeException("Community Admin profile not found."));
+    }
 
     @Override
-    public ResidentProfileResponse createResidentProfile(ResidentProfileRequest request) {
+    public ResidentProfileResponse createResidentProfile(String adminEmail, ResidentProfileRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(UserNotFoundException::new);
 
         Community community = communityRepository.findById(request.getCommunityId())
                 .orElseThrow(CommunityNotFoundException::new);
+
+        if (!community.getId().equals(adminProfile.getCommunity().getId())) {
+            throw new RuntimeException("Not authorized to create resident for this community.");
+        }
 
         Block block = blockRepository.findById(request.getBlockId())
                 .orElseThrow(BlockNotFoundException::new);
@@ -72,31 +86,34 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
 
         resident = residentProfileRepository.save(resident);
 
-        return ResidentProfileResponse.builder()
-                .id(resident.getId())
-                .officialUserId(resident.getOfficialUserId())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .phoneNumber(resident.getPhoneNumber())
-                .communityName(community.getCommunityName())
-                .blockName(block.getBlockName())
-                .unitNumber(unit.getUnitNumber())
-                .verified(resident.isVerified())
-                .build();
+        return mapToResponse(resident);
     }
 
     @Override
-    public ResidentProfileResponse getResidentById(Long id) {
-        ResidentProfile resident = residentProfileRepository.findById(Objects.requireNonNull(id))
+    public ResidentProfileResponse getResidentById(String adminEmail, Long id) {
+        if (id == null) {
+            throw new ResidentProfileNotFoundException();
+        }
+        
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        
+        ResidentProfile resident = residentProfileRepository.findById(id)
                 .orElseThrow(ResidentProfileNotFoundException::new);
+
+        if (!resident.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new ResidentProfileNotFoundException();
+        }
 
         return mapToResponse(resident);
     }
 
     @Override
-    public List<ResidentProfileResponse> getAllResidents() {
+    public List<ResidentProfileResponse> getAllResidents(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        
         return residentProfileRepository.findAll()
                 .stream()
+                .filter(resident -> resident.getCommunity().getId().equals(adminProfile.getCommunity().getId()))
                 .map(this::mapToResponse)
                 .toList();
     }

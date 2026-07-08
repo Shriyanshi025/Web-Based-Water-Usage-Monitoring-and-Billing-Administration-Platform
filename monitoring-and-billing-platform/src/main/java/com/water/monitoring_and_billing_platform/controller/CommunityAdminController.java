@@ -25,6 +25,7 @@ public class CommunityAdminController {
     private final CommunityAdminService service;
 
     @PostMapping
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
     public ResponseEntity<ApiResponse<CommunityAdminResponse>> create(
             @Valid @RequestBody CommunityAdminRequest request) {
 
@@ -39,6 +40,7 @@ public class CommunityAdminController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
     public ResponseEntity<ApiResponse<CommunityAdminResponse>> get(
             @PathVariable Long id) {
 
@@ -53,6 +55,7 @@ public class CommunityAdminController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
     public ResponseEntity<ApiResponse<List<CommunityAdminResponse>>> getAll() {
 
         return ResponseEntity.ok(

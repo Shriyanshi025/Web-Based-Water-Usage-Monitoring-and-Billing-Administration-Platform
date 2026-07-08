@@ -1,7 +1,6 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.UnitRequest;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.UnitResponse;
 import com.water.monitoring_and_billing_platform.entity.Block;
 import com.water.monitoring_and_billing_platform.entity.Community;
@@ -30,13 +29,17 @@ public class UnitServiceImpl implements UnitService {
     @Override
     @org.springframework.transaction.annotation.Transactional
     public UnitResponse createUnit(UnitRequest request) {
+        if (request.getCommunityId() == null) {
+            throw new CommunityNotFoundException();
+        }
+        if (request.getBlockId() == null) {
+            throw new BlockNotFoundException();
+        }
 
-        // next message
-
-        Community community = communityRepository.findById(Objects.requireNonNull(request.getCommunityId()))
+        Community community = communityRepository.findById(request.getCommunityId())
                 .orElseThrow(CommunityNotFoundException::new);
 
-        Block block = blockRepository.findById(Objects.requireNonNull(request.getBlockId()))
+        Block block = blockRepository.findById(request.getBlockId())
                 .orElseThrow(BlockNotFoundException::new);
 
         if (!block.getCommunity().getId().equals(community.getId())) {
@@ -61,7 +64,7 @@ public class UnitServiceImpl implements UnitService {
                 .active(true)
                 .build();
 
-        unit = unitRepository.save(Objects.requireNonNull(unit));
+        unit = unitRepository.save(unit);
 
         return UnitResponse.builder()
                 .id(unit.getId())
@@ -76,7 +79,10 @@ public class UnitServiceImpl implements UnitService {
 
     @Override
     public UnitResponse getUnitById(Long id) {
-        Unit unit = unitRepository.findById(Objects.requireNonNull(id))
+        if (id == null) {
+            throw new UnitNotFoundException();
+        }
+        Unit unit = unitRepository.findById(id)
                 .orElseThrow(UnitNotFoundException::new);
 
         return UnitResponse.builder()

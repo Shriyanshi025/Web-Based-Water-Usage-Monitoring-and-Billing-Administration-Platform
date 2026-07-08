@@ -9,12 +9,13 @@ import java.util.List;
 public interface ResidentProfileService {
 
     ResidentProfileResponse createResidentProfile(
+            String adminEmail,
             ResidentProfileRequest request
     );
 
-    ResidentProfileResponse getResidentById(Long id);
+    ResidentProfileResponse getResidentById(String adminEmail, Long id);
 
-    List<ResidentProfileResponse> getAllResidents();
+    List<ResidentProfileResponse> getAllResidents(String adminEmail);
 
     ResidentProfileResponse getSelfProfile(String email);
 

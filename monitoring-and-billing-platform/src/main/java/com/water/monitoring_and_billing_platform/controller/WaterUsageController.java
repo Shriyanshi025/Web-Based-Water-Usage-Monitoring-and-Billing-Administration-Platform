@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,27 +22,33 @@ public class WaterUsageController {
     private final WaterUsageService waterUsageService;
 
     @PostMapping
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
     public ResponseEntity<WaterUsageResponse> addReading(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
             @Valid @RequestBody WaterUsageRequest request) {
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(waterUsageService.addReading(request));
+                .body(waterUsageService.addReading(userDetails.getUsername(), request));
     }
 
     @GetMapping
-    public ResponseEntity<List<WaterUsageResponse>> getAllReadings() {
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<WaterUsageResponse>> getAllReadings(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
 
         return ResponseEntity.ok(
-                waterUsageService.getAllReadings()
+                waterUsageService.getAllReadings(userDetails.getUsername())
         );
     }
 
     @GetMapping("/meter/{meterId}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
     public ResponseEntity<List<WaterUsageResponse>> getReadingsByMeter(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
             @PathVariable Long meterId) {
 
         return ResponseEntity.ok(
-                waterUsageService.getReadingsByMeter(meterId)
+                waterUsageService.getReadingsByMeter(userDetails.getUsername(), meterId)
         );
     }
 }
