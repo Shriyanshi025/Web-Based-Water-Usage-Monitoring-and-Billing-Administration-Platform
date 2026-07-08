@@ -8,4 +8,6 @@ public interface CommunityAdminProfileRepository
 
     boolean existsByUserId(Long userId);
 
+    boolean existsByCommunity_IdAndActiveTrue(Long communityId);
+
 }
