@@ -6,7 +6,6 @@ import com.water.monitoring_and_billing_platform.entity.*;
 import com.water.monitoring_and_billing_platform.exception.*;
 import com.water.monitoring_and_billing_platform.repository.*;
 import com.water.monitoring_and_billing_platform.service.ResidentProfileService;
-import com.water.monitoring_and_billing_platform.util.IdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -66,13 +65,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                 .active(true)
                 .build();
 
-        resident.setOfficialUserId(
-                IdGenerator.generateResidentId(
-                        community.getCommunityCode(),
-                        block.getBlockName(),
-                        unit.getUnitNumber()
-                )
-        );
+        resident.setOfficialUserId("PENDING");
 
         resident = residentProfileRepository.save(resident);
 
