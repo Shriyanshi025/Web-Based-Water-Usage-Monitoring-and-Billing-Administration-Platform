@@ -26,4 +26,28 @@ public class IdGenerator {
                 + "-001";
     }
 
+    public static String generateOfficialResidentId(
+            String communityCode,
+            String blockName,
+            String unitNumber,
+            long sequence) {
+        return "RS-"
+                + communityCode.toUpperCase()
+                + "-"
+                + blockName.toUpperCase()
+                + "-"
+                + unitNumber.toUpperCase()
+                + "-"
+                + String.format("%04d", sequence);
+    }
+
+    public static String generateOfficialCommunityAdminId(
+            String communityCode,
+            long sequence) {
+        return "CA-"
+                + communityCode.toUpperCase()
+                + "-"
+                + String.format("%04d", sequence);
+    }
+
 }

@@ -2,6 +2,8 @@ package com.water.monitoring_and_billing_platform.controller;
 
 import com.water.monitoring_and_billing_platform.dto.ApiResponse;
 import com.water.monitoring_and_billing_platform.dto.ApprovalRequest;
+import com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile;
+import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
 import com.water.monitoring_and_billing_platform.entity.User;
 import com.water.monitoring_and_billing_platform.service.AdminService;
 import lombok.RequiredArgsConstructor;
@@ -72,6 +74,28 @@ public class AdminController {
                         .build()
         );
 
+    }
+
+    @GetMapping("/pending-residents")
+    public ResponseEntity<ApiResponse<List<ResidentProfile>>> getPendingResidents() {
+        return ResponseEntity.ok(
+                ApiResponse.<List<ResidentProfile>>builder()
+                        .success(true)
+                        .message("Pending residents fetched successfully.")
+                        .data(adminService.getPendingResidents())
+                        .build()
+        );
+    }
+
+    @GetMapping("/pending-community-admins")
+    public ResponseEntity<ApiResponse<List<CommunityAdminProfile>>> getPendingCommunityAdmins() {
+        return ResponseEntity.ok(
+                ApiResponse.<List<CommunityAdminProfile>>builder()
+                        .success(true)
+                        .message("Pending community admins fetched successfully.")
+                        .data(adminService.getPendingCommunityAdmins())
+                        .build()
+        );
     }
 
 }
