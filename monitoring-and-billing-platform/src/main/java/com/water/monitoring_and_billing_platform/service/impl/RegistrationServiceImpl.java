@@ -73,7 +73,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .phoneNumber(request.getPhoneNumber())
                 .verified(false)
                 .active(true)
-                .officialUserId("PENDING")
+                .officialUserId(null)
                 .build();
 
         residentProfileRepository.save(residentProfile);
@@ -125,7 +125,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .officeAddress(request.getOfficeAddress())
                 .verified(false)
                 .active(true)
-                .officialAdminId("PENDING")
+                .officialAdminId(null)
                 .build();
 
         communityAdminProfileRepository.save(adminProfile);
