@@ -67,19 +67,20 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(UserNotFoundException::new);
 
-        if (!passwordEncoder.matches(
-                request.getPassword(),
-                user.getPassword()
-        )) {
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new InvalidPasswordException();
         }
 
-        if(user.getApprovalStatus() != ApprovalStatus.APPROVED){
-
+        if (!user.isActive()) {
             throw new IllegalStateException(
-                    "Your account is awaiting administrator approval."
+                    "Your account has been deactivated. Please contact administrator."
             );
+        }
 
+        if (user.getApprovalStatus() != ApprovalStatus.APPROVED) {
+            throw new IllegalStateException(
+                    "Your registration is awaiting administrator approval."
+            );
         }
 
         user.setLastLogin(LocalDateTime.now());

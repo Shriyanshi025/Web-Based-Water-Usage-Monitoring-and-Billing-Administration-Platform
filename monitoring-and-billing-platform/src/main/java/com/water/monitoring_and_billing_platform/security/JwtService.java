@@ -40,6 +40,10 @@ public class JwtService {
 
         claims.put("userId", user.getId());
 
+        claims.put("approvalStatus", user.getApprovalStatus().name());
+
+        claims.put("fullName", user.getFullName());
+
         return Jwts.builder()
                 .claims(claims)
                 .subject(user.getEmail())
