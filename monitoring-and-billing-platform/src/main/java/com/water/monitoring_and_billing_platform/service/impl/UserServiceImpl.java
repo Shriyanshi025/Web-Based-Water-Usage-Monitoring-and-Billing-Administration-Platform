@@ -1,8 +1,10 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.AuthResponse;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.LoginRequest;
 import com.water.monitoring_and_billing_platform.dto.RegisterRequest;
+import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
 import com.water.monitoring_and_billing_platform.entity.User;
 import com.water.monitoring_and_billing_platform.enums.ApprovalStatus;
 import com.water.monitoring_and_billing_platform.enums.Role;
@@ -97,5 +99,21 @@ public class UserServiceImpl implements UserService {
                 user.getRole().name(),
                 user.getApprovalStatus().name()
         );
+    }
+
+    @Override
+    public UserMeResponse getCurrentUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        return UserMeResponse.builder()
+                .id(user.getId())
+                .fullName(user.getFullName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .approvalStatus(user.getApprovalStatus().name())
+                .active(user.isActive())
+                .lastLogin(user.getLastLogin())
+                .build();
     }
 }

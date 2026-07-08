@@ -1,6 +1,8 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileRequest;
+import com.water.monitoring_and_billing_platform.dto.ResidentSelfProfileUpdateRequest;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
 import com.water.monitoring_and_billing_platform.entity.*;
 import com.water.monitoring_and_billing_platform.exception.*;
@@ -8,6 +10,7 @@ import com.water.monitoring_and_billing_platform.repository.*;
 import com.water.monitoring_and_billing_platform.service.ResidentProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -84,7 +87,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
 
     @Override
     public ResidentProfileResponse getResidentById(Long id) {
-        ResidentProfile resident = residentProfileRepository.findById(id)
+        ResidentProfile resident = residentProfileRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(ResidentProfileNotFoundException::new);
 
         return mapToResponse(resident);
@@ -111,5 +114,34 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                 .unitNumber(resident.getUnit().getUnitNumber())
                 .verified(resident.isVerified())
                 .build();
+    }
+
+    @Override
+    public ResidentProfileResponse getSelfProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        ResidentProfile resident = residentProfileRepository.findByUserId(user.getId())
+                .orElseThrow(ResidentProfileNotFoundException::new);
+
+        return mapToResponse(resident);
+    }
+
+    @Override
+    @Transactional
+    public ResidentProfileResponse updateSelfProfile(String email, ResidentSelfProfileUpdateRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        ResidentProfile resident = residentProfileRepository.findByUserId(user.getId())
+                .orElseThrow(ResidentProfileNotFoundException::new);
+
+        user.setFullName(request.getFullName());
+        resident.setPhoneNumber(request.getPhoneNumber());
+
+        userRepository.save(user);
+        resident = residentProfileRepository.save(resident);
+
+        return mapToResponse(resident);
     }
 }

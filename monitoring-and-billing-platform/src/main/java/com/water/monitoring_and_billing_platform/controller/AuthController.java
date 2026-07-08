@@ -3,11 +3,14 @@ package com.water.monitoring_and_billing_platform.controller;
 import com.water.monitoring_and_billing_platform.dto.AuthResponse;
 import com.water.monitoring_and_billing_platform.dto.LoginRequest;
 import com.water.monitoring_and_billing_platform.dto.RegisterRequest;
+import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
 import com.water.monitoring_and_billing_platform.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,6 +34,14 @@ public class AuthController {
             @Valid @RequestBody LoginRequest request) {
 
         AuthResponse response = userService.login(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserMeResponse> getCurrentUser(
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        UserMeResponse response = userService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
 }

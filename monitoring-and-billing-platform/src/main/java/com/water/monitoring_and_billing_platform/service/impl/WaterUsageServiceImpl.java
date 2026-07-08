@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.WaterUsageRequest;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.WaterUsageResponse;
 import com.water.monitoring_and_billing_platform.entity.WaterMeter;
 import com.water.monitoring_and_billing_platform.entity.WaterUsage;
@@ -22,9 +23,10 @@ public class WaterUsageServiceImpl implements WaterUsageService {
     private final WaterMeterRepository waterMeterRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public WaterUsageResponse addReading(WaterUsageRequest request) {
 
-        WaterMeter meter = waterMeterRepository.findById(request.getWaterMeterId())
+        WaterMeter meter = waterMeterRepository.findById(Objects.requireNonNull(request.getWaterMeterId()))
                 .orElseThrow(WaterMeterNotFoundException::new);
 
         double previousReading = meter.getCurrentReading();
@@ -45,7 +47,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
                 .billed(false)
                 .build();
 
-        usage = waterUsageRepository.save(usage);
+        usage = waterUsageRepository.save(Objects.requireNonNull(usage));
 
         meter.setCurrentReading(request.getCurrentReading());
         waterMeterRepository.save(meter);

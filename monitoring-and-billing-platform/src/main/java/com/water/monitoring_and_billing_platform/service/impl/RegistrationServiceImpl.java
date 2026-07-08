@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.AuthResponse;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.CommunityAdminRegistrationRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentRegistrationRequest;
 import com.water.monitoring_and_billing_platform.entity.*;
@@ -13,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Service
@@ -26,6 +29,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final UnitRepository unitRepository;
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
+    private final InvitationRepository invitationRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -37,8 +41,30 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new EmailAlreadyExistsException();
         }
 
-        Community community = communityRepository.findById(request.getCommunityId())
-                .orElseThrow(CommunityNotFoundException::new);
+        Community community;
+        Invitation invitation = null;
+
+        if (StringUtils.hasText(request.getInviteToken())) {
+            invitation = invitationRepository.findByToken(request.getInviteToken())
+                    .orElseThrow(InvalidInvitationTokenException::new);
+
+            if (invitation.getStatus() == com.water.monitoring_and_billing_platform.enums.InvitationStatus.EXPIRED ||
+                invitation.getStatus() == com.water.monitoring_and_billing_platform.enums.InvitationStatus.REGISTERED ||
+                invitation.getExpiresAt().isBefore(LocalDateTime.now())) {
+                
+                if (invitation.getStatus() != com.water.monitoring_and_billing_platform.enums.InvitationStatus.EXPIRED &&
+                    invitation.getStatus() != com.water.monitoring_and_billing_platform.enums.InvitationStatus.REGISTERED) {
+                    invitation.setStatus(com.water.monitoring_and_billing_platform.enums.InvitationStatus.EXPIRED);
+                    invitationRepository.save(invitation);
+                }
+                throw new InvitationExpiredException();
+            }
+
+            community = invitation.getCommunity();
+        } else {
+            community = communityRepository.findById(request.getCommunityId())
+                    .orElseThrow(CommunityNotFoundException::new);
+        }
 
         Block block = blockRepository.findById(request.getBlockId())
                 .orElseThrow(BlockNotFoundException::new);
@@ -77,6 +103,11 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .build();
 
         residentProfileRepository.save(residentProfile);
+
+        if (invitation != null) {
+            invitation.setStatus(com.water.monitoring_and_billing_platform.enums.InvitationStatus.REGISTERED);
+            invitationRepository.save(invitation);
+        }
 
         return new AuthResponse(
                 "Registration Successful",

@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.WaterMeterRequest;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.WaterMeterResponse;
 import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
 import com.water.monitoring_and_billing_platform.entity.WaterMeter;
@@ -24,6 +25,7 @@ public class WaterMeterServiceImpl implements WaterMeterService {
     private final ResidentProfileRepository residentProfileRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public WaterMeterResponse createWaterMeter(WaterMeterRequest request) {
 
         ResidentProfile resident = residentProfileRepository
@@ -46,7 +48,7 @@ public class WaterMeterServiceImpl implements WaterMeterService {
                 .active(true)
                 .build();
 
-        meter = waterMeterRepository.save(meter);
+        meter = waterMeterRepository.save(Objects.requireNonNull(meter));
 
         return WaterMeterResponse.builder()
                 .id(meter.getId())
@@ -63,7 +65,7 @@ public class WaterMeterServiceImpl implements WaterMeterService {
     @Override
     public WaterMeterResponse getWaterMeterById(Long id) {
 
-        WaterMeter meter = waterMeterRepository.findById(id)
+        WaterMeter meter = waterMeterRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(WaterMeterNotFoundException::new);
 
         return WaterMeterResponse.builder()

@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.UnitRequest;
+import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.UnitResponse;
 import com.water.monitoring_and_billing_platform.entity.Block;
 import com.water.monitoring_and_billing_platform.entity.Community;
@@ -27,14 +28,15 @@ public class UnitServiceImpl implements UnitService {
     private final BlockRepository blockRepository;
 
     @Override
+    @org.springframework.transaction.annotation.Transactional
     public UnitResponse createUnit(UnitRequest request) {
 
         // next message
 
-        Community community = communityRepository.findById(request.getCommunityId())
+        Community community = communityRepository.findById(Objects.requireNonNull(request.getCommunityId()))
                 .orElseThrow(CommunityNotFoundException::new);
 
-        Block block = blockRepository.findById(request.getBlockId())
+        Block block = blockRepository.findById(Objects.requireNonNull(request.getBlockId()))
                 .orElseThrow(BlockNotFoundException::new);
 
         if (!block.getCommunity().getId().equals(community.getId())) {
@@ -59,7 +61,7 @@ public class UnitServiceImpl implements UnitService {
                 .active(true)
                 .build();
 
-        unit = unitRepository.save(unit);
+        unit = unitRepository.save(Objects.requireNonNull(unit));
 
         return UnitResponse.builder()
                 .id(unit.getId())
@@ -74,7 +76,7 @@ public class UnitServiceImpl implements UnitService {
 
     @Override
     public UnitResponse getUnitById(Long id) {
-        Unit unit = unitRepository.findById(id)
+        Unit unit = unitRepository.findById(Objects.requireNonNull(id))
                 .orElseThrow(UnitNotFoundException::new);
 
         return UnitResponse.builder()

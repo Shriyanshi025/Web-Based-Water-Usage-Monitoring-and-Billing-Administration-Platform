@@ -31,4 +31,6 @@ public class ResidentRegistrationRequest {
 
     @NotNull
     private Long unitId;
+
+    private String inviteToken;
 }

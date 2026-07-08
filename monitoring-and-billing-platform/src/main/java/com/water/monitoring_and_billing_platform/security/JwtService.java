@@ -3,7 +3,7 @@ package com.water.monitoring_and_billing_platform.security;
 import com.water.monitoring_and_billing_platform.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
@@ -49,7 +49,7 @@ public class JwtService {
                 .subject(user.getEmail())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(signingKey, SignatureAlgorithm.HS256)
+                .signWith(signingKey, Jwts.SIG.HS256)
                 .compact();
     }
 

@@ -3,10 +3,15 @@ package com.water.monitoring_and_billing_platform.controller;
 import com.water.monitoring_and_billing_platform.dto.ApiResponse;
 import com.water.monitoring_and_billing_platform.dto.CommunityAdminRequest;
 import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.CommunityAdminSelfProfileUpdateRequest;
 import com.water.monitoring_and_billing_platform.service.CommunityAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -58,6 +63,35 @@ public class CommunityAdminController {
                         .build()
         );
 
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> getSelfProfile(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        
+        return ResponseEntity.ok(
+                ApiResponse.<CommunityAdminProfileResponse>builder()
+                        .success(true)
+                        .message("Self profile fetched successfully.")
+                        .data(service.getSelfProfile(userDetails.getUsername()))
+                        .build()
+        );
+    }
+
+    @PutMapping("/me")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> updateSelfProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody CommunityAdminSelfProfileUpdateRequest request) {
+        
+        return ResponseEntity.ok(
+                ApiResponse.<CommunityAdminProfileResponse>builder()
+                        .success(true)
+                        .message("Self profile updated successfully.")
+                        .data(service.updateSelfProfile(userDetails.getUsername(), request))
+                        .build()
+        );
     }
 
 }

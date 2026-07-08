@@ -7,6 +7,10 @@ import java.util.List;
 
 public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"waterMeter", "waterMeter.residentProfile", "waterMeter.residentProfile.user"})
+    List<WaterUsage> findAll();
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"waterMeter", "waterMeter.residentProfile", "waterMeter.residentProfile.user"})
     List<WaterUsage> findByWaterMeterId(Long waterMeterId);
 
     long count();

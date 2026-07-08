@@ -9,8 +9,12 @@ public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
 
     boolean existsByMeterNumber(String meterNumber);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
+    java.util.List<WaterMeter> findAll();
+
     boolean existsByResidentProfileId(Long residentProfileId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
     Optional<WaterMeter> findByResidentProfileId(Long residentProfileId);
 
     Optional<WaterMeter> findByMeterNumber(String meterNumber);

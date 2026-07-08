@@ -1,41 +1,47 @@
 package com.water.monitoring_and_billing_platform.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.water.monitoring_and_billing_platform.enums.InvitationStatus;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
-@Table(name = "blocks")
+@Table(name = "invitations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Block {
+public class Invitation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50)
-    private String blockName;
+    @Column(nullable = false, unique = true, length = 36)
+    private String token;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "community_id", nullable = false)
-    @JsonIgnoreProperties({"blocks"})
     private Community community;
 
-    @OneToMany(mappedBy = "block")
-    @JsonIgnore
-    @Builder.Default
-    private List<Unit> units = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id", nullable = false)
+    private CommunityAdminProfile admin;
+
+    @Column(length = 255)
+    private String email;
+
+    @Column(length = 15)
+    private String mobileNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private InvitationStatus status;
 
     @Column(nullable = false)
-    private boolean active;
+    private LocalDateTime expiresAt;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -52,5 +58,4 @@ public class Block {
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }

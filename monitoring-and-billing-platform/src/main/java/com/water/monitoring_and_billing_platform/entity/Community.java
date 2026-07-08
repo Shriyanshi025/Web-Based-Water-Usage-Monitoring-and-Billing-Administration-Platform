@@ -64,9 +64,11 @@ public class Community {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
+    @Builder.Default
     private List<Block> blocks = new ArrayList<>();
 
     @OneToMany(mappedBy = "community")
     @JsonIgnore
+    @Builder.Default
     private List<Unit> units = new ArrayList<>();
 }
