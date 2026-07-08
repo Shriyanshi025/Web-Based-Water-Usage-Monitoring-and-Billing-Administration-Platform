@@ -1,12 +1,12 @@
 package com.water.monitoring_and_billing_platform.controller;
 
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
-import com.water.monitoring_and_billing_platform.dto.DashboardResponse;
-import com.water.monitoring_and_billing_platform.dto.UserDashboardResponse;
+import com.water.monitoring_and_billing_platform.dto.*;
 import com.water.monitoring_and_billing_platform.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/dashboard")
@@ -17,10 +17,10 @@ public class DashboardController {
     private final DashboardService dashboardService;
 
     @GetMapping("/main-admin")
-    public ResponseEntity<DashboardResponse> getDashboard() {
+    public ResponseEntity<MainAdminDashboardResponse> getDashboard() {
 
         return ResponseEntity.ok(
-                dashboardService.getMainAdminDashboard()
+                dashboardService.getMainAdminDashboardData()
         );
     }
 
@@ -39,6 +39,20 @@ public class DashboardController {
 
         return ResponseEntity.ok(
                 dashboardService.getUserDashboard(residentId)
+        );
+    }
+
+    @GetMapping("/resident")
+    public ResponseEntity<ResidentDashboardResponse> getResidentDashboard(Principal principal) {
+        return ResponseEntity.ok(
+                dashboardService.getResidentDashboard(principal.getName())
+        );
+    }
+
+    @GetMapping("/community-admin")
+    public ResponseEntity<CommunityAdminDashboardResponse> getCommunityAdminDashboard(Principal principal) {
+        return ResponseEntity.ok(
+                dashboardService.getCommunityAdminDashboard(principal.getName())
         );
     }
 

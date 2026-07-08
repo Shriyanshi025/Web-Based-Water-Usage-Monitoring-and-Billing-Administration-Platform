@@ -10,4 +10,10 @@ public interface DashboardService {
 
     UserDashboardResponse getUserDashboard(Long residentId);
 
+    ResidentDashboardResponse getResidentDashboard(String email);
+
+    CommunityAdminDashboardResponse getCommunityAdminDashboard(String email);
+
+    MainAdminDashboardResponse getMainAdminDashboardData();
+
 }

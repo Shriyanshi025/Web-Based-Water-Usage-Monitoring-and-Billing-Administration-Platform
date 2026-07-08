@@ -11,10 +11,14 @@ public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
 
     boolean existsByResidentProfileId(Long residentProfileId);
 
+    Optional<WaterMeter> findByResidentProfileId(Long residentProfileId);
+
     Optional<WaterMeter> findByMeterNumber(String meterNumber);
 
     long count();
 
     long countByResidentProfileCommunityId(Long communityId);
+
+    long countByResidentProfileCommunityIdAndActiveTrue(Long communityId);
 
 }

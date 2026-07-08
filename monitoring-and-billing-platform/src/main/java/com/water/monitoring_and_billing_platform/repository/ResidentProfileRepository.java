@@ -24,4 +24,6 @@ public interface ResidentProfileRepository
 
     List<ResidentProfile> findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus approvalStatus);
 
+    long countByCommunityIdAndVerifiedFalseAndUserApprovalStatus(Long communityId, ApprovalStatus approvalStatus);
+
 }
