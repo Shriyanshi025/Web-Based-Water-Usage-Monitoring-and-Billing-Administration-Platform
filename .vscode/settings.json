@@ -1,3 +1,6 @@
 {
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "maven.settingsFile": "C:\\Users\\91900\\.m2\\settings.xml",
+    "java.configuration.maven.userSettings": "C:\\Users\\91900\\.m2\\settings.xml",
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

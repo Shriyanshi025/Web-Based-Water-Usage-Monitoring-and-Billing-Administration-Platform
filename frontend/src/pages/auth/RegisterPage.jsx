@@ -1,359 +1,156 @@
-import { useState } from "react";
-import {
-    Box,
-    Button,
-    Card,
-    CardContent,
-    Container,
-    Grid,
-    Link,
-    Stack,
-    TextField,
-    Typography,
-    Alert,
-} from "@mui/material";
-import MenuItem from "@mui/material/MenuItem";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm, FormProvider } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Box, Button, Stack, Stepper, Step, StepLabel, Alert, Typography } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
 
-import WaterDropIcon from "@mui/icons-material/WaterDrop";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { register } from "../../services/AuthService";
+import AuthLayout from '../../components/layout/AuthLayout';
+import { register as registerApi } from '../../services/AuthService';
+import { 
+    wizardStep1BasicSchema, wizardStep3ResidentSchema, wizardStep3AdminSchema, wizardStep4CredentialsSchema 
+} from '../../utils/schemas';
+import { z } from 'zod';
 
-function RegisterPage() {
+import { 
+    WizardStep1Basic, WizardStep2Role, WizardStep3Resident, 
+    WizardStep3Admin, WizardStep4Credentials, WizardStep5Review 
+} from './components/WizardSteps';
 
+const STEPS = ['Basic Details', 'Role', 'Location', 'Credentials', 'Review'];
+
+export default function RegisterPage() {
     const navigate = useNavigate();
+    const [activeStep, setActiveStep] = useState(0);
+    const [globalError, setGlobalError] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const [form, setForm] = useState({
-        fullName: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-        requestedRole: "USER"
+    const methods = useForm({
+        mode: 'onChange',
+        defaultValues: {
+            fullName: '',
+            email: '',
+            requestedRole: 'USER',
+            communityId: '',
+            blockId: '',
+            unitId: '',
+            professionalInfo: '',
+            invitationToken: '',
+            password: '',
+            confirmPassword: '',
+            termsAccepted: false
+        }
     });
 
-    const [error, setError] = useState("");
+    const role = methods.watch('requestedRole');
 
-    const [loading, setLoading] = useState(false);
-
-    const handleChange = (e) => {
-
-        setForm({
-
-            ...form,
-
-            [e.target.name]: e.target.value
-
-        });
-
+    const getStepSchema = (step) => {
+        switch (step) {
+            case 0: return wizardStep1BasicSchema;
+            case 1: return z.object({}); // Role requires no strict zod check as it defaults and sets via UI
+            case 2: return role === 'USER' ? wizardStep3ResidentSchema : wizardStep3AdminSchema;
+            case 3: return wizardStep4CredentialsSchema;
+            default: return z.object({});
+        }
     };
 
-    const handleSubmit = async (e) => {
+    const handleNext = async () => {
+        const schema = getStepSchema(activeStep);
+        const values = methods.getValues();
+        const result = schema.safeParse(values);
 
-        e.preventDefault();
-
-        setError("");
-
-        if(form.password!==form.confirmPassword){
-
-            setError("Passwords do not match");
-
-            return;
-
-        }
-
-        try{
-
-            setLoading(true);
-
-            await register({
-                fullName: form.fullName,
-                email: form.email,
-                password: form.password,
-                requestedRole: form.requestedRole
+        if (!result.success) {
+            // Manually set errors to trigger UI feedback
+            result.error.issues.forEach(issue => {
+                methods.setError(issue.path[0], { type: 'manual', message: issue.message });
             });
-
-            navigate("/login");
-
+            return;
         }
 
-        catch(err){
+        methods.clearErrors();
+        setActiveStep(prev => prev + 1);
+    };
 
-            setError(
+    const handleBack = () => setActiveStep(prev => prev - 1);
 
-                err.response?.data?.message ||
-
-                "Registration Failed"
-
-            );
-
+    const onSubmit = async () => {
+        setGlobalError("");
+        setIsSubmitting(true);
+        try {
+            const data = methods.getValues();
+            await registerApi({
+                fullName: data.fullName,
+                email: data.email,
+                password: data.password,
+                requestedRole: data.requestedRole,
+                communityId: data.communityId || null,
+                blockId: data.blockId || null,
+                unitId: data.unitId || null,
+                professionalInfo: data.professionalInfo || null
+            });
+            navigate("/pending-approval");
+        } catch (err) {
+            setGlobalError(err.response?.data?.message || "Registration failed. Please try again.");
+        } finally {
+            setIsSubmitting(false);
         }
-
-        finally{
-
-            setLoading(false);
-
-        }
-
     };
 
     return (
+        <AuthLayout title="Create Account" subtitle="Join AquaBase and manage your water footprint." alignTop>
+            <Box sx={{ mb: 3 }}>
+                <Stepper activeStep={activeStep} alternativeLabel>
+                    {STEPS.map((label, index) => (
+                        <Step key={label}>
+                            <StepLabel>{label}</StepLabel>
+                        </Step>
+                    ))}
+                </Stepper>
+            </Box>
 
-        <Box
+            {globalError && <Alert severity="error" sx={{ mb: 3 }}>{globalError}</Alert>}
 
-            sx={{
-
-                minHeight:"100vh",
-
-                background:"linear-gradient(135deg,#E3F2FD,#FFFFFF)",
-
-                display:"flex",
-
-                alignItems:"center"
-
-            }}
-
-        >
-
-            <Container maxWidth="lg">
-
-                <Grid container spacing={6} alignItems="center">
-
-                    <Grid item xs={12} md={6}>
-
-                        <WaterDropIcon
-
-                            sx={{
-
-                                fontSize:80,
-
-                                color:"#1976d2",
-
-                                mb:2
-
-                            }}
-
-                        />
-
-                        <Typography
-
-                            variant="h3"
-
-                            fontWeight="bold"
-
+            <FormProvider {...methods}>
+                <Box sx={{ minHeight: 300, position: 'relative' }}>
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key={activeStep}
+                            initial={{ x: 20, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: -20, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
                         >
-
-                            Join Water Monitoring
-
-                        </Typography>
-
-                        <Typography mt={3} color="text.secondary">
-
-                            Register yourself to become a resident of your community.
-
-                            After successful verification by the administrator,
-
-                            you will be able to access your dashboard.
-
-                        </Typography>
-
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-
-                        <Card
-
-                            elevation={8}
-
-                            sx={{
-
-                                borderRadius:5
-
-                            }}
-
-                        >
-
-                            <CardContent sx={{p:5}}>
-
-                                <Typography
-
-                                    variant="h4"
-
-                                    fontWeight="bold"
-
-                                >
-
-                                    Register
-
-                                </Typography>
-
-                                <Stack
-
-                                    spacing={3}
-
-                                    component="form"
-
-                                    mt={4}
-
-                                    onSubmit={handleSubmit}
-
-                                >
-
-                                    {
-
-                                        error &&
-
-                                        <Alert severity="error">
-
-                                            {error}
-
-                                        </Alert>
-
-                                    }
-
-                                    <TextField
-
-                                        label="Full Name"
-
-                                        name="fullName"
-
-                                        value={form.fullName}
-
-                                        onChange={handleChange}
-
-                                        required
-
-                                        fullWidth
-
-                                    />
-
-                                    <TextField
-
-                                        label="Email"
-
-                                        name="email"
-
-                                        type="email"
-
-                                        value={form.email}
-
-                                        onChange={handleChange}
-
-                                        required
-
-                                        fullWidth
-
-                                    />
-
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        label="Register As"
-                                        name="requestedRole"
-                                        value={form.requestedRole}
-                                        onChange={handleChange}
-                                    >
-                                        <MenuItem value="USER">
-                                            Resident
-                                        </MenuItem>
-
-                                        <MenuItem value="COMMUNITY_ADMIN">
-                                            Community Administrator
-                                        </MenuItem>
-                                    </TextField>
-
-                                    <TextField
-
-                                        label="Password"
-
-                                        name="password"
-
-                                        type="password"
-
-                                        value={form.password}
-
-                                        onChange={handleChange}
-
-                                        required
-
-                                        fullWidth
-
-                                    />
-
-                                    <TextField
-
-                                        label="Confirm Password"
-
-                                        name="confirmPassword"
-
-                                        type="password"
-
-                                        value={form.confirmPassword}
-
-                                        onChange={handleChange}
-
-                                        required
-
-                                        fullWidth
-
-                                    />
-
-                                    <Button
-
-                                        type="submit"
-
-                                        variant="contained"
-
-                                        size="large"
-
-                                        disabled={loading}
-
-                                    >
-
-                                        {
-
-                                            loading
-
-                                                ?
-
-                                                "Creating Account..."
-
-                                                :
-
-                                                "Register"
-
-                                        }
-
-                                    </Button>
-
-                                    <Link
-
-                                        component={RouterLink}
-
-                                        to="/login"
-
-                                        underline="none"
-
-                                    >
-
-                                        Already have an account? Login
-
-                                    </Link>
-
-                                </Stack>
-
-                            </CardContent>
-
-                        </Card>
-
-                    </Grid>
-
-                </Grid>
-
-            </Container>
-
-        </Box>
-
+                            {activeStep === 0 && <WizardStep1Basic />}
+                            {activeStep === 1 && <WizardStep2Role />}
+                            {activeStep === 2 && role === 'USER' && <WizardStep3Resident />}
+                            {activeStep === 2 && role === 'COMMUNITY_ADMIN' && <WizardStep3Admin />}
+                            {activeStep === 3 && <WizardStep4Credentials />}
+                            {activeStep === 4 && <WizardStep5Review />}
+                        </motion.div>
+                    </AnimatePresence>
+                </Box>
+
+                <Stack direction="row" spacing={2} sx={{ mt: 4, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Button disabled={activeStep === 0 || isSubmitting} onClick={handleBack} variant="outlined">
+                        Back
+                    </Button>
+                    <Box sx={{ flex: 1 }} />
+                    {activeStep === STEPS.length - 1 ? (
+                        <Button variant="contained" onClick={onSubmit} disabled={isSubmitting}>
+                            {isSubmitting ? "Submitting..." : "Complete Registration"}
+                        </Button>
+                    ) : (
+                        <Button variant="contained" onClick={handleNext}>
+                            Continue
+                        </Button>
+                    )}
+                </Stack>
+                <Box sx={{ mt: 3, textAlign: 'center' }}>
+                    <Typography variant="body2" color="text.secondary">
+                        Already have an account? <Button variant="text" size="small" onClick={() => navigate('/login')}>Sign in</Button>
+                    </Typography>
+                </Box>
+            </FormProvider>
+        </AuthLayout>
     );
-
 }
-
-export default RegisterPage;
