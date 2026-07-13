@@ -1,7 +1,6 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.AuthResponse;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.CommunityAdminRegistrationRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentRegistrationRequest;
 import com.water.monitoring_and_billing_platform.entity.*;
@@ -43,6 +42,9 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         Community community;
         Invitation invitation = null;
+        Long communityId = request.getCommunityId();
+        Long blockId = request.getBlockId();
+        Long unitId = request.getUnitId();
 
         if (StringUtils.hasText(request.getInviteToken())) {
             invitation = invitationRepository.findByToken(request.getInviteToken())
@@ -62,14 +64,23 @@ public class RegistrationServiceImpl implements RegistrationService {
 
             community = invitation.getCommunity();
         } else {
-            community = communityRepository.findById(request.getCommunityId())
+            if (communityId == null) {
+                throw new IllegalArgumentException("Community ID is required");
+            }
+            community = communityRepository.findById(communityId)
                     .orElseThrow(CommunityNotFoundException::new);
         }
 
-        Block block = blockRepository.findById(request.getBlockId())
+        if (blockId == null) {
+            throw new IllegalArgumentException("Block ID is required");
+        }
+        Block block = blockRepository.findById(blockId)
                 .orElseThrow(BlockNotFoundException::new);
 
-        Unit unit = unitRepository.findById(request.getUnitId())
+        if (unitId == null) {
+            throw new IllegalArgumentException("Unit ID is required");
+        }
+        Unit unit = unitRepository.findById(unitId)
                 .orElseThrow(UnitNotFoundException::new);
 
         if (!block.getCommunity().getId().equals(community.getId())) {
@@ -129,7 +140,12 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new EmailAlreadyExistsException();
         }
 
-        Community community = communityRepository.findById(request.getCommunityId())
+        Long communityId = request.getCommunityId();
+        if (communityId == null) {
+            throw new IllegalArgumentException("Community ID is required");
+        }
+
+        Community community = communityRepository.findById(communityId)
                 .orElseThrow(CommunityNotFoundException::new);
 
         boolean hasActiveAdmin = communityAdminProfileRepository.existsByCommunity_IdAndActiveTrue(community.getId());

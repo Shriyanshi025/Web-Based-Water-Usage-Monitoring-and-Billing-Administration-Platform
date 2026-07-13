@@ -247,6 +247,20 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    @ExceptionHandler(DuplicateWaterUsageException.class)
+    public ResponseEntity<Map<String, Object>> handleDuplicateWaterUsage(
+            DuplicateWaterUsageException ex) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.CONFLICT.value());
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
     @ExceptionHandler(WaterUsageNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleWaterUsageNotFound(
             WaterUsageNotFoundException ex) {

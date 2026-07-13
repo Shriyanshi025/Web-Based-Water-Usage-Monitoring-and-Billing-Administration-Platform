@@ -1,7 +1,6 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.BlockRequest;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.entity.Block;
 import com.water.monitoring_and_billing_platform.entity.Community;
 import com.water.monitoring_and_billing_platform.exception.BlockAlreadyExistsException;
@@ -54,5 +53,14 @@ public class BlockServiceImpl implements BlockService {
     public Block getBlockById(Long id) {
         return blockRepository.findById(id)
                 .orElseThrow(BlockNotFoundException::new);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteBlock(Long id) {
+        Block block = blockRepository.findById(id)
+                .orElseThrow(BlockNotFoundException::new);
+        block.setActive(false);
+        blockRepository.save(block);
     }
 }

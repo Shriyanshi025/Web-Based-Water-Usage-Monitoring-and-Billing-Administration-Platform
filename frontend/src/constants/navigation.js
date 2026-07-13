@@ -16,6 +16,11 @@ export const NAVIGATION_CONFIG = {
             icon: "ApartmentIcon" 
         },
         { 
+            label: "Community Admins", 
+            path: ROUTES.MAIN_ADMIN_COMMUNITY_ADMINS, 
+            icon: "PeopleIcon" 
+        },
+        { 
             label: "Approvals", 
             path: ROUTES.MAIN_ADMIN_APPROVALS, 
             icon: "DomainVerificationIcon" 
@@ -34,6 +39,11 @@ export const NAVIGATION_CONFIG = {
             label: "Dashboard", 
             path: ROUTES.COMMUNITY_ADMIN_DASHBOARD, 
             icon: "DashboardIcon" 
+        },
+        {
+            label: "Household Directory",
+            path: "/admin/households",
+            icon: "HomeIcon"
         },
         { 
             label: "Residents", 
@@ -55,6 +65,21 @@ export const NAVIGATION_CONFIG = {
             path: ROUTES.COMMUNITY_ADMIN_USAGE, 
             icon: "TimelineIcon" 
         },
+        {
+            label: "Bills",
+            path: ROUTES.COMMUNITY_ADMIN_BILLS,
+            icon: "ReceiptIcon"
+        },
+        {
+            label: "Billing Cycle",
+            path: ROUTES.COMMUNITY_ADMIN_BILLING_CYCLE,
+            icon: "CalendarMonthIcon"
+        },
+        {
+            label: "Tariff Plans",
+            path: ROUTES.COMMUNITY_ADMIN_TARIFF_PLANS,
+            icon: "PriceChangeIcon"
+        },
         { 
             label: "Invitations", 
             path: ROUTES.COMMUNITY_ADMIN_INVITATIONS, 
@@ -66,6 +91,21 @@ export const NAVIGATION_CONFIG = {
             label: "Dashboard", 
             path: ROUTES.RESIDENT_DASHBOARD, 
             icon: "DashboardIcon" 
+        },
+        { 
+            label: "My Bills", 
+            path: ROUTES.RESIDENT_BILLS, 
+            icon: "ReceiptIcon" 
+        },
+        { 
+            label: "Usage History", 
+            path: ROUTES.RESIDENT_USAGE, 
+            icon: "TimelineIcon" 
+        },
+        { 
+            label: "Meter Details", 
+            path: ROUTES.RESIDENT_METER, 
+            icon: "WaterDropIcon" 
         },
         { 
             label: "My Profile", 

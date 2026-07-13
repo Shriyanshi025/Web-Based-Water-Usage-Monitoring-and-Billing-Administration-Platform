@@ -1,10 +1,6 @@
 package com.water.monitoring_and_billing_platform.controller;
 
-import com.water.monitoring_and_billing_platform.dto.ApiResponse;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminRequest;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminSelfProfileUpdateRequest;
+import com.water.monitoring_and_billing_platform.dto.*;
 import com.water.monitoring_and_billing_platform.service.CommunityAdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,11 +37,11 @@ public class CommunityAdminController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('MAIN_ADMIN')")
-    public ResponseEntity<ApiResponse<CommunityAdminResponse>> get(
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> get(
             @PathVariable Long id) {
 
         return ResponseEntity.ok(
-                ApiResponse.<CommunityAdminResponse>builder()
+                ApiResponse.<CommunityAdminProfileResponse>builder()
                         .success(true)
                         .message("Community Admin fetched successfully.")
                         .data(service.getAdmin(id))
@@ -56,13 +52,45 @@ public class CommunityAdminController {
 
     @GetMapping
     @PreAuthorize("hasRole('MAIN_ADMIN')")
-    public ResponseEntity<ApiResponse<List<CommunityAdminResponse>>> getAll() {
+    public ResponseEntity<ApiResponse<List<CommunityAdminProfileResponse>>> getAll() {
 
         return ResponseEntity.ok(
-                ApiResponse.<List<CommunityAdminResponse>>builder()
+                ApiResponse.<List<CommunityAdminProfileResponse>>builder()
                         .success(true)
                         .message("Community Admin list fetched successfully.")
                         .data(service.getAllAdmins())
+                        .build()
+        );
+
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> update(
+            @PathVariable Long id,
+            @Valid @RequestBody CommunityAdminUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<CommunityAdminProfileResponse>builder()
+                        .success(true)
+                        .message("Community Admin updated successfully.")
+                        .data(service.updateAdmin(id, request))
+                        .build()
+        );
+
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('MAIN_ADMIN')")
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> updateStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody CommunityAdminStatusUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                ApiResponse.<CommunityAdminProfileResponse>builder()
+                        .success(true)
+                        .message("Community Admin status updated successfully.")
+                        .data(service.updateAdminStatus(id, request))
                         .build()
         );
 

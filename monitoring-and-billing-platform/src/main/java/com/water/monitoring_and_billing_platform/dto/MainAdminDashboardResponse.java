@@ -13,4 +13,9 @@ public class MainAdminDashboardResponse {
     private Long pendingCommunityAdmins;
     private Long totalResidents;
     private Double totalWaterConsumption;
+    private Double totalRevenue;
+    private java.util.List<MonthlyUsageDto> monthlyWaterConsumptionChart;
+    private java.util.List<ActivityLogDto> recentActivities;
+    private java.util.List<ChartDataDto> communityGrowth;
+    private java.util.List<CommunityAdminProfileResponse> pendingApprovals;
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, useTheme } from "@mui/material";
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from "recharts";
 import WidgetContainer from "./WidgetContainer";
 import { CHART_TYPES } from "../../constants/chartTypes";
 
@@ -21,6 +21,7 @@ const ChartCard = ({
     dataKey = "value",
     xAxisKey = "name",
     color,
+    outerRadius = "80%",
     loading,
     error,
     ...rest
@@ -68,11 +69,18 @@ const ChartCard = ({
             );
         }
 
-        if (type === CHART_TYPES.PIE) {
+        if (type === CHART_TYPES.PIE || type === "doughnut") {
+            const isDoughnut = type === "doughnut";
+            const PIE_COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
             return (
                 <PieChart>
                     <Tooltip {...customTooltip} />
-                    <Pie data={data} dataKey={dataKey} nameKey={xAxisKey} cx="50%" cy="50%" outerRadius={80} fill={chartColor} label />
+                    <Legend verticalAlign="bottom" height={36}/>
+                    <Pie data={data} dataKey={dataKey} nameKey={xAxisKey} cx="50%" cy="50%" innerRadius={isDoughnut ? "60%" : 0} outerRadius={outerRadius} fill={chartColor} label>
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color || PIE_COLORS[index % PIE_COLORS.length]} />
+                        ))}
+                    </Pie>
                 </PieChart>
             );
         }

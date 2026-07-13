@@ -142,7 +142,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                 {user?.fullName || "User"}
                             </Typography>
                             <Typography variant="caption" color="text.secondary">
-                                {user?.roles?.[0]?.replace('_', ' ') || "Role"}
+                                {user?.role?.replace('_', ' ') || "Role"}
                             </Typography>
                         </Box>
                         
@@ -198,7 +198,7 @@ function TopNavbar({ onMobileNavOpen }) {
                         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
                         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
                     >
-                        <MenuItem onClick={handleMenuClose} component={Link} to="/profile">
+                        <MenuItem onClick={handleMenuClose} component={Link} to={user?.role === 'COMMUNITY_ADMIN' ? '/community-admin/profile' : user?.role === 'USER' ? '/user/profile' : '#'}>
                             <ListItemIcon>
                                 <PersonIcon fontSize="small" />
                             </ListItemIcon>

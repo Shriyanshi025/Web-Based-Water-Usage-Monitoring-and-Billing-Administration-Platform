@@ -27,4 +27,6 @@ public class WaterMeterResponse {
 
     private LocalDate installationDate;
 
+    private boolean active;
+
 }

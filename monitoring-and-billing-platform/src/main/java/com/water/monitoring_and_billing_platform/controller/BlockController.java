@@ -44,4 +44,10 @@ public class BlockController {
                 blockService.getBlockById(id)
         );
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBlock(@PathVariable Long id) {
+        blockService.deleteBlock(id);
+        return ResponseEntity.noContent().build();
+    }
 }

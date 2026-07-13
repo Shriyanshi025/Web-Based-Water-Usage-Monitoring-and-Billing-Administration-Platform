@@ -111,4 +111,36 @@ public class UnitServiceImpl implements UnitService {
                         .build())
                 .toList();
     }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public UnitResponse updateUnit(Long id, UnitRequest request) {
+        Unit unit = unitRepository.findById(id)
+                .orElseThrow(UnitNotFoundException::new);
+        
+        unit.setUnitNumber(request.getUnitNumber());
+        unit.setUnitType(request.getUnitType());
+        unit.setFloorNumber(request.getFloorNumber());
+        
+        unit = unitRepository.save(unit);
+        
+        return UnitResponse.builder()
+                .id(unit.getId())
+                .unitNumber(unit.getUnitNumber())
+                .unitType(unit.getUnitType().name())
+                .floorNumber(unit.getFloorNumber())
+                .communityName(unit.getCommunity().getCommunityName())
+                .blockName(unit.getBlock().getBlockName())
+                .active(unit.isActive())
+                .build();
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteUnit(Long id) {
+        Unit unit = unitRepository.findById(id)
+                .orElseThrow(UnitNotFoundException::new);
+        unit.setActive(false);
+        unitRepository.save(unit);
+    }
 }

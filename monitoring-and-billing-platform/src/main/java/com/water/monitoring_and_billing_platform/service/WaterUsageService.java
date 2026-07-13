@@ -1,9 +1,10 @@
 package com.water.monitoring_and_billing_platform.service;
 
+import java.io.InputStream;
+import java.util.List;
+
 import com.water.monitoring_and_billing_platform.dto.WaterUsageRequest;
 import com.water.monitoring_and_billing_platform.dto.WaterUsageResponse;
-
-import java.util.List;
 
 public interface WaterUsageService {
 
@@ -12,5 +13,9 @@ public interface WaterUsageService {
     List<WaterUsageResponse> getAllReadings(String adminEmail);
 
     List<WaterUsageResponse> getReadingsByMeter(String adminEmail, Long meterId);
+
+    List<WaterUsageResponse> uploadCsv(String adminEmail, InputStream inputStream);
+
+    List<WaterUsageResponse> getMyReadings(String userEmail);
 
 }

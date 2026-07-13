@@ -2,6 +2,7 @@ package com.water.monitoring_and_billing_platform.controller;
 
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
+import com.water.monitoring_and_billing_platform.dto.ResidentProfileUpdateRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentSelfProfileUpdateRequest;
 import com.water.monitoring_and_billing_platform.service.ResidentProfileService;
 import jakarta.validation.Valid;
@@ -54,9 +55,44 @@ public class ResidentProfileController {
         );
     }
 
+    @GetMapping("/households")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse>> getHouseholdDirectory(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                residentProfileService.getHouseholdDirectory(userDetails.getUsername())
+        );
+    }
+
+    @GetMapping("/pending")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<ResidentProfileResponse>> getPendingResidents(
+            @AuthenticationPrincipal UserDetails userDetails) {
+        return ResponseEntity.ok(
+                residentProfileService.getPendingResidents(userDetails.getUsername())
+        );
+    }
+
+    @PutMapping("/{id}/approve")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<com.water.monitoring_and_billing_platform.dto.ApiResponse<Void>> approveResident(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @RequestBody com.water.monitoring_and_billing_platform.dto.ApprovalRequest request) {
+        
+        residentProfileService.approveResident(userDetails.getUsername(), id, request);
+        return ResponseEntity.ok(
+                com.water.monitoring_and_billing_platform.dto.ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("Resident status updated successfully.")
+                        .data(null)
+                        .build()
+        );
+    }
+
     @GetMapping("/me")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ResidentProfileResponse> getSelfProfile(
+    public ResponseEntity<ResidentProfileResponse> getMyProfile(
             @AuthenticationPrincipal UserDetails userDetails) {
         return ResponseEntity.ok(
                 residentProfileService.getSelfProfile(userDetails.getUsername())
@@ -65,11 +101,31 @@ public class ResidentProfileController {
 
     @PutMapping("/me")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ResidentProfileResponse> updateSelfProfile(
+    public ResponseEntity<ResidentProfileResponse> updateMyProfile(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ResidentSelfProfileUpdateRequest request) {
         return ResponseEntity.ok(
                 residentProfileService.updateSelfProfile(userDetails.getUsername(), request)
         );
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ResidentProfileResponse> updateResident(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody ResidentProfileUpdateRequest request) {
+        return ResponseEntity.ok(
+                residentProfileService.updateResident(userDetails.getUsername(), id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<Void> deleteResident(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        residentProfileService.deleteResident(userDetails.getUsername(), id);
+        return ResponseEntity.noContent().build();
     }
 }

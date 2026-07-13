@@ -4,7 +4,6 @@ import com.water.monitoring_and_billing_platform.dto.InvitationDetailsResponse;
 import com.water.monitoring_and_billing_platform.dto.InvitationHistoryResponse;
 import com.water.monitoring_and_billing_platform.dto.ResidentInvitationRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentInvitationResponse;
-import com.water.monitoring_and_billing_platform.entity.Invitation;
 
 import java.util.List;
 

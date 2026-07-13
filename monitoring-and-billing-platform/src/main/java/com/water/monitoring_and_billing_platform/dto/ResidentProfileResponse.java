@@ -11,6 +11,8 @@ public class ResidentProfileResponse {
 
     private Long id;
 
+    private Long userId;
+
     private String officialUserId;
 
     private String fullName;
@@ -25,6 +27,11 @@ public class ResidentProfileResponse {
 
     private String unitNumber;
 
+    private String approvalStatus;
+
+    private String meterSerialNumber;
+
     private boolean verified;
 
+    private boolean active;
 }

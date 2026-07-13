@@ -13,4 +13,8 @@ public interface UnitService {
 
     List<UnitResponse> getAllUnits();
 
+    UnitResponse updateUnit(Long id, UnitRequest request);
+
+    void deleteUnit(Long id);
+
 }

@@ -1,6 +1,28 @@
 import React from "react";
 import { Box, Typography, Stack, Avatar } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import WidgetContainer from "./WidgetContainer";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import SpeedIcon from "@mui/icons-material/Speed";
+import HistoryIcon from "@mui/icons-material/History";
+import BuildIcon from "@mui/icons-material/Build";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+
+const renderIcon = (iconName) => {
+    switch(iconName) {
+        case "WaterDropIcon": return <WaterDropIcon />;
+        case "ReceiptIcon": return <ReceiptIcon />;
+        case "SpeedIcon": return <SpeedIcon />;
+        case "HistoryIcon": return <HistoryIcon />;
+        case "BuildIcon": return <BuildIcon />;
+        case "PendingActionsIcon": return <PendingActionsIcon />;
+        case "AttachMoneyIcon": return <AttachMoneyIcon />;
+        default: return <NotificationsIcon />;
+    }
+};
 
 const TimelineItem = ({ item, isLast }) => {
     return (
@@ -18,12 +40,20 @@ const TimelineItem = ({ item, isLast }) => {
             )}
             <Box sx={{ zIndex: 1 }}>
                 <Avatar sx={{ 
-                    bgcolor: `${item.color || "primary"}.main` + "1A", 
+                    bgcolor: (theme) => {
+                        const colorString = `${item.color || "primary"}.main`;
+                        const colorPath = colorString.split('.');
+                        let themeColor = theme.palette;
+                        for (const key of colorPath) {
+                            if (themeColor[key]) themeColor = themeColor[key];
+                        }
+                        return typeof themeColor === 'string' ? alpha(themeColor, 0.1) : alpha(theme.palette.primary.main, 0.1);
+                    },
                     color: `${item.color || "primary"}.main`, 
                     width: 40, 
                     height: 40 
                 }}>
-                    {item.icon}
+                    {typeof item.icon === "string" ? renderIcon(item.icon) : item.icon}
                 </Avatar>
             </Box>
             <Box sx={{ pt: 1, pb: 1 }}>

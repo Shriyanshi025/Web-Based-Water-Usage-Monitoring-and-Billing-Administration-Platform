@@ -18,7 +18,7 @@ import { useAuth } from "../../context/AuthContext";
 import { NAVIGATION_CONFIG } from "../../constants/navigation";
 import { STORAGE_KEYS } from "../../constants/storageKeys";
 import { storageHelper } from "../../helpers/storageHelper";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 // Icons
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -30,6 +30,10 @@ import TimelineIcon from "@mui/icons-material/Timeline";
 import MailIcon from "@mui/icons-material/Mail";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
+import HomeIcon from "@mui/icons-material/Home";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PriceChangeIcon from "@mui/icons-material/PriceChange";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -45,7 +49,11 @@ const iconMap = {
     TimelineIcon: <TimelineIcon />,
     MailIcon: <MailIcon />,
     PersonIcon: <PersonIcon />,
-    SettingsIcon: <SettingsIcon />
+    SettingsIcon: <SettingsIcon />,
+    HomeIcon: <HomeIcon />,
+    ReceiptIcon: <ReceiptIcon />,
+    CalendarMonthIcon: <CalendarMonthIcon />,
+    PriceChangeIcon: <PriceChangeIcon />
 };
 
 const drawerWidth = 280;
@@ -176,8 +184,9 @@ function Sidebar({ mobileOpen, onMobileClose }) {
     const { user } = useAuth();
     const location = useLocation();
     
-    const role = user?.roles?.[0] || "";
+    const role = user?.role || "";
     const navItems = NAVIGATION_CONFIG[role] || [];
+    console.log("Sidebar Debug -> User Role:", role, "NavItems length:", navItems.length, "user object:", user);
 
     // State for desktop collapsed mode, persistance via localStorage
     const [isCollapsed, setIsCollapsed] = useState(() => {
@@ -219,16 +228,14 @@ function Sidebar({ mobileOpen, onMobileClose }) {
 
             <Box sx={{ flexGrow: 1, overflowY: 'auto', overflowX: 'hidden' }}>
                 <List sx={{ pt: 0 }}>
-                    <AnimatePresence>
-                        {navItems.map((item, index) => (
-                            <NavItem
-                                key={index}
-                                item={item}
-                                isCollapsed={!isMobile && isCollapsed}
-                                isActive={location.pathname === item.path || (item.children && item.children.some(c => location.pathname === c.path))}
-                            />
-                        ))}
-                    </AnimatePresence>
+                    {navItems.map((item, index) => (
+                        <NavItem
+                            key={index}
+                            item={item}
+                            isCollapsed={!isMobile && isCollapsed}
+                            isActive={location.pathname === item.path || (item.children && item.children.some(c => location.pathname === c.path))}
+                        />
+                    ))}
                 </List>
             </Box>
         </Box>

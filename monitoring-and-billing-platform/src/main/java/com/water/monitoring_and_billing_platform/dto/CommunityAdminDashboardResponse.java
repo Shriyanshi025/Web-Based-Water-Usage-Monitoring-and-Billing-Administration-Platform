@@ -15,4 +15,9 @@ public class CommunityAdminDashboardResponse {
     private Long activeWaterMeters;
     private Double totalWaterUsage;
     private Double pendingBills;
+    private Double totalRevenue;
+    private java.util.List<MonthlyUsageDto> monthlyWaterUsage;
+    private java.util.List<ActivityLogDto> recentActivities;
+    private java.util.List<ResidentProfileResponse> pendingResidentsList;
+    private java.util.List<ChartDataDto> meterStatusData;
 }

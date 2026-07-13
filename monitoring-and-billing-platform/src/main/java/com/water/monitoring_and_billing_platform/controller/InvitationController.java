@@ -3,7 +3,6 @@ package com.water.monitoring_and_billing_platform.controller;
 import com.water.monitoring_and_billing_platform.dto.InvitationDetailsResponse;
 import com.water.monitoring_and_billing_platform.dto.ResidentInvitationRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentInvitationResponse;
-import com.water.monitoring_and_billing_platform.entity.Invitation;
 import com.water.monitoring_and_billing_platform.service.InvitationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

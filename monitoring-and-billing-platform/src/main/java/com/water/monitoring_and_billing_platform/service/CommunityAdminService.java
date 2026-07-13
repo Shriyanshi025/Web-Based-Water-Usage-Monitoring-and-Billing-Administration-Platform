@@ -1,9 +1,6 @@
 package com.water.monitoring_and_billing_platform.service;
 
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminRequest;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminResponse;
-import com.water.monitoring_and_billing_platform.dto.CommunityAdminSelfProfileUpdateRequest;
+import com.water.monitoring_and_billing_platform.dto.*;
 
 import java.util.List;
 
@@ -13,11 +10,21 @@ public interface CommunityAdminService {
             CommunityAdminRequest request
     );
 
-    CommunityAdminResponse getAdmin(
+    CommunityAdminProfileResponse getAdmin(
             Long id
     );
 
-    List<CommunityAdminResponse> getAllAdmins();
+    List<CommunityAdminProfileResponse> getAllAdmins();
+
+    CommunityAdminProfileResponse updateAdmin(
+            Long id,
+            CommunityAdminUpdateRequest request
+    );
+
+    CommunityAdminProfileResponse updateAdminStatus(
+            Long id,
+            CommunityAdminStatusUpdateRequest request
+    );
 
     CommunityAdminProfileResponse getSelfProfile(String email);
 

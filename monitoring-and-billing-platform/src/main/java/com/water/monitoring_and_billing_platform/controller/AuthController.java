@@ -41,6 +41,10 @@ public class AuthController {
     public ResponseEntity<UserMeResponse> getCurrentUser(
             @AuthenticationPrincipal UserDetails userDetails) {
 
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         UserMeResponse response = userService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(response);
     }

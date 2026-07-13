@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class CommunityAdminProfileResponse {
 
     private Long id;
+    private Long userId;
     private String officialAdminId;
     private String fullName;
     private String email;
@@ -19,5 +20,6 @@ public class CommunityAdminProfileResponse {
     private String officeAddress;
     private String communityName;
     private boolean verified;
+    private boolean active;
 
 }

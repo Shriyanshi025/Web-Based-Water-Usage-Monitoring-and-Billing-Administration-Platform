@@ -13,4 +13,6 @@ public interface BlockService {
 
     Block getBlockById(Long id);
 
+    void deleteBlock(Long id);
+
 }

@@ -7,7 +7,7 @@ import SpeedOutlinedIcon from '@mui/icons-material/SpeedOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 
 const FeatureItem = ({ icon, title, description }) => (
-    <Stack direction="row" spacing={2} alignItems="flex-start" sx={{ mb: 4 }}>
+    <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', mb: 4 }}>
         <Box sx={{
             color: 'primary.main',
             bgcolor: 'rgba(255,255,255,0.9)',
@@ -36,10 +36,10 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
     return (
         <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default', position: 'relative', overflow: 'hidden' }}>
             
-            <Grid container sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
                 {/* Left Side: Branding & Features (Hidden on mobile) */}
                 {!isMobile && (
-                    <Grid item xs={12} md={5} lg={6} sx={{ position: 'relative', overflow: 'hidden' }}>
+                    <Box sx={{ width: { md: '41.666%', lg: '50%' }, position: 'relative', overflow: 'hidden' }}>
                         {/* Animated Background */}
                         <Box sx={{
                             position: 'absolute', inset: 0,
@@ -111,18 +111,19 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
                                 />
                             </Box>
                         </Box>
-                    </Grid>
+                    </Box>
                 )}
 
                 {/* Right Side: Form Area */}
-                <Grid item xs={12} md={7} lg={6} sx={{ 
+                <Box sx={{ 
+                    width: { xs: '100%', md: '58.333%', lg: '50%' },
                     display: 'flex', 
                     alignItems: alignTop ? 'flex-start' : 'center', 
                     justifyContent: 'center', 
                     p: { xs: 3, sm: 6, md: 8 },
                     pt: alignTop ? { xs: 4, sm: 6, md: 10 } : { xs: 3, sm: 6, md: 8 }
                 }}>
-                    <Box sx={{ width: '100%', maxWidth: 480, width: '100%' }}>
+                    <Box sx={{ width: '100%', maxWidth: 480 }}>
                         {isMobile && (
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 6, justifyContent: 'center' }}>
                                 <Box sx={{ p: 1, bgcolor: 'primary.main', borderRadius: 2, display: 'flex' }}>
@@ -159,8 +160,8 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
                             </Paper>
                         </motion.div>
                     </Box>
-                </Grid>
-            </Grid>
+                </Box>
+            </Box>
         </Box>
     );
 };

@@ -30,7 +30,8 @@ const WidgetContainer = ({
     onRefresh,
     onFullscreen,
     onExport,
-    action
+    action,
+    sx = {}
 }) => {
     if (loading) return <SkeletonCard />;
 
@@ -53,7 +54,8 @@ const WidgetContainer = ({
                 transition: "box-shadow 0.2s ease-in-out",
                 "&:hover": {
                     boxShadow: "0px 6px 24px rgba(0, 0, 0, 0.06)",
-                }
+                },
+                ...sx
             }}
         >
             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>

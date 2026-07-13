@@ -55,7 +55,7 @@ public class JwtService {
 
     public String extractUsername(String token) {
 
-        return extractClaim(token, Claims::getSubject);
+        return extractClaim(token, claims -> claims.getSubject());
 
     }
 
@@ -103,7 +103,7 @@ public class JwtService {
 
         return extractClaim(
                 token,
-                Claims::getExpiration
+                claims -> claims.getExpiration()
         ).before(new Date());
 
     }

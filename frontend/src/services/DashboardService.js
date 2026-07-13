@@ -15,3 +15,7 @@ export const getUserDashboard = (residentId) => {
 export const getCommunityAdminDashboard = () => {
     return api.get("/dashboard/community-admin");
 };
+
+export const getResidentDashboard = () => {
+    return api.get("/dashboard/resident");
+};

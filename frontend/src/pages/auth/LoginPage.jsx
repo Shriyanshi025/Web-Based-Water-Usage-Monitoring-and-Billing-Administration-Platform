@@ -84,18 +84,24 @@ export default function LoginPage() {
                     helperText={errors.password?.message}
                     fullWidth
                     autoComplete="current-password"
-                    InputProps={{
-                        endAdornment: (
-                            <InputAdornment position="end">
-                                <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" aria-label="Toggle password visibility">
-                                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                                </IconButton>
-                            </InputAdornment>
-                        )
+                    slotProps={{
+                        input: {
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="toggle password visibility"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        edge="end"
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            )
+                        }
                     }}
                 />
 
-                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                     <FormControlLabel control={<Checkbox color="primary" />} label={<Typography variant="body2">Remember Me</Typography>} />
                     <Link component={RouterLink} to="#" variant="body2" sx={{ fontWeight: 600 }}>Forgot Password?</Link>
                 </Stack>

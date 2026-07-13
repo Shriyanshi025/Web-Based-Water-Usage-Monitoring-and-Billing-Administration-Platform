@@ -16,40 +16,43 @@ class CommunityOpsService {
         return response.data;
     }
 
+    async getHouseholdDirectory() {
+        const response = await api.get("/residents/households");
+        return response.data;
+    }
+
     async getResidentById(id) {
         const response = await api.get(`/residents/${id}`);
         return response.data;
     }
 
-    // Pending Backend Support
     async updateResident(id, data) {
-        throw new Error("Backend Support Pending");
+        const response = await api.put(`/residents/${id}`, data);
+        return response.data;
     }
 
-    // Pending Backend Support
     async updateResidentStatus(id, status) {
-        throw new Error("Backend Support Pending");
+        const active = status === true || status === "ACTIVE" || status === "APPROVED";
+        const response = await api.put(`/residents/${id}`, { active });
+        return response.data;
     }
 
-    // Pending Backend Support
     async deleteResident(id) {
-        throw new Error("Backend Support Pending");
+        const response = await api.put(`/residents/${id}`, { active: false, verified: false });
+        return response.data;
     }
 
     // ==========================================
     // RESIDENT APPROVALS
     // ==========================================
     
-    // Note: /api/admin/pending-residents exists but is restricted to MAIN_ADMIN.
-    // Calling this as COMMUNITY_ADMIN will currently return 403 Forbidden.
     async getPendingResidents() {
-        const response = await api.get("/admin/pending-residents");
+        const response = await api.get("/residents/pending");
         return response.data;
     }
 
-    // Note: Restricted to MAIN_ADMIN
     async approveResident(id, approvalData) {
-        const response = await api.put(`/admin/approve/${id}`, approvalData);
+        const response = await api.put(`/residents/${id}/approve`, approvalData);
         return response.data;
     }
 
@@ -62,19 +65,38 @@ class CommunityOpsService {
         return response.data;
     }
 
+    async getAllWaterUsage() {
+        const response = await api.get("/water-usage");
+        return response.data;
+    }
+
+    async addWaterUsage(data) {
+        const response = await api.post("/water-usage", data);
+        return response.data;
+    }
+
+    async uploadWaterUsageCsv(file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await api.post("/water-usage/upload", formData, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+        return response.data;
+    }
+
     async getMeterById(id) {
         const response = await api.get(`/water-meters/${id}`);
         return response.data;
     }
 
-    // Existing but missing PUT
     async assignMeter(id, data) {
-        throw new Error("Backend Support Pending");
+        const response = await api.put(`/water-meters/${id}`, data);
+        return response.data;
     }
 
-    // Existing but missing PUT
     async updateMeter(id, data) {
-        throw new Error("Backend Support Pending");
+        const response = await api.put(`/water-meters/${id}`, data);
+        return response.data;
     }
 
     // ==========================================
@@ -86,6 +108,26 @@ class CommunityOpsService {
         // API returns a direct List without ApiResponse wrapper according to controller
         // Wait, let me double check the controller.
         // Yes: return ResponseEntity.ok(invitations);
+        return response.data;
+    }
+
+    async getBills() {
+        const response = await api.get("/billing/bills");
+        return response.data;
+    }
+
+    async getActiveBillingCycle() {
+        const response = await api.get("/billing/billing-cycle/active");
+        return response.data;
+    }
+
+    async getTariffPlans() {
+        const response = await api.get("/billing/tariff-plans");
+        return response.data;
+    }
+
+    async generateBills(data) {
+        const response = await api.post("/billing/generate", data);
         return response.data;
     }
 

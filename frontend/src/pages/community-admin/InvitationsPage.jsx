@@ -91,7 +91,7 @@ const InvitationsPage = () => {
             const link = `${window.location.origin}/register?token=${selectedRow.token}`;
             try {
                 await navigator.clipboard.writeText(link);
-                setCopySuccess(selectedRow.id);
+                setCopySuccess(selectedRow.invitationId);
                 setTimeout(() => setCopySuccess(""), 3000);
             } catch (err) {
                 console.error("Failed to copy", err);
@@ -149,16 +149,16 @@ const InvitationsPage = () => {
                     <Button 
                         size="small" 
                         variant="text" 
-                        startIcon={copySuccess === params.row.id ? <CheckCircleIcon color="success" /> : <ContentCopyIcon />}
+                        startIcon={copySuccess === params.row.invitationId ? <CheckCircleIcon color="success" /> : <ContentCopyIcon />}
                         onClick={(e) => {
                             e.stopPropagation();
                             const link = `${window.location.origin}/register?token=${params.row.token}`;
                             navigator.clipboard.writeText(link);
-                            setCopySuccess(params.row.id);
+                            setCopySuccess(params.row.invitationId);
                             setTimeout(() => setCopySuccess(""), 3000);
                         }}
                     >
-                        {copySuccess === params.row.id ? "Copied" : "Copy"}
+                        {copySuccess === params.row.invitationId ? "Copied" : "Copy"}
                     </Button>
                 </Tooltip>
             )
@@ -232,8 +232,6 @@ const InvitationsPage = () => {
                         title="Active Pending" 
                         value={stats.active} 
                         icon="DomainVerificationIcon"
-                        trend="up"
-                        trendValue="Awaiting Registration"
                     />
                 </Grid>
                 <Grid item xs={12} sm={4}>
@@ -264,6 +262,7 @@ const InvitationsPage = () => {
                     <DataGrid 
                         rows={invitations} 
                         columns={columns} 
+                        getRowId={(row) => row.invitationId}
                         loading={loading}
                         error={error}
                         onRetry={fetchInvitations}

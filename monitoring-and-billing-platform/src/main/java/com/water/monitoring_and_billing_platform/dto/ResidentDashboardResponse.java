@@ -16,4 +16,6 @@ public class ResidentDashboardResponse {
     private Double currentMonthWaterUsage;
     private Double currentBill;
     private String meterStatus;
+    private String meterNumber;
+    private java.util.List<ActivityLogDto> recentActivities;
 }

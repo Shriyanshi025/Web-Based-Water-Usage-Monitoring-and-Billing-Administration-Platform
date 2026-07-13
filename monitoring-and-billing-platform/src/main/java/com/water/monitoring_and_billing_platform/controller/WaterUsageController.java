@@ -10,7 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -49,6 +51,25 @@ public class WaterUsageController {
 
         return ResponseEntity.ok(
                 waterUsageService.getReadingsByMeter(userDetails.getUsername(), meterId)
+        );
+    }
+
+    @PostMapping("/upload")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<WaterUsageResponse>> uploadCsv(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestParam("file") MultipartFile file) throws IOException {
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(waterUsageService.uploadCsv(userDetails.getUsername(), file.getInputStream()));
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<WaterUsageResponse>> getMyReadings(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        return ResponseEntity.ok(
+                waterUsageService.getMyReadings(userDetails.getUsername())
         );
     }
 }

@@ -23,6 +23,8 @@ public interface ResidentProfileRepository
     long countByCommunityIdAndVerifiedTrue(Long communityId);
 
     List<ResidentProfile> findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus approvalStatus);
+    
+    List<ResidentProfile> findByCommunityIdAndVerifiedFalseAndUserApprovalStatus(Long communityId, ApprovalStatus approvalStatus);
 
     long countByCommunityIdAndVerifiedFalseAndUserApprovalStatus(Long communityId, ApprovalStatus approvalStatus);
 

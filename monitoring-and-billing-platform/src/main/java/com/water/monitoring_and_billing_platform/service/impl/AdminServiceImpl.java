@@ -4,7 +4,6 @@ import com.water.monitoring_and_billing_platform.dto.ApprovalRequest;
 import com.water.monitoring_and_billing_platform.dto.CommunityAdminProfileResponse;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
 import com.water.monitoring_and_billing_platform.dto.UserMeResponse;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile;
 import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
 import com.water.monitoring_and_billing_platform.entity.User;
@@ -31,6 +30,7 @@ public class AdminServiceImpl implements AdminService {
     private final UserRepository userRepository;
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
+    private final com.water.monitoring_and_billing_platform.repository.WaterMeterRepository waterMeterRepository;
 
     @Override
     @Transactional
@@ -73,7 +73,23 @@ public class AdminServiceImpl implements AdminService {
                 user.setApprovalStatus(ApprovalStatus.APPROVED);
 
                 userRepository.save(user);
-                residentProfileRepository.save(profile);
+                ResidentProfile savedProfile = residentProfileRepository.save(profile);
+                
+                // Assign a UNIQUE Water Meter automatically
+                if (waterMeterRepository.findByResidentProfileId(savedProfile.getId()).isEmpty()) {
+                    long totalMeters = waterMeterRepository.count();
+                    String meterNumber = String.format("WM-%06d", totalMeters + 1);
+                    com.water.monitoring_and_billing_platform.entity.WaterMeter meter = com.water.monitoring_and_billing_platform.entity.WaterMeter.builder()
+                            .meterNumber(meterNumber)
+                            .residentProfile(savedProfile)
+                            .meterStatus(com.water.monitoring_and_billing_platform.enums.MeterStatus.ACTIVE)
+                            .initialReading(0.0)
+                            .currentReading(0.0)
+                            .installationDate(java.time.LocalDate.now())
+                            .active(true)
+                            .build();
+                    waterMeterRepository.save(meter);
+                }
 
             } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
                 CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(user.getId())
@@ -118,6 +134,7 @@ public class AdminServiceImpl implements AdminService {
     private ResidentProfileResponse mapToResidentProfileResponse(ResidentProfile resident) {
         return ResidentProfileResponse.builder()
                 .id(resident.getId())
+                .userId(resident.getUser().getId())
                 .officialUserId(resident.getOfficialUserId())
                 .fullName(resident.getUser().getFullName())
                 .email(resident.getUser().getEmail())

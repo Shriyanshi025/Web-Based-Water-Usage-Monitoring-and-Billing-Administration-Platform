@@ -2,6 +2,7 @@ package com.water.monitoring_and_billing_platform.controller;
 
 import com.water.monitoring_and_billing_platform.dto.WaterMeterRequest;
 import com.water.monitoring_and_billing_platform.dto.WaterMeterResponse;
+import com.water.monitoring_and_billing_platform.dto.WaterMeterUpdateRequest;
 import com.water.monitoring_and_billing_platform.service.WaterMeterService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,36 @@ public class WaterMeterController {
 
         return ResponseEntity.ok(
                 waterMeterService.getAllWaterMeters(userDetails.getUsername())
+        );
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<WaterMeterResponse> updateWaterMeter(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody WaterMeterUpdateRequest request) {
+
+        return ResponseEntity.ok(
+                waterMeterService.updateWaterMeter(userDetails.getUsername(), id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<Void> deleteWaterMeter(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @PathVariable Long id) {
+        waterMeterService.deleteWaterMeter(userDetails.getUsername(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/me")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<WaterMeterResponse> getMyMeter(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        return ResponseEntity.ok(
+                waterMeterService.getMyMeter(userDetails.getUsername())
         );
     }
 }

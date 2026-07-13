@@ -43,4 +43,19 @@ public class UnitController {
                 unitService.getAllUnits()
         );
     }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<UnitResponse> updateUnit(
+            @PathVariable Long id,
+            @Valid @RequestBody UnitRequest request) {
+        return ResponseEntity.ok(
+                unitService.updateUnit(id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUnit(@PathVariable Long id) {
+        unitService.deleteUnit(id);
+        return ResponseEntity.noContent().build();
+    }
 }

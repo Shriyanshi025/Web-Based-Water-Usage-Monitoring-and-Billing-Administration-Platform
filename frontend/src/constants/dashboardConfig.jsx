@@ -10,6 +10,12 @@ import EmailIcon from "@mui/icons-material/Email";
 import SpeedIcon from "@mui/icons-material/Speed";
 import ManageAccountsIcon from "@mui/icons-material/ManageAccounts";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import TimelineIcon from "@mui/icons-material/Timeline";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import PersonIcon from "@mui/icons-material/Person";
+import DownloadIcon from "@mui/icons-material/Download";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import HomeIcon from "@mui/icons-material/Home";
 import StatusBadge from "../components/common/StatusBadge";
 import { ROUTES } from "./routes";
 
@@ -52,12 +58,12 @@ export const QUICK_ACTIONS_CONFIG = {
         },
         {
             id: "invite-admin",
-            title: "Invite Community Admin",
-            description: "Send community admin invites",
+            title: "Manage Community Admins",
+            description: "View and manage community admins",
             icon: <PeopleIcon />,
             color: "info",
             comingSoon: false,
-            path: "/admin/invites",
+            path: ROUTES.MAIN_ADMIN_COMMUNITY_ADMINS,
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "invite_users",
             hidden: false,
@@ -70,7 +76,7 @@ export const QUICK_ACTIONS_CONFIG = {
             icon: <ReceiptIcon />,
             color: "warning",
             comingSoon: true,
-            path: "/admin/billing",
+            path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "manage_billing",
             hidden: false,
@@ -83,7 +89,7 @@ export const QUICK_ACTIONS_CONFIG = {
             icon: <AssessmentIcon />,
             color: "primary",
             comingSoon: true,
-            path: "/admin/reports",
+            path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "view_reports",
             hidden: false,
@@ -95,15 +101,28 @@ export const QUICK_ACTIONS_CONFIG = {
             description: "Configure global parameters",
             icon: <SettingsIcon />,
             color: "secondary",
-            comingSoon: false,
-            path: "/admin/settings",
+            comingSoon: true,
+            path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "manage_settings",
             hidden: false,
-            disabled: false
+            disabled: true
         }
     ],
     COMMUNITY_ADMIN: [
+        {
+            id: "household-directory",
+            title: "Household Directory",
+            description: "View residents, meters, and bills in one place",
+            icon: <HomeIcon />,
+            color: "secondary",
+            comingSoon: false,
+            path: "/admin/households",
+            requiredRole: "COMMUNITY_ADMIN",
+            requiredPermission: "manage_residents",
+            hidden: false,
+            disabled: false
+        },
         {
             id: "manage-residents",
             title: "Manage Residents",
@@ -149,12 +168,12 @@ export const QUICK_ACTIONS_CONFIG = {
             description: "View water consumption analytics",
             icon: <AssessmentIcon />,
             color: "secondary",
-            comingSoon: true,
+            comingSoon: false,
             path: ROUTES.COMMUNITY_ADMIN_USAGE,
             requiredRole: "COMMUNITY_ADMIN",
             requiredPermission: "view_reports",
             hidden: false,
-            disabled: true
+            disabled: false
         },
         {
             id: "send-invitations",
@@ -175,12 +194,92 @@ export const QUICK_ACTIONS_CONFIG = {
             description: "Manage your community settings",
             icon: <ManageAccountsIcon />,
             color: "primary",
-            comingSoon: false,
+            comingSoon: true,
             path: ROUTES.COMMUNITY_ADMIN_PROFILE,
             requiredRole: "COMMUNITY_ADMIN",
             requiredPermission: "manage_profile",
             hidden: false,
+            disabled: true
+        }
+    ],
+    USER: [
+        {
+            id: "view-bills",
+            title: "View Bills",
+            description: "Check your monthly water bills",
+            icon: <ReceiptIcon />,
+            color: "primary",
+            comingSoon: false,
+            path: ROUTES.RESIDENT_BILLS,
+            requiredRole: "USER",
+            requiredPermission: "view_bills",
+            hidden: false,
             disabled: false
+        },
+        {
+            id: "water-usage",
+            title: "Usage History",
+            description: "Track your water consumption",
+            icon: <TimelineIcon />,
+            color: "info",
+            comingSoon: false,
+            path: ROUTES.RESIDENT_USAGE,
+            requiredRole: "USER",
+            requiredPermission: "view_usage",
+            hidden: false,
+            disabled: false
+        },
+        {
+            id: "meter-details",
+            title: "Meter Details",
+            description: "View meter status and info",
+            icon: <WaterDropIcon />,
+            color: "success",
+            comingSoon: false,
+            path: ROUTES.RESIDENT_METER,
+            requiredRole: "USER",
+            requiredPermission: "view_meter",
+            hidden: false,
+            disabled: false
+        },
+        {
+            id: "user-profile",
+            title: "My Profile",
+            description: "Update personal information",
+            icon: <PersonIcon />,
+            color: "secondary",
+            comingSoon: false,
+            path: ROUTES.RESIDENT_PROFILE,
+            requiredRole: "USER",
+            requiredPermission: "manage_profile",
+            hidden: false,
+            disabled: false
+        },
+        {
+            id: "download-bill",
+            title: "Download Bill",
+            description: "Get your latest bill PDF",
+            icon: <DownloadIcon />,
+            color: "warning",
+            comingSoon: true,
+            path: ROUTES.RESIDENT_BILLS,
+            requiredRole: "USER",
+            requiredPermission: "download_bill",
+            hidden: false,
+            disabled: true
+        },
+        {
+            id: "raise-complaint",
+            title: "Raise Complaint",
+            description: "Report an issue or leak",
+            icon: <ReportProblemIcon />,
+            color: "error",
+            comingSoon: true,
+            path: "#",
+            requiredRole: "USER",
+            requiredPermission: "raise_complaint",
+            hidden: false,
+            disabled: true
         }
     ]
 };
@@ -212,7 +311,7 @@ export const CHART_CONFIG = {
     WATER_CONSUMPTION: {
         type: "line",
         height: 300,
-        color: "primary.main"
+        color: "#1976d2"
     },
     METER_STATUS: {
         type: "doughnut",

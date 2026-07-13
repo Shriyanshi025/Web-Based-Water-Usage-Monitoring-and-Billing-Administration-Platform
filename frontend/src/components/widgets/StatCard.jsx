@@ -1,5 +1,6 @@
 import React from "react";
 import { Box, Typography, Stack, Avatar, Skeleton } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { motion } from "framer-motion";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
@@ -96,7 +97,19 @@ const StatCard = ({ title, value, icon, color = "primary.main", trend, trendLabe
                 height: "100%"
             }}
         >
-            <Avatar sx={{ bgcolor: `${color}15`, color: color, width: 56, height: 56 }}>
+            <Avatar sx={{ 
+                bgcolor: (theme) => {
+                    const colorPath = color.split('.');
+                    let themeColor = theme.palette;
+                    for (const key of colorPath) {
+                        if (themeColor[key]) themeColor = themeColor[key];
+                    }
+                    return typeof themeColor === 'string' ? alpha(themeColor, 0.15) : alpha(theme.palette.primary.main, 0.15);
+                }, 
+                color: color, 
+                width: 56, 
+                height: 56 
+            }}>
                 {icon}
             </Avatar>
             <Box flexGrow={1}>

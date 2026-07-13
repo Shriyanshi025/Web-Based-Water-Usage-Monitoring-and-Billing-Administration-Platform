@@ -1,7 +1,6 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
 import com.water.monitoring_and_billing_platform.dto.AuthResponse;
-import java.util.Objects;
 import com.water.monitoring_and_billing_platform.dto.LoginRequest;
 import com.water.monitoring_and_billing_platform.dto.RegisterRequest;
 import com.water.monitoring_and_billing_platform.dto.UserMeResponse;

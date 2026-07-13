@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { Grid } from "@mui/material";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import DashboardGrid from "../../components/layout/DashboardGrid";
 import StatCard from "../../components/widgets/StatCard";
@@ -25,12 +26,6 @@ import { getCommunityAdminDashboard } from "../../services/DashboardService";
 import { formatCurrency, formatWaterUsage } from "../../helpers/numberHelper";
 import { useAuth } from "../../context/AuthContext";
 
-// Mocks
-import { mockCommunityMetrics } from "../../mocks/communityDashboardMock";
-import { mockCommunityWaterUsageData, mockCommunityMeterStatusData } from "../../mocks/communityChartsMock";
-import { mockCommunityTimeline } from "../../mocks/communityTimelineMock";
-import { mockCommunityApprovals } from "../../mocks/communityApprovalsMock";
-
 function CommunityDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -47,8 +42,8 @@ function CommunityDashboard() {
             const response = await getCommunityAdminDashboard();
             setDashboard(response.data);
         } catch (err) {
-            console.error("Failed to fetch dashboard, falling back to mock", err);
-            setDashboard(mockCommunityMetrics);
+            console.error("Failed to fetch dashboard", err);
+            setError("Failed to load dashboard data.");
         } finally {
             setLoading(false);
         }
@@ -105,57 +100,69 @@ function CommunityDashboard() {
         <StatCard 
             key="water-consumption"
             title="Water Consumption" 
-            value={dashboard?.totalWaterUsage || 0} 
-            formatValue={formatWaterUsage}
+            value={dashboard?.totalWaterConsumption || 0} 
+            formatValue={(v) => `${v.toFixed(2)} Litres`}
             icon={<WaterDropIcon />} 
-            trend={3.4} 
+            trend={2.4} 
             trendLabel="vs last month"
-            color="primary.main"
+            color="info.main"
         />,
         <StatCard 
-            key="pending-bills"
-            title="Pending Bills" 
-            value={dashboard?.pendingBills || 0}
-            formatValue={(v) => formatCurrency(v)}
+            key="revenue-collected"
+            title="Revenue Collected" 
+            value={dashboard?.totalRevenue || 0}
+            formatValue={(v) => `$${v.toLocaleString()}`}
             icon={<ReceiptIcon />} 
-            trend={-1.5} 
+            trend={8.3} 
             trendLabel="vs last month"
-            color="error.main"
+            color="success.main"
         />
     ], [dashboard]);
 
     const memoizedLeftColumn = useMemo(() => [
-        <ChartCard 
-            key="water-consumption-chart"
-            title="Monthly Water Consumption" 
-            data={mockCommunityWaterUsageData} 
-            type={CHART_CONFIG.WATER_CONSUMPTION.type} 
-            color={CHART_CONFIG.WATER_CONSUMPTION.color}
-        />,
-        <WidgetContainer key="pending-approvals-table" title="Pending Resident Approvals">
+        <Grid container spacing={3} key="charts-row">
+            <Grid item xs={12} md={4}>
+                <ChartCard 
+                    key="water-usage-chart"
+                    title="Monthly Water Usage" 
+                    data={dashboard?.monthlyWaterUsage || []} 
+                    type="bar" 
+                    color="#2196f3"
+                />
+            </Grid>
+            <Grid item xs={12} md={8}>
+                <ChartCard 
+                    key="meter-status"
+                    title="Meter Status" 
+                    data={dashboard?.meterStatusData || []} 
+                    type="doughnut" 
+                />
+            </Grid>
+        </Grid>,
+        <WidgetContainer key="pending-approvals-table" title="Recent Pending Approvals">
             <DataGrid 
-                rows={mockCommunityApprovals} 
+                rows={(dashboard?.pendingResidentsList || []).map(resident => ({
+                    id: resident.id,
+                    name: resident.fullName,
+                    unit: resident.unitNumber || 'N/A',
+                    email: resident.email,
+                    date: new Date().toLocaleDateString(),
+                    status: resident.verified ? 'VERIFIED' : 'PENDING'
+                }))} 
                 columns={DATAGRID_COLUMNS.COMMUNITY_ADMIN_APPROVALS} 
                 pageSize={5} 
                 autoHeight 
             />
         </WidgetContainer>
-    ], []);
+    ], [dashboard]);
 
     const memoizedRightColumn = useMemo(() => [
         <TimelineWidget 
             key="recent-activities"
             title="Recent Activities" 
-            activities={mockCommunityTimeline} 
-        />,
-        <ChartCard 
-            key="meter-status-chart"
-            title="Meter Status Distribution" 
-            data={mockCommunityMeterStatusData} 
-            type={CHART_CONFIG.METER_STATUS.type} 
-            colors={CHART_CONFIG.METER_STATUS.colors}
+            activities={dashboard?.recentActivities || []} 
         />
-    ], []);
+    ], [dashboard]);
 
     if (loading) {
         return (

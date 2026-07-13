@@ -104,6 +104,7 @@ public class InvitationServiceImpl implements InvitationService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<InvitationHistoryResponse> getAdminInvitations(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);

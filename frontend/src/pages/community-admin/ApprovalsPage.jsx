@@ -4,7 +4,12 @@ import {
     Typography,
     Stack,
     IconButton,
-    Tooltip
+    Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -25,6 +30,8 @@ const ApprovalsPage = () => {
     const [error, setError] = useState(null);
     
     // UI State
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
+    const [selectedRow, setSelectedRow] = useState(null);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", content: "", onConfirm: null, confirmText: "", confirmColor: "primary" });
 
     const fetchPendingResidents = useCallback(async () => {
@@ -34,9 +41,8 @@ const ApprovalsPage = () => {
             const data = await CommunityOpsService.getPendingResidents();
             setPendingResidents(data || []);
         } catch (err) {
-            // Check if it's a 403 Forbidden which means backend doesn't support Community Admin approval yet
             if (err.response?.status === 403) {
-                setError("Backend Support Pending: Approvals are currently restricted to Main Admin.");
+                setError("You are not authorized to view this page.");
             } else {
                 setError(err.message || "Failed to fetch pending residents");
             }
@@ -50,14 +56,6 @@ const ApprovalsPage = () => {
     }, [fetchPendingResidents]);
 
     const handleAction = useCallback((actionType, row) => {
-        // Backend doesn't support community admin approval yet, so we mark it as coming soon
-        const isBackendSupported = false;
-
-        if (!isBackendSupported) {
-            // Could show a toast here, but the buttons are disabled anyway
-            return;
-        }
-
         if (actionType === "APPROVE") {
             setDialogConfig({
                 open: true,
@@ -67,7 +65,7 @@ const ApprovalsPage = () => {
                 confirmColor: "success",
                 onConfirm: async () => {
                     try {
-                        await CommunityOpsService.approveResident(row.user?.id, { approvalStatus: "APPROVED", remarks: "Approved by Community Admin" });
+                        await CommunityOpsService.approveResident(row.userId, { approvalStatus: "APPROVED", remarks: "Approved by Community Admin" });
                         setPendingResidents(prev => prev.filter(r => r.id !== row.id)); // Optimistic UI Update
                     } catch (err) {
                         console.error(err);
@@ -85,7 +83,7 @@ const ApprovalsPage = () => {
                 confirmColor: "error",
                 onConfirm: async () => {
                     try {
-                        await CommunityOpsService.approveResident(row.user?.id, { approvalStatus: "REJECTED", remarks: "Rejected by Community Admin" });
+                        await CommunityOpsService.approveResident(row.userId, { approvalStatus: "REJECTED", remarks: "Rejected by Community Admin" });
                         setPendingResidents(prev => prev.filter(r => r.id !== row.id)); // Optimistic UI Update
                     } catch (err) {
                         console.error(err);
@@ -105,7 +103,7 @@ const ApprovalsPage = () => {
             minWidth: 200,
             renderCell: (params) => (
                 <Typography variant="body2" fontWeight={500}>
-                    {`${params.row.firstName} ${params.row.lastName}`}
+                    {params.row.fullName}
                 </Typography>
             )
         },
@@ -127,24 +125,22 @@ const ApprovalsPage = () => {
             align: "center",
             renderCell: (params) => (
                 <Stack direction="row" spacing={1} justifyContent="center">
-                    <Tooltip title="Backend Support Pending" arrow>
+                    <Tooltip title="Approve" arrow>
                         <span>
                             <IconButton 
                                 size="small" 
                                 color="success"
-                                disabled={true}
                                 onClick={(e) => { e.stopPropagation(); handleAction("APPROVE", params.row); }}
                             >
                                 <CheckCircleIcon fontSize="small" />
                             </IconButton>
                         </span>
                     </Tooltip>
-                    <Tooltip title="Backend Support Pending" arrow>
+                    <Tooltip title="Reject" arrow>
                         <span>
                             <IconButton 
                                 size="small" 
                                 color="error"
-                                disabled={true}
                                 onClick={(e) => { e.stopPropagation(); handleAction("REJECT", params.row); }}
                             >
                                 <CancelIcon fontSize="small" />
@@ -154,7 +150,11 @@ const ApprovalsPage = () => {
                     <Tooltip title="View Details" arrow>
                         <IconButton 
                             size="small"
-                            onClick={(e) => { e.stopPropagation(); /* View logic here */ }}
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                setSelectedRow(params.row);
+                                setViewDialogOpen(true);
+                            }}
                         >
                             <VisibilityIcon fontSize="small" />
                         </IconButton>
@@ -195,6 +195,64 @@ const ApprovalsPage = () => {
                 confirmColor={dialogConfig.confirmColor}
                 confirmText={dialogConfig.confirmText}
             />
+
+            {/* View Details Dialog */}
+            <Dialog 
+                open={viewDialogOpen} 
+                onClose={() => {
+                    setViewDialogOpen(false);
+                    setSelectedRow(null);
+                }}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle sx={{ fontWeight: 600, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
+                    Resident Details
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2, pb: 4 }}>
+                    {selectedRow && (
+                        <Stack spacing={4}>
+                            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={4}>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Full Name</Typography>
+                                    <Typography variant="body1" fontWeight={500}>{selectedRow.fullName || "Unnamed Resident"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Community</Typography>
+                                    <Typography variant="body1">{selectedRow.communityName || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Block</Typography>
+                                    <Typography variant="body1">{selectedRow.blockName || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Unit</Typography>
+                                    <Typography variant="body1">{selectedRow.unitNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Meter Serial</Typography>
+                                    <Typography variant="body1">{selectedRow.meterSerialNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Email Address</Typography>
+                                    <Typography variant="body1">{selectedRow.email || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Contact Number</Typography>
+                                    <Typography variant="body1">{selectedRow.phoneNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Approval Status</Typography>
+                                    <Typography variant="body1">{selectedRow.approvalStatus || "—"}</Typography>
+                                </Box>
+                            </Box>
+                        </Stack>
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, pb: 2, px: 3 }}>
+                    <Button variant="contained" onClick={() => { setViewDialogOpen(false); setSelectedRow(null); }}>Close</Button>
+                </DialogActions>
+            </Dialog>
         </DashboardLayout>
     );
 };

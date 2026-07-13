@@ -18,7 +18,7 @@ export default function ProtectedRoute({ allowedRoles = [], children }) {
     }
 
     // Check approval status
-    if (user.approvalStatus === APPROVAL_STATUS.PENDING) {
+    if (user.approvalStatus === APPROVAL_STATUS.PENDING && location.pathname !== ROUTES.PENDING_APPROVAL) {
         return <Navigate to={ROUTES.PENDING_APPROVAL} replace />;
     }
 

@@ -11,10 +11,12 @@ import {
     Drawer,
     Typography,
     Divider,
-    Grid,
     Stack,
     TextField,
-    Chip
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
@@ -36,10 +38,10 @@ import CommunityOpsService from "../../services/CommunityOpsService";
 
 const ACTION_CONFIG = {
     VIEW: { label: "View Details", icon: <VisibilityIcon fontSize="small" />, enabled: true, backendSupported: true },
-    EDIT: { label: "Edit Resident", icon: <EditIcon fontSize="small" />, enabled: false, backendSupported: false, comingSoon: true },
-    ACTIVATE: { label: "Activate", icon: <CheckCircleIcon fontSize="small" color="success" />, enabled: false, backendSupported: false, comingSoon: true },
-    DEACTIVATE: { label: "Deactivate", icon: <BlockIcon fontSize="small" color="error" />, enabled: false, backendSupported: false, comingSoon: true },
-    DELETE: { label: "Delete", icon: <DeleteIcon fontSize="small" color="error" />, enabled: false, backendSupported: false, comingSoon: true },
+    EDIT: { label: "Edit Resident", icon: <EditIcon fontSize="small" />, enabled: true, backendSupported: true },
+    ACTIVATE: { label: "Activate", icon: <CheckCircleIcon fontSize="small" color="success" />, enabled: true, backendSupported: true },
+    DEACTIVATE: { label: "Deactivate", icon: <BlockIcon fontSize="small" color="error" />, enabled: true, backendSupported: true },
+    DELETE: { label: "Delete", icon: <DeleteIcon fontSize="small" color="error" />, enabled: true, backendSupported: true },
 };
 
 const ResidentsPage = () => {
@@ -54,6 +56,8 @@ const ResidentsPage = () => {
     const [selectedRow, setSelectedRow] = useState(null);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", content: "", onConfirm: null });
+    const [editDialogOpen, setEditDialogOpen] = useState(false);
+    const [editForm, setEditForm] = useState({ phoneNumber: "", officialUserId: "", verified: false, active: true });
 
     const fetchResidents = useCallback(async () => {
         try {
@@ -80,24 +84,40 @@ const ResidentsPage = () => {
 
     const handleMenuClose = useCallback(() => {
         setAnchorEl(null);
-        setSelectedRow(null);
     }, []);
 
     const handleAction = useCallback((actionKey) => {
         const config = ACTION_CONFIG[actionKey];
         if (!config.enabled || config.comingSoon) {
-            // Future UI feedback like toast can be added here
             handleMenuClose();
             return;
         }
+        
+        setAnchorEl(null); // Close the menu when an action is clicked
 
         if (actionKey === "VIEW") {
             setDrawerOpen(true);
+        } else if (actionKey === "EDIT") {
+            setEditForm({
+                phoneNumber: selectedRow?.phoneNumber || "",
+                officialUserId: selectedRow?.officialUserId || "",
+                verified: selectedRow?.verified || false,
+                active: selectedRow?.active ?? true
+            });
+            setEditDialogOpen(true);
+        } else if (actionKey === "ACTIVATE") {
+            CommunityOpsService.updateResidentStatus(selectedRow?.id, "ACTIVE")
+                .then(() => fetchResidents())
+                .catch(err => console.error(err));
+        } else if (actionKey === "DEACTIVATE") {
+            CommunityOpsService.updateResidentStatus(selectedRow?.id, "INACTIVE")
+                .then(() => fetchResidents())
+                .catch(err => console.error(err));
         } else if (actionKey === "DELETE") {
             setDialogConfig({
                 open: true,
-                title: "Delete Resident",
-                content: `Are you sure you want to delete ${selectedRow?.firstName}? This action cannot be undone.`,
+                title: "Deactivate Resident",
+                content: `Deactivate ${selectedRow?.firstName || "this resident"}? This will disable access while preserving the record.`,
                 onConfirm: async () => {
                     try {
                         await CommunityOpsService.deleteResident(selectedRow?.id);
@@ -113,16 +133,32 @@ const ResidentsPage = () => {
         handleMenuClose();
     }, [handleMenuClose, selectedRow, fetchResidents]);
 
+    const handleEditSave = useCallback(async () => {
+        try {
+            await CommunityOpsService.updateResident(selectedRow?.id, {
+                phoneNumber: editForm.phoneNumber,
+                officialUserId: editForm.officialUserId || undefined,
+                verified: editForm.verified,
+                active: editForm.active
+            });
+            await fetchResidents();
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setEditDialogOpen(false);
+        }
+    }, [editForm, fetchResidents, selectedRow]);
+
     const filteredRows = useMemo(() => {
         return residents.filter(row => {
+            const fullName = `${row.fullName || ""}`.toLowerCase();
             const matchesSearch = searchTerm === "" || 
-                `${row.firstName} ${row.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                row.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                row.flatNumber.toLowerCase().includes(searchTerm.toLowerCase());
+                fullName.includes(searchTerm.toLowerCase()) ||
+                (row.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (row.unitNumber || "").toLowerCase().includes(searchTerm.toLowerCase());
             
-            // Assume user object might be nested or direct status
-            const status = row.user?.approvalStatus || "APPROVED";
-            const matchesStatus = statusFilter === "ALL" || status === statusFilter;
+            const statusValue = row.active ? "ACTIVE" : "INACTIVE";
+            const matchesStatus = statusFilter === "ALL" || statusValue === statusFilter;
             
             return matchesSearch && matchesStatus;
         });
@@ -133,23 +169,26 @@ const ResidentsPage = () => {
             field: "fullName", 
             headerName: "Resident Name", 
             flex: 1, 
-            minWidth: 200,
+            minWidth: 220,
             renderCell: (params) => (
                 <Typography variant="body2" fontWeight={500}>
-                    {`${params.row.firstName} ${params.row.lastName}`}
+                    {params.row.fullName || "Unnamed Resident"}
                 </Typography>
             )
         },
-        { field: "flatNumber", headerName: "Flat", width: 120 },
-        { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
-        { field: "contactNumber", headerName: "Contact", width: 150 },
+        { field: "unitNumber", headerName: "Unit", width: 120 },
+        { field: "email", headerName: "Email", flex: 1, minWidth: 220 },
+        { field: "phoneNumber", headerName: "Contact", width: 150 },
         { 
             field: "status", 
             headerName: "Status", 
             width: 150,
-            renderCell: (params) => (
-                <StatusBadge status={params.row.user?.approvalStatus || "APPROVED"} />
-            )
+            renderCell: (params) => {
+                const isActive = params.row.active !== false;
+                return (
+                    <StatusBadge status={isActive ? "ACTIVE" : "INACTIVE"} />
+                );
+            }
         },
         { 
             field: "actions", 
@@ -167,8 +206,8 @@ const ResidentsPage = () => {
 
     const statusOptions = [
         { value: "ALL", label: "All Statuses" },
-        { value: "APPROVED", label: "Approved" },
-        { value: "PENDING", label: "Pending" }
+        { value: "ACTIVE", label: "Active" },
+        { value: "INACTIVE", label: "Inactive" }
     ];
 
     return (
@@ -239,55 +278,138 @@ const ResidentsPage = () => {
                 ))}
             </Menu>
 
-            {/* Details Drawer */}
-            <Drawer
-                anchor="right"
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                PaperProps={{ sx: { width: { xs: '100%', sm: 400 }, p: 3 } }}
+            {/* View Details Dialog */}
+            <Dialog 
+                open={drawerOpen} 
+                onClose={() => {
+                    setDrawerOpen(false);
+                    setSelectedRow(null);
+                }}
+                maxWidth="md"
+                fullWidth
             >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                    <Typography variant="h6" fontWeight={600}>Resident Details</Typography>
-                </Box>
-                <Divider sx={{ mb: 3 }} />
-                
-                {selectedRow && (
-                    <Stack spacing={3}>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Full Name</Typography>
-                            <Typography variant="body1" fontWeight={500}>{`${selectedRow.firstName} ${selectedRow.lastName}`}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Flat / Unit</Typography>
-                            <Typography variant="body1">{selectedRow.flatNumber}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Email Address</Typography>
-                            <Typography variant="body1">{selectedRow.email}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Contact Number</Typography>
-                            <Typography variant="body1">{selectedRow.contactNumber}</Typography>
-                        </Box>
-                        <Box>
-                            <Typography variant="caption" color="text.secondary">Status</Typography>
-                            <Box sx={{ mt: 0.5 }}>
-                                <StatusBadge status={selectedRow.user?.approvalStatus || "APPROVED"} />
+                <DialogTitle sx={{ fontWeight: 600, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
+                    Resident Details
+                </DialogTitle>
+                <DialogContent sx={{ mt: 2, pb: 4 }}>
+                    {selectedRow && (
+                        <Stack spacing={4}>
+                            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={4}>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Full Name</Typography>
+                                    <Typography variant="body1" fontWeight={500}>{selectedRow.fullName || "Unnamed Resident"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Community</Typography>
+                                    <Typography variant="body1">{selectedRow.communityName || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Block</Typography>
+                                    <Typography variant="body1">{selectedRow.blockName || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Unit</Typography>
+                                    <Typography variant="body1">{selectedRow.unitNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Meter Serial</Typography>
+                                    <Typography variant="body1">{selectedRow.meterSerialNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Email Address</Typography>
+                                    <Typography variant="body1">{selectedRow.email || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Contact Number</Typography>
+                                    <Typography variant="body1">{selectedRow.phoneNumber || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Official ID</Typography>
+                                    <Typography variant="body1">{selectedRow.officialUserId || "—"}</Typography>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Account Status</Typography>
+                                    <Box sx={{ mt: 0.5 }}>
+                                        <StatusBadge status={selectedRow.active !== false ? "ACTIVE" : "INACTIVE"} />
+                                    </Box>
+                                </Box>
+                                <Box>
+                                    <Typography variant="caption" color="text.secondary">Approval Status</Typography>
+                                    <Typography variant="body1">{selectedRow.approvalStatus || "—"}</Typography>
+                                </Box>
                             </Box>
-                        </Box>
-                        
-                        <Divider sx={{ my: 2 }} />
-                        
-                        <Button 
-                            variant="outlined" 
-                            fullWidth 
-                            disabled={ACTION_CONFIG.EDIT.comingSoon}
+                            <Box display="flex" justifyContent="flex-end" pt={2} sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+                                <Button 
+                                    variant="outlined"
+                                    onClick={() => {
+                                        setDrawerOpen(false);
+                                        setEditDialogOpen(true);
+                                        setEditForm({
+                                            phoneNumber: selectedRow?.phoneNumber || "",
+                                            officialUserId: selectedRow?.officialUserId || "",
+                                            verified: selectedRow?.verified || false,
+                                            active: selectedRow?.active ?? true
+                                        });
+                                    }}
+                                    disabled={ACTION_CONFIG.EDIT.comingSoon}
+                                    startIcon={<EditIcon />}
+                                >
+                                    {ACTION_CONFIG.EDIT.comingSoon ? "Edit (Coming Soon)" : "Edit Profile"}
+                                </Button>
+                            </Box>
+                        </Stack>
+                    )}
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={editDialogOpen} onClose={() => {
+                setEditDialogOpen(false);
+                setSelectedRow(null);
+            }} maxWidth="sm" fullWidth>
+                <DialogTitle>Edit Resident</DialogTitle>
+                <DialogContent>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <TextField
+                            label="Phone Number"
+                            value={editForm.phoneNumber}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                            fullWidth
+                        />
+                        <TextField
+                            label="Official User ID"
+                            value={editForm.officialUserId}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, officialUserId: e.target.value }))}
+                            fullWidth
+                        />
+                        <TextField
+                            select
+                            label="Verification"
+                            value={editForm.verified ? "true" : "false"}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, verified: e.target.value === "true" }))}
+                            SelectProps={{ native: true }}
+                            fullWidth
                         >
-                            {ACTION_CONFIG.EDIT.comingSoon ? "Edit (Coming Soon)" : "Edit Profile"}
-                        </Button>
+                            <option value="true">Verified</option>
+                            <option value="false">Pending</option>
+                        </TextField>
+                        <TextField
+                            select
+                            label="Status"
+                            value={editForm.active ? "active" : "inactive"}
+                            onChange={(e) => setEditForm(prev => ({ ...prev, active: e.target.value === "active" }))}
+                            SelectProps={{ native: true }}
+                            fullWidth
+                        >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </TextField>
                     </Stack>
-                )}
-            </Drawer>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleEditSave}>Save</Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Confirmation Dialog */}
             <ConfirmationDialog 
@@ -297,7 +419,7 @@ const ResidentsPage = () => {
                 onConfirm={dialogConfig.onConfirm}
                 onCancel={() => setDialogConfig(prev => ({ ...prev, open: false }))}
                 confirmColor="error"
-                confirmText="Delete"
+                confirmText="Deactivate"
             />
         </DashboardLayout>
     );

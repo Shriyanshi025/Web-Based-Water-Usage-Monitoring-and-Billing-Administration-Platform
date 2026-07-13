@@ -1,6 +1,8 @@
 package com.water.monitoring_and_billing_platform.service.impl;
 
+import com.water.monitoring_and_billing_platform.enums.ApprovalStatus;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileRequest;
+import com.water.monitoring_and_billing_platform.dto.ResidentProfileUpdateRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentSelfProfileUpdateRequest;
 import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
 import com.water.monitoring_and_billing_platform.entity.*;
@@ -28,6 +30,12 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     private final UnitRepository unitRepository;
     
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
+
+    private final WaterMeterRepository waterMeterRepository;
+
+    private final BillRepository billRepository;
+    
+    private final ActivityLogRepository activityLogRepository;
 
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
@@ -85,6 +93,16 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         resident.setOfficialUserId("PENDING");
 
         resident = residentProfileRepository.save(resident);
+        
+        activityLogRepository.save(ActivityLog.builder()
+                .title("Resident Registered")
+                .description("New resident profile created for " + user.getFullName())
+                .timestamp(java.time.LocalDateTime.now())
+                .icon("PersonAdd")
+                .color("info.main")
+                .community(community)
+                .user(user)
+                .build());
 
         return mapToResponse(resident);
     }
@@ -119,17 +137,29 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     private ResidentProfileResponse mapToResponse(ResidentProfile resident) {
+        var user = resident.getUser();
+        var community = resident.getCommunity();
+        var block = resident.getBlock();
+        var unit = resident.getUnit();
+
+        String meterSerial = null;
+        // meterSerial = waterMeterRepository.findByResidentProfileId(resident.getId()).map(WaterMeter::getSerialNumber).orElse(null);
+        // We will just leave it null for now since it's not easily accessible without repository injection here.
 
         return ResidentProfileResponse.builder()
                 .id(resident.getId())
+                .userId(resident.getUser().getId())
                 .officialUserId(resident.getOfficialUserId())
-                .fullName(resident.getUser().getFullName())
-                .email(resident.getUser().getEmail())
+                .fullName(user != null ? user.getFullName() : null)
+                .email(user != null ? user.getEmail() : null)
                 .phoneNumber(resident.getPhoneNumber())
-                .communityName(resident.getCommunity().getCommunityName())
-                .blockName(resident.getBlock().getBlockName())
-                .unitNumber(resident.getUnit().getUnitNumber())
+                .communityName(community != null ? community.getCommunityName() : null)
+                .blockName(block != null ? block.getBlockName() : null)
+                .unitNumber(unit != null ? unit.getUnitNumber() : null)
+                .approvalStatus(user != null && user.getApprovalStatus() != null ? user.getApprovalStatus().name() : null)
+                .meterSerialNumber(meterSerial)
                 .verified(resident.isVerified())
+                .active(resident.isActive())
                 .build();
     }
 
@@ -160,5 +190,172 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         resident = residentProfileRepository.save(resident);
 
         return mapToResponse(resident);
+    }
+
+    @Override
+    @Transactional
+    public ResidentProfileResponse updateResident(String adminEmail, Long residentId, ResidentProfileUpdateRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+
+        ResidentProfile resident = residentProfileRepository.findById(residentId)
+                .orElseThrow(ResidentProfileNotFoundException::new);
+
+        if (!resident.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new ResidentProfileNotFoundException();
+        }
+
+        if (request.getPhoneNumber() != null) {
+            resident.setPhoneNumber(request.getPhoneNumber());
+        }
+
+        if (request.getVerified() != null) {
+            resident.setVerified(request.getVerified());
+        }
+
+        if (request.getActive() != null) {
+            resident.setActive(request.getActive());
+        }
+
+        if (request.getOfficialUserId() != null && !request.getOfficialUserId().isBlank()) {
+            resident.setOfficialUserId(request.getOfficialUserId());
+        }
+
+        resident = residentProfileRepository.save(resident);
+        return mapToResponse(resident);
+    }
+
+    @Override
+    @Transactional
+    public void deleteResident(String adminEmail, Long id) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        ResidentProfile resident = residentProfileRepository.findById(id)
+                .orElseThrow(ResidentProfileNotFoundException::new);
+        if (!resident.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new ResidentProfileNotFoundException();
+        }
+        resident.setActive(false);
+        residentProfileRepository.save(resident);
+    }
+
+    @Override
+    public List<com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse> getHouseholdDirectory(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        
+        return residentProfileRepository.findAll().stream()
+                .filter(resident -> resident.isActive() && resident.getCommunity().getId().equals(adminProfile.getCommunity().getId()))
+                .map(resident -> {
+                    com.water.monitoring_and_billing_platform.entity.WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId()).orElse(null);
+                    List<com.water.monitoring_and_billing_platform.entity.Bill> bills = billRepository.findByResidentProfileId(resident.getId()).stream()
+                            .filter(b -> b.getStatus() == com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID)
+                            .toList();
+                    
+                    int pendingCount = bills.size();
+                    java.math.BigDecimal pendingAmount = bills.stream()
+                            .map(com.water.monitoring_and_billing_platform.entity.Bill::getAmount)
+                            .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+                    return com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse.builder()
+                            .residentId(resident.getId())
+                            .residentName(resident.getUser() != null ? resident.getUser().getFullName() : null)
+                            .unitNumber(resident.getUnit() != null ? resident.getUnit().getUnitNumber() : null)
+                            .meterNumber(meter != null ? meter.getMeterNumber() : "No Meter")
+                            .currentReading(meter != null ? meter.getCurrentReading() : 0.0)
+                            .pendingBillsCount(pendingCount)
+                            .pendingBillsAmount(pendingAmount)
+                            .build();
+                })
+                .toList();
+    }
+
+    @Override
+    public List<ResidentProfileResponse> getPendingResidents(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        return residentProfileRepository.findByCommunityIdAndVerifiedFalseAndUserApprovalStatus(adminProfile.getCommunity().getId(), ApprovalStatus.PENDING)
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void approveResident(String adminEmail, Long userId, com.water.monitoring_and_billing_platform.dto.ApprovalRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new com.water.monitoring_and_billing_platform.exception.UserNotFoundException());
+
+        ResidentProfile profile = residentProfileRepository.findByUserId(userId)
+                .orElseThrow(ResidentProfileNotFoundException::new);
+                
+        if (!profile.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new ResidentProfileNotFoundException(); // Using existing exception as shorthand for Unauthorized
+        }
+
+        if (user.getApprovalStatus() != ApprovalStatus.PENDING) {
+            throw new IllegalStateException("User is not in PENDING status.");
+        }
+
+        if (request.getApprovalStatus() == ApprovalStatus.REJECTED) {
+            user.setApprovalStatus(ApprovalStatus.REJECTED);
+            userRepository.save(user);
+            
+            activityLogRepository.save(ActivityLog.builder()
+                .title("Resident Rejected")
+                .description("Resident profile rejected for " + user.getFullName())
+                .timestamp(java.time.LocalDateTime.now())
+                .icon("Cancel")
+                .color("error.main")
+                .community(profile.getCommunity())
+                .user(user)
+                .build());
+                
+            return;
+        }
+
+        if (request.getApprovalStatus() == ApprovalStatus.APPROVED) {
+            long verifiedCount = residentProfileRepository.countByCommunityIdAndVerifiedTrue(profile.getCommunity().getId());
+            long sequence = verifiedCount + 1;
+
+            String officialUserId = com.water.monitoring_and_billing_platform.util.IdGenerator.generateOfficialResidentId(
+                    profile.getCommunity().getCommunityCode(),
+                    profile.getBlock().getBlockName(),
+                    profile.getUnit().getUnitNumber(),
+                    sequence
+            );
+
+            profile.setVerified(true);
+            profile.setOfficialUserId(officialUserId);
+
+            user.setApprovalStatus(ApprovalStatus.APPROVED);
+
+            userRepository.save(user);
+            ResidentProfile savedProfile = residentProfileRepository.save(profile);
+            
+            // Assign a UNIQUE Water Meter automatically
+            if (waterMeterRepository.findByResidentProfileId(savedProfile.getId()).isEmpty()) {
+                long totalMeters = waterMeterRepository.count();
+                String meterNumber = String.format("WM-%06d", totalMeters + 1);
+                WaterMeter meter = WaterMeter.builder()
+                        .meterNumber(meterNumber)
+                        .residentProfile(savedProfile)
+                        .meterStatus(com.water.monitoring_and_billing_platform.enums.MeterStatus.ACTIVE)
+                        .initialReading(0.0)
+                        .currentReading(0.0)
+                        .installationDate(java.time.LocalDate.now())
+                        .active(true)
+                        .build();
+                waterMeterRepository.save(meter);
+            }
+            
+            activityLogRepository.save(ActivityLog.builder()
+                .title("Resident Approved")
+                .description("Resident profile approved for " + user.getFullName() + ". Assigned ID: " + officialUserId)
+                .timestamp(java.time.LocalDateTime.now())
+                .icon("CheckCircle")
+                .color("success.main")
+                .community(profile.getCommunity())
+                .user(user)
+                .build());
+        }
     }
 }
