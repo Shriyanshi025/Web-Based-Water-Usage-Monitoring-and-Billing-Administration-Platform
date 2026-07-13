@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: monitoring-and-billing-platform
+    env: java
+    rootDir: monitoring-and-billing-platform
+    buildCommand: chmod +x mvnw && ./mvnw clean package -DskipTests
+    startCommand: java -jar target/monitoring-and-billing-platform-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: FRONTEND_URL
+        value: https://your-frontend-url.com
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
