@@ -19,6 +19,34 @@ frontend/dist/
 # Logs
 *.log
 
+# Build / Output directories
+target/
+node_modules/
+dist/
+build/
+frontend/node_modules/
+frontend/dist/
+
 # OS files
 .DS_Store
 Thumbs.db
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Local testing artifacts
+local_db_dump.sql
+local_counts.txt
+neon_counts.txt
+admin.json
+approve.json
+login.json
+resident.json
+Test.java
+temporary scripts
+scratch files
+*.json.tmp
+*.tmp
+
