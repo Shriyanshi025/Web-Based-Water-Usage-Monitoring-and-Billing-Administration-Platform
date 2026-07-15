@@ -50,6 +50,9 @@ class HouseholdManagementServiceImplTest {
     @Mock
     private WaterMeterRepository waterMeterRepository;
 
+    @Mock
+    private com.water.monitoring_and_billing_platform.repository.ActivityLogRepository activityLogRepository;
+
     @InjectMocks
     private ResidentProfileServiceImpl residentProfileService;
 

@@ -14,6 +14,8 @@ public interface AdminService {
             ApprovalRequest request
     );
 
+    void deleteUser(Long userId);
+
     List<UserMeResponse> getPendingUsers();
 
     List<UserMeResponse> getApprovedUsers();

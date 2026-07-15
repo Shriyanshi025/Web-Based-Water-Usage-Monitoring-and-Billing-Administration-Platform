@@ -7,7 +7,8 @@ export const loginSchema = z.object({
 
 export const wizardStep1BasicSchema = z.object({
     fullName: z.string().min(3, "Full name must be at least 3 characters.").max(100, "Full name is too long."),
-    email: z.string().email("Please enter a valid email address.")
+    email: z.string().email("Please enter a valid email address."),
+    phoneNumber: z.string().min(10, "Please enter a valid phone number.")
 });
 
 export const wizardStep3ResidentSchema = z.object({

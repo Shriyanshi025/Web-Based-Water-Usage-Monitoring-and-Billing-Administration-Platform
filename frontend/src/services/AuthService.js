@@ -20,10 +20,15 @@ export const getCurrentUser = () => {
 // Aliased fallback for existing template compatibility
 export const register = registerResident;
 
+export const validateInvitationToken = (token) => {
+    return api.get(`/invitations/${token}`).then((res) => res.data);
+};
+
 export const AuthService = {
     login,
     registerResident,
     registerCommunityAdmin,
     getCurrentUser,
-    register
+    register,
+    validateInvitationToken
 };

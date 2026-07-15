@@ -5,6 +5,7 @@ import com.water.monitoring_and_billing_platform.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Profile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.util.List;
 import com.water.monitoring_and_billing_platform.enums.MeterStatus;
 
 @Component
+@Profile("dev")
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
 

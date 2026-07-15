@@ -50,6 +50,10 @@ public class RegistrationServiceImpl implements RegistrationService {
             invitation = invitationRepository.findByToken(request.getInviteToken())
                     .orElseThrow(InvalidInvitationTokenException::new);
 
+            if (invitation.getStatus() == com.water.monitoring_and_billing_platform.enums.InvitationStatus.REVOKED) {
+                throw new com.water.monitoring_and_billing_platform.exception.InvitationRevokedException();
+            }
+
             if (invitation.getStatus() == com.water.monitoring_and_billing_platform.enums.InvitationStatus.EXPIRED ||
                 invitation.getStatus() == com.water.monitoring_and_billing_platform.enums.InvitationStatus.REGISTERED ||
                 invitation.getExpiresAt().isBefore(LocalDateTime.now())) {

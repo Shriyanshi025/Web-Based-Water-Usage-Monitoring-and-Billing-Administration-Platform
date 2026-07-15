@@ -38,7 +38,7 @@ class CommunityOpsService {
     }
 
     async deleteResident(id) {
-        const response = await api.put(`/residents/${id}`, { active: false, verified: false });
+        const response = await api.delete(`/residents/${id}`);
         return response.data;
     }
 
@@ -137,9 +137,9 @@ class CommunityOpsService {
         return response.data;
     }
 
-    // Pending Backend Support
     async revokeInvitation(id) {
-        throw new Error("Backend Support Pending");
+        const response = await api.put(`/community-admins/me/invitations/${id}/revoke`);
+        return response.data;
     }
 }
 

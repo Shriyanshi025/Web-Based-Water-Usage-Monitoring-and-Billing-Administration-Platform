@@ -13,7 +13,7 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long> {
 
     List<Invitation> findByAdminIdOrderByCreatedAtDesc(Long adminId);
 
-    boolean existsByEmailAndCommunityIdAndStatusIn(String email, Long communityId, List<InvitationStatus> statuses);
+    boolean existsByEmailAndStatusIn(String email, List<InvitationStatus> statuses);
 
-    boolean existsByMobileNumberAndCommunityIdAndStatusIn(String mobileNumber, Long communityId, List<InvitationStatus> statuses);
+    boolean existsByMobileNumberAndStatusIn(String mobileNumber, List<InvitationStatus> statuses);
 }

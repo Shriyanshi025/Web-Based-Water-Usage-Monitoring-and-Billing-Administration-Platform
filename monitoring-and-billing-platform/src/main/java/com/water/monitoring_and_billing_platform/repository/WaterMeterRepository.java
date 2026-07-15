@@ -26,4 +26,6 @@ public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
 
     long countByResidentProfileCommunityIdAndActiveTrue(Long communityId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
+    java.util.List<WaterMeter> findByResidentProfileCommunityId(Long communityId);
 }

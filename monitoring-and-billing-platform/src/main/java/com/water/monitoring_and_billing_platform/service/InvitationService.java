@@ -13,4 +13,6 @@ public interface InvitationService {
     List<InvitationHistoryResponse> getAdminInvitations(String email);
     
     InvitationDetailsResponse validateToken(String token);
+
+    void revokeInvitation(String email, Long invitationId);
 }

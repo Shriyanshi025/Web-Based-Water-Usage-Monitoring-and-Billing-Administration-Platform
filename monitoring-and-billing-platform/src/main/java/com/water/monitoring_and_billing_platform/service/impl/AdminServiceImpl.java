@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,9 @@ public class AdminServiceImpl implements AdminService {
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final com.water.monitoring_and_billing_platform.repository.WaterMeterRepository waterMeterRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -149,6 +154,7 @@ public class AdminServiceImpl implements AdminService {
     private CommunityAdminProfileResponse mapToCommunityAdminProfileResponse(CommunityAdminProfile admin) {
         return CommunityAdminProfileResponse.builder()
                 .id(admin.getId())
+                .userId(admin.getUser().getId())
                 .officialAdminId(admin.getOfficialAdminId())
                 .fullName(admin.getUser().getFullName())
                 .email(admin.getUser().getEmail())
@@ -156,6 +162,54 @@ public class AdminServiceImpl implements AdminService {
                 .communityName(admin.getCommunity().getCommunityName())
                 .verified(admin.isVerified())
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public void deleteUser(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(UserNotFoundException::new);
+        
+        entityManager.createQuery("DELETE FROM ActivityLog a WHERE a.user.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        if (user.getRole() == Role.USER) {
+            ResidentProfile profile = residentProfileRepository.findByUserId(userId).orElse(null);
+            if (profile != null) {
+                entityManager.createQuery("DELETE FROM Bill b WHERE b.residentProfile.id = :profileId")
+                        .setParameter("profileId", profile.getId())
+                        .executeUpdate();
+                
+                List<com.water.monitoring_and_billing_platform.entity.WaterMeter> meters = entityManager.createQuery(
+                        "SELECT wm FROM WaterMeter wm WHERE wm.residentProfile.id = :profileId", 
+                        com.water.monitoring_and_billing_platform.entity.WaterMeter.class)
+                        .setParameter("profileId", profile.getId())
+                        .getResultList();
+                
+                for (com.water.monitoring_and_billing_platform.entity.WaterMeter meter : meters) {
+                    entityManager.createQuery("DELETE FROM WaterUsage wu WHERE wu.waterMeter.id = :meterId")
+                            .setParameter("meterId", meter.getId())
+                            .executeUpdate();
+                    entityManager.remove(meter);
+                }
+                
+                residentProfileRepository.delete(profile);
+            }
+        } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
+            CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(userId).orElse(null);
+            if (profile != null) {
+                // Invitations are strongly tied to the Community Admin who created them (nullable = false).
+                // Existing business logic requires their deletion to prevent foreign key constraint violations.
+                entityManager.createQuery("DELETE FROM Invitation i WHERE i.admin.id = :adminId")
+                        .setParameter("adminId", profile.getId())
+                        .executeUpdate();
+                
+                communityAdminProfileRepository.delete(profile);
+            }
+        }
+
+        userRepository.delete(user);
     }
 
     @Override

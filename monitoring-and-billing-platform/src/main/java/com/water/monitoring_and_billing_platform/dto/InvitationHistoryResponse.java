@@ -13,6 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class InvitationHistoryResponse {
     private Long invitationId;
+    private String token;
+    private String residentName;
     private String email;
     private String mobileNumber;
     private String status;

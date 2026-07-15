@@ -39,6 +39,18 @@ public class AdminController {
 
     }
 
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<ApiResponse<Void>> deleteUser(@PathVariable Long userId) {
+        adminService.deleteUser(userId);
+        return ResponseEntity.ok(
+                ApiResponse.<Void>builder()
+                        .success(true)
+                        .message("User deleted successfully.")
+                        .data(null)
+                        .build()
+        );
+    }
+
     @GetMapping("/pending")
     public ResponseEntity<ApiResponse<List<UserMeResponse>>> getPendingUsers() {
 

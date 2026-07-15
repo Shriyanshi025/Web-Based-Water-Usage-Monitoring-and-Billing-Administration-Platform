@@ -16,6 +16,7 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -131,6 +132,26 @@ const CommunityAdminsPage = () => {
         });
     };
 
+    const handleDeleteUser = (admin) => {
+        setConfirmConfig({
+            open: true,
+            title: "Delete User",
+            content: `Are you sure you want to completely delete ${admin.fullName}? This action cannot be undone.`,
+            confirmColor: "error",
+            confirmText: "Delete",
+            onConfirm: async () => {
+                try {
+                    await MainAdminOpsService.deleteUser(admin.userId || admin.id);
+                    fetchAdmins();
+                } catch (err) {
+                    alert(err.response?.data?.message || "Failed to delete user");
+                } finally {
+                    setConfirmConfig(prev => ({ ...prev, open: false }));
+                }
+            }
+        });
+    };
+
     const columns = useMemo(() => [
         { field: "officialAdminId", headerName: "Admin ID", width: 150 },
         { 
@@ -170,6 +191,11 @@ const CommunityAdminsPage = () => {
                     <Tooltip title="Toggle Status" arrow>
                         <IconButton size="small" color={params.row.active !== false ? "error" : "success"} onClick={(e) => { e.stopPropagation(); handleToggleStatus(params.row); }}>
                             {params.row.active !== false ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete" arrow>
+                        <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteUser(params.row); }}>
+                            <DeleteIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Stack>

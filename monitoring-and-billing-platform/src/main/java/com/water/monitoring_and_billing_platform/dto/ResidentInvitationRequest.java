@@ -5,7 +5,10 @@ import lombok.Data;
 
 @Data
 public class ResidentInvitationRequest {
-    @Email
+    @jakarta.validation.constraints.NotBlank(message = "Resident name is required")
+    private String residentName;
+
+    @Email(message = "Invalid email format")
     private String email;
     
     private String mobileNumber;

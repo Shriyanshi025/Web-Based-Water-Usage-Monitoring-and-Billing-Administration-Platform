@@ -105,9 +105,8 @@ public class WaterMeterServiceImpl implements WaterMeterService {
     public List<WaterMeterResponse> getAllWaterMeters(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
 
-        return waterMeterRepository.findAll()
+        return waterMeterRepository.findByResidentProfileCommunityId(adminProfile.getCommunity().getId())
                 .stream()
-                .filter(meter -> meter.getResidentProfile().getCommunity().getId().equals(adminProfile.getCommunity().getId()))
                 .map(this::mapToResponse)
                 .toList();
     }

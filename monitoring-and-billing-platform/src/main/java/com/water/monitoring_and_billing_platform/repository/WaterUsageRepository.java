@@ -20,6 +20,7 @@ public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
 
     long countByWaterMeterResidentProfileCommunityId(Long communityId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"waterMeter", "waterMeter.residentProfile", "waterMeter.residentProfile.user"})
     List<WaterUsage> findByWaterMeterResidentProfileCommunityId(Long communityId);
 
     boolean existsByWaterMeterIdAndReadingDateAndCurrentReading(Long waterMeterId, LocalDate readingDate, Double currentReading);

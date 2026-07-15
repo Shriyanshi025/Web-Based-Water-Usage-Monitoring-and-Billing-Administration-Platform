@@ -112,6 +112,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
     private CommunityAdminProfileResponse mapToResponse(CommunityAdminProfile profile) {
         return CommunityAdminProfileResponse.builder()
                 .id(profile.getId())
+                .userId(profile.getUser().getId())
                 .officialAdminId(profile.getOfficialAdminId())
                 .fullName(profile.getUser().getFullName())
                 .email(profile.getUser().getEmail())

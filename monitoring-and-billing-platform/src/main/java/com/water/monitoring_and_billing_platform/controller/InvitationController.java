@@ -41,4 +41,12 @@ public class InvitationController {
         InvitationDetailsResponse response = invitationService.validateToken(token);
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/community-admins/me/invitations/{invitationId}/revoke")
+    public ResponseEntity<Void> revokeInvitation(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long invitationId) {
+        invitationService.revokeInvitation(userDetails.getUsername(), invitationId);
+        return ResponseEntity.ok().build();
+    }
 }

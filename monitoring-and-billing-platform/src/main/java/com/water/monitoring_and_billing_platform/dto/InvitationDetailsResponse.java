@@ -10,8 +10,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class InvitationDetailsResponse {
+    private Long communityId;
     private String communityName;
     private String communityCode;
     private String invitedBy;
+    private String residentName;
     private java.time.LocalDateTime expiresAt;
 }

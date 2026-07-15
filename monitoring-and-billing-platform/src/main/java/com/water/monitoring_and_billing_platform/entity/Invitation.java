@@ -30,6 +30,9 @@ public class Invitation {
     @JoinColumn(name = "admin_id", nullable = false)
     private CommunityAdminProfile admin;
 
+    @Column(name = "resident_name", nullable = false, length = 100)
+    private String residentName;
+
     @Column(length = 255)
     private String email;
 

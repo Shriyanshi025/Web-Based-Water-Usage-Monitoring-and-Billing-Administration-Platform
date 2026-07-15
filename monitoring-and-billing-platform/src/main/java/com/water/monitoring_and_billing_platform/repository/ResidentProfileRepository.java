@@ -12,6 +12,8 @@ public interface ResidentProfileRepository
 
     boolean existsByUserId(Long userId);
 
+    boolean existsByPhoneNumber(String phoneNumber);
+
     Optional<ResidentProfile> findByUserId(Long userId);
 
     Optional<ResidentProfile> findByOfficialUserId(String officialUserId);
@@ -28,4 +30,9 @@ public interface ResidentProfileRepository
 
     long countByCommunityIdAndVerifiedFalseAndUserApprovalStatus(Long communityId, ApprovalStatus approvalStatus);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "community", "block", "unit"})
+    List<ResidentProfile> findByCommunityId(Long communityId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"user", "community", "block", "unit"})
+    List<ResidentProfile> findByCommunityIdAndActiveTrue(Long communityId);
 }

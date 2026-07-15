@@ -116,8 +116,8 @@ const ResidentsPage = () => {
         } else if (actionKey === "DELETE") {
             setDialogConfig({
                 open: true,
-                title: "Deactivate Resident",
-                content: `Deactivate ${selectedRow?.firstName || "this resident"}? This will disable access while preserving the record.`,
+                title: "Delete Resident",
+                content: `Are you sure you want to permanently delete ${selectedRow?.fullName || "this resident"}? This will completely remove their profile and all dependent records.`,
                 onConfirm: async () => {
                     try {
                         await CommunityOpsService.deleteResident(selectedRow?.id);
@@ -419,7 +419,7 @@ const ResidentsPage = () => {
                 onConfirm={dialogConfig.onConfirm}
                 onCancel={() => setDialogConfig(prev => ({ ...prev, open: false }))}
                 confirmColor="error"
-                confirmText="Deactivate"
+                confirmText={dialogConfig.title === "Delete Resident" ? "Delete" : "Deactivate"}
             />
         </DashboardLayout>
     );

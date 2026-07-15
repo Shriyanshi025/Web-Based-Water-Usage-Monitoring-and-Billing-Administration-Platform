@@ -17,6 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -141,6 +142,26 @@ const CommunitiesPage = () => {
         });
     };
 
+    const handleDeleteCommunity = (community) => {
+        setConfirmConfig({
+            open: true,
+            title: "Delete Community",
+            content: `Are you sure you want to permanently delete community "${community.communityName}"?`,
+            confirmColor: "error",
+            confirmText: "Delete",
+            onConfirm: async () => {
+                try {
+                    await MainAdminOpsService.deleteCommunity(community.id);
+                    fetchCommunities();
+                } catch (err) {
+                    alert(err.response?.data?.message || err.message || "Failed to delete community");
+                } finally {
+                    setConfirmConfig(prev => ({ ...prev, open: false }));
+                }
+            }
+        });
+    };
+
     const columns = useMemo(() => [
         { field: "communityCode", headerName: "Code", width: 120 },
         { 
@@ -167,7 +188,7 @@ const CommunitiesPage = () => {
         { 
             field: "actions", 
             headerName: "Actions", 
-            width: 150, 
+            width: 180, 
             sortable: false,
             align: "center",
             renderCell: (params) => (
@@ -180,6 +201,11 @@ const CommunitiesPage = () => {
                     <Tooltip title={params.row.active ? "Deactivate" : "Activate"} arrow>
                         <IconButton size="small" color={params.row.active ? "error" : "success"} onClick={(e) => { e.stopPropagation(); handleToggleStatus(params.row); }}>
                             {params.row.active ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete" arrow>
+                        <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteCommunity(params.row); }}>
+                            <DeleteIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Stack>

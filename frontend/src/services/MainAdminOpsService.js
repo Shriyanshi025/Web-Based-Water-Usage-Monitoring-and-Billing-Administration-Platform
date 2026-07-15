@@ -22,6 +22,11 @@ class MainAdminOpsService {
         return response.data;
     }
 
+    async deleteCommunity(id) {
+        const response = await api.delete(`/communities/${id}`);
+        return response.data;
+    }
+
     // ================= Community Admins =================
     async getAllCommunityAdmins() {
         const response = await api.get("/community-admins");
@@ -46,6 +51,11 @@ class MainAdminOpsService {
 
     async approveUser(userId, data) {
         const response = await api.put(`/admin/approve/${userId}`, data);
+        return response.data;
+    }
+
+    async deleteUser(userId) {
+        const response = await api.delete(`/admin/${userId}`);
         return response.data;
     }
 }

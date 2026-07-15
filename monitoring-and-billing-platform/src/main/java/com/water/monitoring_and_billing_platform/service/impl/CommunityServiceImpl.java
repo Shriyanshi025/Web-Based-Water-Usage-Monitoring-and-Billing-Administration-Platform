@@ -6,7 +6,7 @@ import com.water.monitoring_and_billing_platform.dto.CommunityStatusUpdateReques
 import com.water.monitoring_and_billing_platform.entity.Community;
 import com.water.monitoring_and_billing_platform.exception.CommunityAlreadyExistsException;
 import com.water.monitoring_and_billing_platform.exception.CommunityNotFoundException;
-import com.water.monitoring_and_billing_platform.repository.CommunityRepository;
+import com.water.monitoring_and_billing_platform.repository.*;
 import com.water.monitoring_and_billing_platform.service.CommunityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,12 @@ import java.util.stream.Collectors;
 public class CommunityServiceImpl implements CommunityService {
 
     private final CommunityRepository communityRepository;
-    private final com.water.monitoring_and_billing_platform.repository.ActivityLogRepository activityLogRepository;
+    private final ActivityLogRepository activityLogRepository;
+    private final BlockRepository blockRepository;
+    private final UnitRepository unitRepository;
+    private final WaterMeterRepository waterMeterRepository;
+    private final ResidentProfileRepository residentProfileRepository;
+    private final CommunityAdminProfileRepository communityAdminProfileRepository;
 
     @Override
     @Transactional
@@ -127,17 +132,17 @@ public class CommunityServiceImpl implements CommunityService {
     public void deleteCommunity(Long id) {
         Community community = communityRepository.findById(id)
                 .orElseThrow(() -> new CommunityNotFoundException());
-        community.setActive(false);
-        communityRepository.save(community);
-        
-        activityLogRepository.save(com.water.monitoring_and_billing_platform.entity.ActivityLog.builder()
-                .title("Community Deleted")
-                .description("Community deactivated: " + community.getCommunityName())
-                .timestamp(java.time.LocalDateTime.now())
-                .icon("DomainDisabled")
-                .color("error.main")
-                .community(community)
-                .build());
+
+        if (blockRepository.countByCommunityId(id) > 0 ||
+            unitRepository.countByCommunityId(id) > 0 ||
+            waterMeterRepository.countByResidentProfileCommunityId(id) > 0 ||
+            residentProfileRepository.countByCommunityId(id) > 0 ||
+            communityAdminProfileRepository.countByCommunityId(id) > 0) {
+            throw new IllegalStateException("Community cannot be deleted because it still contains dependent records.");
+        }
+
+        activityLogRepository.deleteByCommunityId(id);
+        communityRepository.delete(community);
     }
 
     private CommunityResponse mapToResponse(Community community) {

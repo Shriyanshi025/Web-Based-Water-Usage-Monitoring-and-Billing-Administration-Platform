@@ -11,9 +11,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResidentInvitationResponse {
     private Long invitationId;
+    private String token;
     private String status;
     private String registrationLink;
     private String whatsappShareLink;
+    private String residentName;
     private String email;
     private String mobileNumber;
     private java.time.LocalDateTime expiresAt;

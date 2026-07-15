@@ -48,9 +48,11 @@ const InvitationsPage = () => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [selectedRow, setSelectedRow] = useState(null);
     const [createDialogOpen, setCreateDialogOpen] = useState(false);
-    const [createFormData, setCreateFormData] = useState({ email: "", mobileNumber: "" });
+    const [createFormData, setCreateFormData] = useState({ residentName: "", email: "", mobileNumber: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [copySuccess, setCopySuccess] = useState("");
+    const [revokeConfirmOpen, setRevokeConfirmOpen] = useState(false);
+    const [rowToRevoke, setRowToRevoke] = useState(null);
 
     const fetchInvitations = useCallback(async () => {
         try {
@@ -81,12 +83,6 @@ const InvitationsPage = () => {
     }, []);
 
     const handleAction = useCallback(async (actionKey) => {
-        const config = ACTION_CONFIG[actionKey];
-        if (!config.enabled || config.comingSoon) {
-            handleMenuClose();
-            return;
-        }
-
         if (actionKey === "COPY") {
             const link = `${window.location.origin}/register?token=${selectedRow.token}`;
             try {
@@ -96,9 +92,31 @@ const InvitationsPage = () => {
             } catch (err) {
                 console.error("Failed to copy", err);
             }
+            handleMenuClose();
+        } else if (actionKey === "REVOKE") {
+            setRowToRevoke(selectedRow);
+            setRevokeConfirmOpen(true);
+            handleMenuClose();
         }
-        handleMenuClose();
     }, [handleMenuClose, selectedRow]);
+
+    const handleRevokeConfirm = useCallback(async () => {
+        if (!rowToRevoke) return;
+        try {
+            setLoading(true);
+            await CommunityOpsService.revokeInvitation(rowToRevoke.invitationId);
+            setRevokeConfirmOpen(false);
+            setRowToRevoke(null);
+            await fetchInvitations();
+        } catch (err) {
+            console.error("Failed to revoke invitation", err);
+            setError(err.message || "Failed to revoke invitation");
+            setRevokeConfirmOpen(false);
+            setRowToRevoke(null);
+        } finally {
+            setLoading(false);
+        }
+    }, [rowToRevoke, fetchInvitations]);
 
     const handleCreateSubmit = useCallback(async (e) => {
         e.preventDefault();
@@ -106,7 +124,7 @@ const InvitationsPage = () => {
             setIsSubmitting(true);
             await CommunityOpsService.createInvitation(createFormData);
             setCreateDialogOpen(false);
-            setCreateFormData({ email: "", mobileNumber: "" });
+            setCreateFormData({ residentName: "", email: "", mobileNumber: "" });
             fetchInvitations();
         } catch (err) {
             console.error("Failed to create invitation", err);
@@ -125,20 +143,32 @@ const InvitationsPage = () => {
 
     const columns = useMemo(() => [
         { 
+            field: "residentName", 
+            headerName: "Resident Name", 
+            flex: 1, 
+            minWidth: 150,
+            renderCell: (params) => (
+                <Typography variant="body2" fontWeight={600}>
+                    {params.row.residentName}
+                </Typography>
+            )
+        },
+        { 
             field: "email", 
             headerName: "Invited Email", 
             flex: 1, 
             minWidth: 200,
             renderCell: (params) => (
                 <Typography variant="body2" fontWeight={500}>
-                    {params.row.email}
+                    {params.row.email || "N/A"}
                 </Typography>
             )
         },
         { 
             field: "mobileNumber", 
             headerName: "Mobile Number", 
-            width: 150 
+            width: 150,
+            renderCell: (params) => params.row.mobileNumber || "N/A"
         },
         { 
             field: "token", 
@@ -281,25 +311,49 @@ const InvitationsPage = () => {
                     sx: { minWidth: 200, mt: 1, borderRadius: 2 }
                 }}
             >
-                {Object.entries(ACTION_CONFIG).map(([key, config]) => (
-                    <Tooltip key={key} title={config.comingSoon ? "Backend Support Pending" : ""} placement="left" arrow>
-                        <span>
-                            <MenuItem 
-                                onClick={() => handleAction(key)}
-                                disabled={!config.enabled || config.comingSoon}
-                                sx={{ py: 1.5 }}
-                            >
-                                <ListItemIcon>{config.icon}</ListItemIcon>
-                                <ListItemText 
-                                    primary={config.label} 
-                                    secondary={config.comingSoon ? "Coming Soon" : null}
-                                    secondaryTypographyProps={{ variant: "caption", color: "warning.main" }}
-                                />
-                            </MenuItem>
-                        </span>
-                    </Tooltip>
-                ))}
+                {/* Copy Link Item */}
+                <MenuItem onClick={() => handleAction("COPY")} sx={{ py: 1.5 }}>
+                    <ListItemIcon><ContentCopyIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText primary="Copy Link" />
+                </MenuItem>
+
+                {/* Revoke Invitation Item */}
+                {selectedRow && !(selectedRow.status === "EXPIRED" || new Date(selectedRow.expiresAt) < new Date()) && (
+                    <MenuItem 
+                        onClick={() => handleAction("REVOKE")}
+                        disabled={selectedRow.status === "REGISTERED" || selectedRow.status === "REVOKED"}
+                        sx={{ py: 1.5 }}
+                    >
+                        <ListItemIcon><BlockIcon fontSize="small" color={selectedRow.status === "REGISTERED" || selectedRow.status === "REVOKED" ? "disabled" : "error"} /></ListItemIcon>
+                        <ListItemText 
+                            primary="Revoke Invitation" 
+                            primaryTypographyProps={{ color: selectedRow.status === "REGISTERED" || selectedRow.status === "REVOKED" ? "text.secondary" : "error.main" }}
+                        />
+                    </MenuItem>
+                )}
             </Menu>
+
+            {/* Revoke Confirmation Dialog */}
+            <Dialog 
+                open={revokeConfirmOpen} 
+                onClose={() => setRevokeConfirmOpen(false)}
+            >
+                <DialogTitle>Revoke Invitation</DialogTitle>
+                <DialogContent dividers>
+                    <Typography>
+                        Are you sure you want to revoke the invitation for <strong>{rowToRevoke?.residentName}</strong>? 
+                        This action cannot be undone and they will not be able to register using this link.
+                    </Typography>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setRevokeConfirmOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleRevokeConfirm} color="error" variant="contained">
+                        Revoke
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {/* Create Invitation Dialog */}
             <Dialog open={createDialogOpen} onClose={() => !isSubmitting && setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -308,18 +362,25 @@ const InvitationsPage = () => {
                     <DialogContent dividers>
                         <Stack spacing={3} sx={{ mt: 1 }}>
                             <Typography variant="body2" color="text.secondary">
-                                Send a secure registration link to a new resident. The link will expire in 24 hours.
+                                Send a secure registration link to a new resident. The link will expire in 48 hours.
                             </Typography>
+                            <TextField
+                                label="Resident Name"
+                                type="text"
+                                fullWidth
+                                required
+                                value={createFormData.residentName}
+                                onChange={(e) => setCreateFormData(prev => ({ ...prev, residentName: e.target.value }))}
+                            />
                             <TextField
                                 label="Resident Email Address"
                                 type="email"
                                 fullWidth
-                                required
                                 value={createFormData.email}
                                 onChange={(e) => setCreateFormData(prev => ({ ...prev, email: e.target.value }))}
                             />
                             <TextField
-                                label="Mobile Number (Optional)"
+                                label="Mobile Number"
                                 type="tel"
                                 fullWidth
                                 value={createFormData.mobileNumber}
@@ -338,7 +399,7 @@ const InvitationsPage = () => {
                         <Button 
                             type="submit" 
                             variant="contained" 
-                            disabled={isSubmitting || !createFormData.email}
+                            disabled={isSubmitting || !createFormData.residentName.trim() || (!createFormData.email.trim() && !createFormData.mobileNumber.trim())}
                         >
                             {isSubmitting ? <CircularProgress size={24} /> : "Send Invitation"}
                         </Button>

@@ -37,6 +37,8 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     
     private final ActivityLogRepository activityLogRepository;
 
+    private final WaterUsageRepository waterUsageRepository;
+
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
                 .orElseThrow(UserNotFoundException::new);
@@ -129,9 +131,8 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     public List<ResidentProfileResponse> getAllResidents(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
         
-        return residentProfileRepository.findAll()
+        return residentProfileRepository.findByCommunityId(adminProfile.getCommunity().getId())
                 .stream()
-                .filter(resident -> resident.getCommunity().getId().equals(adminProfile.getCommunity().getId()))
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -210,10 +211,18 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
 
         if (request.getVerified() != null) {
             resident.setVerified(request.getVerified());
+            if (resident.getUser() != null) {
+                resident.getUser().setApprovalStatus(request.getVerified() ? ApprovalStatus.APPROVED : ApprovalStatus.PENDING);
+                userRepository.save(resident.getUser());
+            }
         }
 
         if (request.getActive() != null) {
             resident.setActive(request.getActive());
+            if (resident.getUser() != null) {
+                resident.getUser().setActive(request.getActive());
+                userRepository.save(resident.getUser());
+            }
         }
 
         if (request.getOfficialUserId() != null && !request.getOfficialUserId().isBlank()) {
@@ -233,16 +242,33 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         if (!resident.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
             throw new ResidentProfileNotFoundException();
         }
-        resident.setActive(false);
-        residentProfileRepository.save(resident);
+        
+        java.util.Optional<WaterMeter> waterMeterOpt = waterMeterRepository.findByResidentProfileId(id);
+        if (waterMeterOpt.isPresent()) {
+            WaterMeter meter = waterMeterOpt.get();
+            List<WaterUsage> usages = waterUsageRepository.findByWaterMeterId(meter.getId());
+            waterUsageRepository.deleteAll(usages);
+            waterMeterRepository.delete(meter);
+        }
+        
+        List<Bill> bills = billRepository.findByResidentProfileId(id);
+        billRepository.deleteAll(bills);
+        
+        User residentUser = resident.getUser();
+        
+        residentProfileRepository.delete(resident);
+        
+        if (residentUser != null) {
+            activityLogRepository.deleteByUserId(residentUser.getId());
+            userRepository.delete(residentUser);
+        }
     }
 
     @Override
     public List<com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse> getHouseholdDirectory(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
         
-        return residentProfileRepository.findAll().stream()
-                .filter(resident -> resident.isActive() && resident.getCommunity().getId().equals(adminProfile.getCommunity().getId()))
+        return residentProfileRepository.findByCommunityIdAndActiveTrue(adminProfile.getCommunity().getId()).stream()
                 .map(resident -> {
                     com.water.monitoring_and_billing_platform.entity.WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId()).orElse(null);
                     List<com.water.monitoring_and_billing_platform.entity.Bill> bills = billRepository.findByResidentProfileId(resident.getId()).stream()

@@ -19,5 +19,5 @@ public interface CommunityAdminProfileRepository
     long countByCommunityIdAndVerifiedTrue(Long communityId);
 
     List<CommunityAdminProfile> findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus approvalStatus);
-
+    long countByCommunityId(Long communityId);
 }

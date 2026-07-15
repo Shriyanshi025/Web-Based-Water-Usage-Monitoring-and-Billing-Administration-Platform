@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +6,7 @@ import { Box, Button, Stack, Stepper, Step, StepLabel, Alert, Typography } from 
 import { motion, AnimatePresence } from 'framer-motion';
 
 import AuthLayout from '../../components/layout/AuthLayout';
-import { register as registerApi } from '../../services/AuthService';
+import { registerResident, registerCommunityAdmin, validateInvitationToken } from '../../services/AuthService';
 import { 
     wizardStep1BasicSchema, wizardStep3ResidentSchema, wizardStep3AdminSchema, wizardStep4CredentialsSchema 
 } from '../../utils/schemas';
@@ -30,17 +30,40 @@ export default function RegisterPage() {
         defaultValues: {
             fullName: '',
             email: '',
+            phoneNumber: '',
             requestedRole: 'USER',
             communityId: '',
             blockId: '',
             unitId: '',
             professionalInfo: '',
             invitationToken: '',
+            isInvitationLocked: false,
             password: '',
             confirmPassword: '',
             termsAccepted: false
         }
     });
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const token = queryParams.get("invite") || queryParams.get("token");
+        if (token) {
+            methods.setValue("invitationToken", token);
+            methods.setValue("requestedRole", "USER");
+            
+            validateInvitationToken(token)
+                .then(res => {
+                    if (res && res.communityId) {
+                        methods.setValue("communityId", res.communityId);
+                        methods.setValue("fullName", res.residentName || "");
+                        methods.setValue("isInvitationLocked", true);
+                    }
+                })
+                .catch(err => {
+                    setGlobalError(err.response?.data?.message || "Invitation is invalid or has expired.");
+                });
+        }
+    }, [methods]);
 
     const role = methods.watch('requestedRole');
 
@@ -78,16 +101,27 @@ export default function RegisterPage() {
         setIsSubmitting(true);
         try {
             const data = methods.getValues();
-            await registerApi({
-                fullName: data.fullName,
-                email: data.email,
-                password: data.password,
-                requestedRole: data.requestedRole,
-                communityId: data.communityId || null,
-                blockId: data.blockId || null,
-                unitId: data.unitId || null,
-                professionalInfo: data.professionalInfo || null
-            });
+            if (data.requestedRole === 'USER') {
+                await registerResident({
+                    fullName: data.fullName,
+                    email: data.email,
+                    password: data.password,
+                    phoneNumber: data.phoneNumber,
+                    communityId: data.communityId || null,
+                    blockId: data.blockId || null,
+                    unitId: data.unitId || null,
+                    inviteToken: data.invitationToken || null
+                });
+            } else {
+                await registerCommunityAdmin({
+                    fullName: data.fullName,
+                    email: data.email,
+                    password: data.password,
+                    phoneNumber: data.phoneNumber,
+                    communityId: data.communityId || null,
+                    officeAddress: data.professionalInfo || null
+                });
+            }
             navigate("/pending-approval");
         } catch (err) {
             setGlobalError(err.response?.data?.message || "Registration failed. Please try again.");

@@ -12,4 +12,6 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
     List<ActivityLog> findTop5ByCommunityIdOrderByTimestampDesc(Long communityId);
     List<ActivityLog> findTop5ByUserIdOrderByTimestampDesc(Long userId);
     List<ActivityLog> findTop5ByUserIdOrCommunityIdOrderByTimestampDesc(Long userId, Long communityId);
+    void deleteByUserId(Long userId);
+    void deleteByCommunityId(Long communityId);
 }

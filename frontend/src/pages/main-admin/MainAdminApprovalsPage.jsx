@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import DeleteIcon from "@mui/icons-material/Delete";
+import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -77,6 +79,29 @@ const MainAdminApprovalsPage = () => {
         setDialogOpen(false);
     };
 
+    // Confirm Dialog state for Delete
+    const [confirmConfig, setConfirmConfig] = useState({ open: false, title: "", content: "", onConfirm: null, confirmColor: "primary", confirmText: "" });
+
+    const handleDeleteUser = (user) => {
+        setConfirmConfig({
+            open: true,
+            title: "Delete User",
+            content: `Are you sure you want to completely delete ${user.fullName}? This action cannot be undone.`,
+            confirmColor: "error",
+            confirmText: "Delete",
+            onConfirm: async () => {
+                try {
+                    await MainAdminOpsService.deleteUser(user.id || user.userId);
+                    fetchPendingUsers();
+                } catch (err) {
+                    alert(err.response?.data?.message || "Failed to delete user");
+                } finally {
+                    setConfirmConfig(prev => ({ ...prev, open: false }));
+                }
+            }
+        });
+    };
+
     const handleConfirm = async () => {
         try {
             if (selectedUser) {
@@ -130,6 +155,11 @@ const MainAdminApprovalsPage = () => {
                     <Tooltip title="Reject" arrow>
                         <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleOpenDialog(params.row, "REJECTED"); }}>
                             <CancelIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Delete" arrow>
+                        <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteUser(params.row); }}>
+                            <DeleteIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
                 </Stack>
@@ -191,6 +221,15 @@ const MainAdminApprovalsPage = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+            <ConfirmationDialog 
+                open={confirmConfig.open}
+                title={confirmConfig.title}
+                content={confirmConfig.content}
+                onConfirm={confirmConfig.onConfirm}
+                onCancel={() => setConfirmConfig(prev => ({ ...prev, open: false }))}
+                confirmColor={confirmConfig.confirmColor}
+                confirmText={confirmConfig.confirmText}
+            />
         </DashboardLayout>
     );
 };

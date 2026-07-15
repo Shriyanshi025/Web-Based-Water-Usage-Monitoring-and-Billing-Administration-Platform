@@ -9,7 +9,11 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import { getCommunities, getBlocks, getUnits } from '../../../services/LookupService';
 
 export const WizardStep1Basic = () => {
-    const { register, formState: { errors } } = useFormContext();
+    const { register, watch, formState: { errors } } = useFormContext();
+    const fullNameValue = watch("fullName");
+    const emailValue = watch("email");
+    const phoneNumberValue = watch("phoneNumber");
+
     return (
         <Stack spacing={3}>
             <Typography variant="h6" fontWeight="700">Basic Information</Typography>
@@ -19,6 +23,7 @@ export const WizardStep1Basic = () => {
                 error={!!errors.fullName} 
                 helperText={errors.fullName?.message} 
                 fullWidth 
+                InputLabelProps={fullNameValue ? { shrink: true } : {}}
             />
             <TextField 
                 label="Email Address" 
@@ -27,6 +32,16 @@ export const WizardStep1Basic = () => {
                 error={!!errors.email} 
                 helperText={errors.email?.message} 
                 fullWidth 
+                InputLabelProps={emailValue ? { shrink: true } : {}}
+            />
+            <TextField 
+                label="Phone Number" 
+                type="tel"
+                {...register("phoneNumber")} 
+                error={!!errors.phoneNumber} 
+                helperText={errors.phoneNumber?.message} 
+                fullWidth 
+                InputLabelProps={phoneNumberValue ? { shrink: true } : {}}
             />
         </Stack>
     );
@@ -87,9 +102,10 @@ export const WizardStep2Role = () => {
 };
 
 export const WizardStep3Resident = () => {
-    const { control, watch, setValue, formState: { errors } } = useFormContext();
+    const { register, watch, setValue, control, formState: { errors } } = useFormContext();
     const communityId = watch("communityId");
     const blockId = watch("blockId");
+    const isInvitationLocked = watch("isInvitationLocked");
 
     const [communities, setCommunities] = useState([]);
     const [blocks, setBlocks] = useState([]);
@@ -138,10 +154,22 @@ export const WizardStep3Resident = () => {
                 name="communityId"
                 control={control}
                 render={({ field }) => (
-                    <TextField {...field} select label="Select Community" fullWidth error={!!errors.communityId} helperText={errors.communityId?.message} disabled={loading.c}>
-                        {loading.c ? <MenuItem disabled><CircularProgress size={20} /></MenuItem> :
-                            communities.map(c => <MenuItem key={c.id} value={c.id}>{c.communityName || c.name}</MenuItem>)
-                        }
+                    <TextField 
+                        {...field} 
+                        select 
+                        label="Community" 
+                        fullWidth 
+                        error={!!errors.communityId} 
+                        helperText={errors.communityId?.message} 
+                        disabled={loading.c || isInvitationLocked}
+                        SelectProps={{
+                            displayEmpty: true,
+                        }}
+                    >
+                        <MenuItem value="" disabled>Select a Community</MenuItem>
+                        {communities.map(c => (
+                            <MenuItem key={c.id} value={c.id}>{c.communityName || c.name}</MenuItem>
+                        ))}
                     </TextField>
                 )}
             />
@@ -150,11 +178,22 @@ export const WizardStep3Resident = () => {
                 name="blockId"
                 control={control}
                 render={({ field }) => (
-                    <TextField {...field} select label="Select Block" fullWidth error={!!errors.blockId} helperText={errors.blockId?.message} disabled={!communityId || loading.b}>
-                        {loading.b ? <MenuItem disabled><CircularProgress size={20} /></MenuItem> :
-                            blocks.length === 0 ? <MenuItem disabled>No blocks available</MenuItem> :
-                            blocks.map(b => <MenuItem key={b.id} value={b.id}>{b.blockName}</MenuItem>)
-                        }
+                    <TextField 
+                        {...field} 
+                        select 
+                        label="Block" 
+                        fullWidth 
+                        error={!!errors.blockId} 
+                        helperText={errors.blockId?.message} 
+                        disabled={!communityId || loading.b}
+                        SelectProps={{
+                            displayEmpty: true,
+                        }}
+                    >
+                        <MenuItem value="" disabled>Select a Block</MenuItem>
+                        {blocks.map(b => (
+                            <MenuItem key={b.id} value={b.id}>{b.blockName}</MenuItem>
+                        ))}
                     </TextField>
                 )}
             />
@@ -163,11 +202,22 @@ export const WizardStep3Resident = () => {
                 name="unitId"
                 control={control}
                 render={({ field }) => (
-                    <TextField {...field} select label="Select Unit" fullWidth error={!!errors.unitId} helperText={errors.unitId?.message} disabled={!blockId || loading.u}>
-                        {loading.u ? <MenuItem disabled><CircularProgress size={20} /></MenuItem> :
-                            units.length === 0 ? <MenuItem disabled>No units available</MenuItem> :
-                            units.map(u => <MenuItem key={u.id} value={u.id}>{u.unitNumber}</MenuItem>)
-                        }
+                    <TextField 
+                        {...field} 
+                        select 
+                        label="Unit" 
+                        fullWidth 
+                        error={!!errors.unitId} 
+                        helperText={errors.unitId?.message} 
+                        disabled={!blockId || loading.u}
+                        SelectProps={{
+                            displayEmpty: true,
+                        }}
+                    >
+                        <MenuItem value="" disabled>Select a Unit</MenuItem>
+                        {units.map(u => (
+                            <MenuItem key={u.id} value={u.id}>{u.unitNumber}</MenuItem>
+                        ))}
                     </TextField>
                 )}
             />
@@ -176,7 +226,9 @@ export const WizardStep3Resident = () => {
 };
 
 export const WizardStep3Admin = () => {
-    const { register, control, formState: { errors } } = useFormContext();
+    const { register, watch, control, formState: { errors } } = useFormContext();
+    const professionalInfoValue = watch("professionalInfo");
+    const invitationTokenValue = watch("invitationToken");
     const [communities, setCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -195,10 +247,22 @@ export const WizardStep3Admin = () => {
                 name="communityId"
                 control={control}
                 render={({ field }) => (
-                    <TextField {...field} select label="Select Community to Administer" fullWidth error={!!errors.communityId} helperText={errors.communityId?.message} disabled={loading}>
-                        {loading ? <MenuItem disabled><CircularProgress size={20} /></MenuItem> :
-                            communities.map(c => <MenuItem key={c.id} value={c.id}>{c.communityName || c.name}</MenuItem>)
-                        }
+                    <TextField 
+                        {...field} 
+                        select 
+                        label="Community to Administer" 
+                        fullWidth 
+                        error={!!errors.communityId} 
+                        helperText={errors.communityId?.message} 
+                        disabled={loading}
+                        SelectProps={{
+                            displayEmpty: true,
+                        }}
+                    >
+                        <MenuItem value="" disabled>Select a Community</MenuItem>
+                        {communities.map(c => (
+                            <MenuItem key={c.id} value={c.id}>{c.communityName || c.name}</MenuItem>
+                        ))}
                     </TextField>
                 )}
             />
@@ -211,6 +275,7 @@ export const WizardStep3Admin = () => {
                 helperText={errors.professionalInfo?.message} 
                 fullWidth 
                 placeholder="Briefly describe your role and experience..."
+                InputLabelProps={professionalInfoValue ? { shrink: true } : {}}
             />
 
             <TextField 
@@ -219,6 +284,7 @@ export const WizardStep3Admin = () => {
                 error={!!errors.invitationToken} 
                 helperText={errors.invitationToken?.message} 
                 fullWidth 
+                InputLabelProps={invitationTokenValue ? { shrink: true } : {}}
             />
         </Stack>
     );
@@ -227,6 +293,7 @@ export const WizardStep3Admin = () => {
 export const WizardStep4Credentials = () => {
     const { register, watch, control, formState: { errors } } = useFormContext();
     const pwd = watch("password") || "";
+    const confirmPasswordValue = watch("confirmPassword");
     
     // Simple password strength
     let strength = 0;
@@ -247,6 +314,7 @@ export const WizardStep4Credentials = () => {
                 error={!!errors.password} 
                 helperText={errors.password?.message} 
                 fullWidth 
+                InputLabelProps={pwd ? { shrink: true } : {}}
             />
             {pwd && (
                 <Box>
@@ -268,6 +336,7 @@ export const WizardStep4Credentials = () => {
                 error={!!errors.confirmPassword} 
                 helperText={errors.confirmPassword?.message} 
                 fullWidth 
+                InputLabelProps={confirmPasswordValue ? { shrink: true } : {}}
             />
 
             <Controller

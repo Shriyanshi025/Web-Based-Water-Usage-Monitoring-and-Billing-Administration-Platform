@@ -190,9 +190,8 @@ public class WaterUsageServiceImpl implements WaterUsageService {
     public List<WaterUsageResponse> getAllReadings(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
 
-        return waterUsageRepository.findAll()
+        return waterUsageRepository.findByWaterMeterResidentProfileCommunityId(adminProfile.getCommunity().getId())
                 .stream()
-                .filter(usage -> usage.getWaterMeter().getResidentProfile().getCommunity().getId().equals(adminProfile.getCommunity().getId()))
                 .map(this::mapToResponse)
                 .toList();
     }
