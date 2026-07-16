@@ -45,10 +45,11 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(List.of(
             "http://localhost:5173", "http://127.0.0.1:5173",
             "http://localhost:5174", "http://127.0.0.1:5174",
-            frontendUrl
+            "https://web-based-water-usage-monitoring-an.vercel.app"
         ));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        configuration.setExposedHeaders(List.of("Authorization"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
