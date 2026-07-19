@@ -13,6 +13,11 @@ export const getMyBills = async () => {
     return res.data.data;
 };
 
+export const getBillsByResidentId = async (residentId) => {
+    const res = await api.get(`/bills/resident/${residentId}`);
+    return res.data.data;
+};
+
 export const payBill = async (id) => {
     const res = await api.post(`/billing/me/bills/${id}/pay`);
     return res.data.data;

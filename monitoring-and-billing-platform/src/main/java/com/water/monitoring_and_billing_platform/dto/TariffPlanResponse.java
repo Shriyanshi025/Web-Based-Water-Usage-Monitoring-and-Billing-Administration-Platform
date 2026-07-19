@@ -13,4 +13,5 @@ public class TariffPlanResponse {
     private BigDecimal ratePerUnit;
     private BigDecimal fixedCharge;
     private boolean active;
+    private java.util.List<TariffSlabResponse> slabs;
 }

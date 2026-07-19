@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { 
-    Box, 
+import {
+    Box,
     Typography,
     Stack,
     IconButton,
@@ -9,152 +9,182 @@ import {
     DialogTitle,
     DialogContent,
     DialogActions,
-    Button
+    Button,
+    Chip,
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
+
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
+import SearchBar from "../../components/common/SearchBar";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import StatusBadge from "../../components/common/StatusBadge";
+import ActionButton from "../../components/common/ActionButton";
+import ErrorState from "../../components/common/ErrorState";
 
 import CommunityOpsService from "../../services/CommunityOpsService";
 
-const ApprovalsPage = () => {
-    const [pendingResidents, setPendingResidents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    
-    // UI State
-    const [viewDialogOpen, setViewDialogOpen] = useState(false);
-    const [selectedRow, setSelectedRow] = useState(null);
-    const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", content: "", onConfirm: null, confirmText: "", confirmColor: "primary" });
+// ─── Detail field ─────────────────────────────────────────────────────────────
+const DetailField = ({ label, value, children }) => (
+    <Box>
+        <Typography
+            variant="caption"
+            sx={{ display: "block", fontWeight: 500, color: "text.secondary", mb: 0.25, textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.6875rem" }}
+        >
+            {label}
+        </Typography>
+        {children || (
+            <Typography variant="body2" sx={{ fontWeight: 500, color: value ? "text.primary" : "text.disabled" }}>
+                {value || "—"}
+            </Typography>
+        )}
+    </Box>
+);
 
-    const fetchPendingResidents = useCallback(async () => {
+const ApprovalsPage = () => {
+    const theme = useTheme();
+    const [pendingResidents, setPendingResidents]   = useState([]);
+    const [loading, setLoading]                     = useState(true);
+    const [error, setError]                         = useState(null);
+    const [searchTerm, setSearchTerm]               = useState("");
+
+    // UI state
+    const [viewOpen, setViewOpen]       = useState(false);
+    const [selectedRow, setSelectedRow] = useState(null);
+    const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", message: "", onConfirm: null, confirmText: "", confirmColor: "primary" });
+
+    // ── Data fetching ─────────────────────────────────────────────────────────
+    const fetchPending = useCallback(async () => {
+        setLoading(true);
+        setError(null);
         try {
-            setLoading(true);
-            setError(null);
             const data = await CommunityOpsService.getPendingResidents();
             setPendingResidents(data || []);
         } catch (err) {
             if (err.response?.status === 403) {
                 setError("You are not authorized to view this page.");
             } else {
-                setError(err.message || "Failed to fetch pending residents");
+                setError(err?.response?.data?.message || err.message || "Failed to load pending residents.");
             }
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        fetchPendingResidents();
-    }, [fetchPendingResidents]);
+    useEffect(() => { fetchPending(); }, [fetchPending]);
 
+    // ── Actions ───────────────────────────────────────────────────────────────
     const handleAction = useCallback((actionType, row) => {
         if (actionType === "APPROVE") {
             setDialogConfig({
                 open: true,
                 title: "Approve Resident",
-                content: `Are you sure you want to approve ${row.firstName} ${row.lastName}?`,
+                message: `Approve ${row.firstName} ${row.lastName}? They will gain full access to community resident services.`,
                 confirmText: "Approve",
                 confirmColor: "success",
                 onConfirm: async () => {
                     try {
                         await CommunityOpsService.approveResident(row.userId, { approvalStatus: "APPROVED", remarks: "Approved by Community Admin" });
-                        setPendingResidents(prev => prev.filter(r => r.id !== row.id)); // Optimistic UI Update
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        setDialogConfig(prev => ({ ...prev, open: false }));
-                    }
+                        setPendingResidents(prev => prev.filter(r => r.id !== row.id));
+                    } catch (err) { console.error(err); }
+                    finally { setDialogConfig(p => ({ ...p, open: false })); }
                 }
             });
         } else if (actionType === "REJECT") {
             setDialogConfig({
                 open: true,
                 title: "Reject Resident",
-                content: `Are you sure you want to reject ${row.firstName} ${row.lastName}?`,
+                message: `Reject ${row.firstName} ${row.lastName}'s registration? Their application will be denied and they will not gain access.`,
                 confirmText: "Reject",
                 confirmColor: "error",
                 onConfirm: async () => {
                     try {
                         await CommunityOpsService.approveResident(row.userId, { approvalStatus: "REJECTED", remarks: "Rejected by Community Admin" });
-                        setPendingResidents(prev => prev.filter(r => r.id !== row.id)); // Optimistic UI Update
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        setDialogConfig(prev => ({ ...prev, open: false }));
-                    }
+                        setPendingResidents(prev => prev.filter(r => r.id !== row.id));
+                    } catch (err) { console.error(err); }
+                    finally { setDialogConfig(p => ({ ...p, open: false })); }
                 }
             });
         }
     }, []);
 
+    // ── Filtering ─────────────────────────────────────────────────────────────
+    const filteredRows = useMemo(() => {
+        const term = searchTerm.toLowerCase();
+        if (!term) return pendingResidents;
+        return pendingResidents.filter(row =>
+            (row.fullName   || "").toLowerCase().includes(term) ||
+            (row.email      || "").toLowerCase().includes(term) ||
+            (row.flatNumber || "").toLowerCase().includes(term)
+        );
+    }, [pendingResidents, searchTerm]);
+
+    // ── Columns ───────────────────────────────────────────────────────────────
     const columns = useMemo(() => [
-        { 
-            field: "fullName", 
-            headerName: "Resident Name", 
-            flex: 1, 
-            minWidth: 200,
+        {
+            field: "fullName", headerName: "Applicant", flex: 1, minWidth: 200,
             renderCell: (params) => (
-                <Typography variant="body2" fontWeight={500}>
-                    {params.row.fullName}
+                <Box>
+                    <Typography variant="body2" fontWeight={600}>{params.row.fullName || "Unnamed"}</Typography>
+                    {params.row.email && (
+                        <Typography variant="caption" color="text.secondary">{params.row.email}</Typography>
+                    )}
+                </Box>
+            )
+        },
+        {
+            field: "flatNumber", headerName: "Unit / Flat", width: 120,
+            renderCell: (params) => (
+                <Typography variant="body2" color={params.row.flatNumber ? "text.primary" : "text.disabled"}>
+                    {params.row.flatNumber || "—"}
                 </Typography>
             )
         },
-        { field: "flatNumber", headerName: "Flat", width: 120 },
-        { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
-        { 
-            field: "status", 
-            headerName: "Status", 
-            width: 150,
-            renderCell: () => (
-                <StatusBadge status="PENDING" />
-            )
+        {
+            field: "status", headerName: "Status", width: 120,
+            renderCell: () => <StatusBadge status="PENDING" />
         },
-        { 
-            field: "actions", 
-            headerName: "Actions", 
-            width: 150, 
-            sortable: false,
-            align: "center",
+        {
+            field: "actions", headerName: "Actions", width: 160, sortable: false, align: "center", headerAlign: "center",
             renderCell: (params) => (
-                <Stack direction="row" spacing={1} justifyContent="center">
+                <Stack direction="row" spacing={0.5} justifyContent="center">
                     <Tooltip title="Approve" arrow>
-                        <span>
-                            <IconButton 
-                                size="small" 
-                                color="success"
-                                onClick={(e) => { e.stopPropagation(); handleAction("APPROVE", params.row); }}
-                            >
-                                <CheckCircleIcon fontSize="small" />
-                            </IconButton>
-                        </span>
+                        <IconButton
+                            size="small"
+                            color="success"
+                            onClick={(e) => { e.stopPropagation(); handleAction("APPROVE", params.row); }}
+                            aria-label={`Approve ${params.row.fullName}`}
+                            sx={{ borderRadius: "6px", "&:hover": { bgcolor: "success.lighter" } }}
+                        >
+                            <CheckCircleIcon fontSize="small" />
+                        </IconButton>
                     </Tooltip>
                     <Tooltip title="Reject" arrow>
-                        <span>
-                            <IconButton 
-                                size="small" 
-                                color="error"
-                                onClick={(e) => { e.stopPropagation(); handleAction("REJECT", params.row); }}
-                            >
-                                <CancelIcon fontSize="small" />
-                            </IconButton>
-                        </span>
+                        <IconButton
+                            size="small"
+                            color="error"
+                            onClick={(e) => { e.stopPropagation(); handleAction("REJECT", params.row); }}
+                            aria-label={`Reject ${params.row.fullName}`}
+                            sx={{ borderRadius: "6px", "&:hover": { bgcolor: "error.lighter" } }}
+                        >
+                            <CancelIcon fontSize="small" />
+                        </IconButton>
                     </Tooltip>
                     <Tooltip title="View Details" arrow>
-                        <IconButton 
+                        <IconButton
                             size="small"
-                            onClick={(e) => { 
-                                e.stopPropagation(); 
-                                setSelectedRow(params.row);
-                                setViewDialogOpen(true);
-                            }}
+                            onClick={(e) => { e.stopPropagation(); setSelectedRow(params.row); setViewOpen(true); }}
+                            aria-label={`View details for ${params.row.fullName}`}
+                            sx={{ borderRadius: "6px", "&:hover": { bgcolor: "action.hover" } }}
                         >
                             <VisibilityIcon fontSize="small" />
                         </IconButton>
@@ -164,93 +194,171 @@ const ApprovalsPage = () => {
         }
     ], [handleAction]);
 
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="Resident Approvals" 
-                subtitle="Review and manage pending resident registrations."
+            <PageHeader
+                title="Resident Approvals"
+                subtitle="Review and action pending resident registration requests."
+                action={
+                    <ActionButton variant="outlined" startIcon={<RefreshIcon />} onClick={fetchPending} disabled={loading} sx={{ fontSize: "0.8125rem" }}>
+                        Refresh
+                    </ActionButton>
+                }
             />
 
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
-                <TableToolbar title="Pending Approvals" />
-                
+            {/* ── Pending count banner ──────────────────────────────────────── */}
+            {!loading && !error && pendingResidents.length > 0 && (
+                <Box sx={{ mb: 3, px: 2, py: 1.5, bgcolor: "warning.lighter" ?? "#fffbeb", borderRadius: 2, border: "1px solid", borderColor: "warning.light", display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <PendingActionsIcon sx={{ fontSize: "1rem", color: "warning.main" }} />
+                    <Typography variant="body2" color="warning.dark" fontWeight={600}>
+                        {pendingResidents.length} resident{pendingResidents.length !== 1 ? "s" : ""} awaiting approval
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        — Review each application and approve or reject below.
+                    </Typography>
+                </Box>
+            )}
+
+            {/* ── Empty state ───────────────────────────────────────────────── */}
+            {!loading && !error && pendingResidents.length === 0 && (
+                <Box sx={{ mb: 3, px: 2, py: 1.5, bgcolor: "success.lighter" ?? "#f0fdf4", borderRadius: 2, border: "1px solid", borderColor: "success.light", display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <HowToRegIcon sx={{ fontSize: "1rem", color: "success.main" }} />
+                    <Typography variant="body2" color="success.dark" fontWeight={600}>
+                        All caught up — no pending approvals.
+                    </Typography>
+                </Box>
+            )}
+
+            {/* ── Full-page error ───────────────────────────────────────────── */}
+            {error && !pendingResidents.length && (
+                <Box sx={{ mb: 3 }}>
+                    <ErrorState title="Failed to load approvals" message={error} onRetry={fetchPending} />
+                </Box>
+            )}
+
+            {/* ── Main table panel ──────────────────────────────────────────── */}
+            <Box sx={{ bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+                <TableToolbar
+                    title="Pending Applications"
+                    action={
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                            <SearchBar
+                                value={searchTerm}
+                                onChange={setSearchTerm}
+                                onClear={() => setSearchTerm("")}
+                                placeholder="Search by name, email, or unit…"
+                                sx={{ width: { xs: "100%", sm: 260 } }}
+                            />
+                            {searchTerm && (
+                                <Chip
+                                    label={`${filteredRows.length} of ${pendingResidents.length}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontSize: "0.75rem", height: 26 }}
+                                    onDelete={() => setSearchTerm("")}
+                                />
+                            )}
+                            {pendingResidents.length > 0 && (
+                                <Chip
+                                    icon={<PendingActionsIcon sx={{ fontSize: "0.875rem !important" }} />}
+                                    label={`${pendingResidents.length} pending`}
+                                    size="small"
+                                    color="warning"
+                                    variant="outlined"
+                                    sx={{ fontSize: "0.75rem", height: 26 }}
+                                />
+                            )}
+                        </Stack>
+                    }
+                />
                 <Box sx={{ height: 500 }}>
-                    <DataGrid 
-                        rows={pendingResidents} 
-                        columns={columns} 
+                    <DataGrid
+                        rows={filteredRows}
+                        columns={columns}
                         loading={loading}
-                        error={error}
-                        onRetry={fetchPendingResidents}
+                        error={error && pendingResidents.length ? error : null}
+                        onRetry={fetchPending}
                         disableRowSelectionOnClick
+                        pageSize={10}
                     />
                 </Box>
             </Box>
 
-            <ConfirmationDialog 
+            {/* ── Confirmation Dialog ───────────────────────────────────────── */}
+            <ConfirmationDialog
                 open={dialogConfig.open}
                 title={dialogConfig.title}
-                content={dialogConfig.content}
+                message={dialogConfig.message}
                 onConfirm={dialogConfig.onConfirm}
-                onCancel={() => setDialogConfig(prev => ({ ...prev, open: false }))}
-                confirmColor={dialogConfig.confirmColor}
+                onClose={() => setDialogConfig(p => ({ ...p, open: false }))}
+                color={dialogConfig.confirmColor}
                 confirmText={dialogConfig.confirmText}
             />
 
-            {/* View Details Dialog */}
-            <Dialog 
-                open={viewDialogOpen} 
-                onClose={() => {
-                    setViewDialogOpen(false);
-                    setSelectedRow(null);
-                }}
-                maxWidth="md"
+            {/* ── View Details dialog ───────────────────────────────────────── */}
+            <Dialog
+                open={viewOpen}
+                onClose={() => { setViewOpen(false); setSelectedRow(null); }}
+                maxWidth="sm"
                 fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}
             >
-                <DialogTitle sx={{ fontWeight: 600, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
-                    Resident Details
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2, pb: 4 }}>
+                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
+                    Applicant Details
                     {selectedRow && (
-                        <Stack spacing={4}>
-                            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={4}>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Full Name</Typography>
-                                    <Typography variant="body1" fontWeight={500}>{selectedRow.fullName || "Unnamed Resident"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Community</Typography>
-                                    <Typography variant="body1">{selectedRow.communityName || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Block</Typography>
-                                    <Typography variant="body1">{selectedRow.blockName || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Unit</Typography>
-                                    <Typography variant="body1">{selectedRow.unitNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Meter Serial</Typography>
-                                    <Typography variant="body1">{selectedRow.meterSerialNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Email Address</Typography>
-                                    <Typography variant="body1">{selectedRow.email || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Contact Number</Typography>
-                                    <Typography variant="body1">{selectedRow.phoneNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Approval Status</Typography>
-                                    <Typography variant="body1">{selectedRow.approvalStatus || "—"}</Typography>
-                                </Box>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400, mt: 0.25 }}>
+                            {selectedRow.email}
+                        </Typography>
+                    )}
+                </DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    {selectedRow && (
+                        <Stack spacing={3}>
+                            <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }} gap={3}>
+                                <DetailField label="Full Name"    value={selectedRow.fullName} />
+                                <DetailField label="Unit / Flat"  value={selectedRow.unitNumber || selectedRow.flatNumber} />
+                                <DetailField label="Block"        value={selectedRow.blockName} />
+                                <DetailField label="Community"    value={selectedRow.communityName} />
+                                <DetailField label="Meter Serial" value={selectedRow.meterSerialNumber} />
+                                <DetailField label="Contact"      value={selectedRow.phoneNumber} />
+                                <DetailField label="Approval Status">
+                                    <Box sx={{ mt: 0.5 }}>
+                                        <StatusBadge status="PENDING" />
+                                    </Box>
+                                </DetailField>
                             </Box>
                         </Stack>
                     )}
                 </DialogContent>
-                <DialogActions sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2, pb: 2, px: 3 }}>
-                    <Button variant="contained" onClick={() => { setViewDialogOpen(false); setSelectedRow(null); }}>Close</Button>
+                <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", px: 3, py: 2, gap: 1 }}>
+                    <Button onClick={() => { setViewOpen(false); setSelectedRow(null); }} sx={{ textTransform: "none" }}>
+                        Close
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="success"
+                        startIcon={<CheckCircleIcon />}
+                        sx={{ textTransform: "none" }}
+                        onClick={() => {
+                            setViewOpen(false);
+                            if (selectedRow) handleAction("APPROVE", selectedRow);
+                        }}
+                    >
+                        Approve
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        color="error"
+                        startIcon={<CancelIcon />}
+                        sx={{ textTransform: "none" }}
+                        onClick={() => {
+                            setViewOpen(false);
+                            if (selectedRow) handleAction("REJECT", selectedRow);
+                        }}
+                    >
+                        Reject
+                    </Button>
                 </DialogActions>
             </Dialog>
         </DashboardLayout>

@@ -18,4 +18,10 @@ public interface WaterUsageService {
 
     List<WaterUsageResponse> getMyReadings(String userEmail);
 
+    WaterUsageResponse updateReading(String adminEmail, Long readingId, WaterUsageRequest request);
+
+    void deleteReading(String adminEmail, Long readingId);
+
+    List<WaterUsageResponse> getReadingsByBillingCycle(String adminEmail, Long billingCycleId);
+
 }

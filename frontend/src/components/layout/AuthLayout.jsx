@@ -80,7 +80,7 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
                                     <WaterDropIcon sx={{ fontSize: 32, color: 'primary.main' }} />
                                 </Box>
                                 <Typography variant="h4" fontWeight="800" color="white" sx={{ letterSpacing: '-0.5px' }}>
-                                    AquaBase
+                                    HydroSync
                                 </Typography>
                             </Box>
 
@@ -130,7 +130,7 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
                                     <WaterDropIcon sx={{ fontSize: 24, color: 'white' }} />
                                 </Box>
                                 <Typography variant="h5" fontWeight="800" color="text.primary">
-                                    AquaBase
+                                    HydroSync
                                 </Typography>
                             </Box>
                         )}

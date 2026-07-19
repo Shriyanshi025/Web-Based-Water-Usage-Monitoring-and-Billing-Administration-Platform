@@ -48,4 +48,20 @@ public class AuthController {
         UserMeResponse response = userService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<com.water.monitoring_and_billing_platform.dto.ApiResponse<Void>> changePassword(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody com.water.monitoring_and_billing_platform.dto.ChangePasswordRequest request) {
+
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        userService.changePassword(userDetails.getUsername(), request);
+        return ResponseEntity.ok(com.water.monitoring_and_billing_platform.dto.ApiResponse.<Void>builder()
+                .success(true)
+                .message("Password changed successfully")
+                .build());
+    }
 }

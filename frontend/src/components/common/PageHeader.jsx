@@ -1,48 +1,61 @@
 import React from "react";
-import { Box, Typography, Stack } from "@mui/material";
+import { Box, Typography, Stack, Divider } from "@mui/material";
 
 /**
- * Reusable PageHeader component for consistent top-level page titles
+ * Reusable PageHeader component for consistent top-level page titles.
+ *
  * @param {Object} props
- * @param {string} props.title - Main page title
- * @param {string} [props.subtitle] - Optional subtitle or description
- * @param {React.ReactNode} [props.action] - Optional action button(s) on the right
+ * @param {string}            props.title    - Main page title
+ * @param {string}            [props.subtitle] - Optional subtitle / description
+ * @param {React.ReactNode}   [props.action]   - Optional action area (buttons, chips) on the right
  */
 const PageHeader = ({ title, subtitle, action }) => {
     return (
-        <Box sx={{ mb: 4 }}>
-            <Stack 
-                direction="row" 
-                justifyContent="space-between" 
-                alignItems="center" 
-                flexWrap="wrap" 
+        <Box sx={{ mb: 3 }}>
+            <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems={{ xs: "flex-start", sm: "center" }}
+                flexWrap="wrap"
                 gap={2}
+                sx={{ mb: subtitle ? 0.5 : 0 }}
             >
-                <Box sx={{ flex: '1 1 auto', minWidth: '250px', pr: 2 }}>
-                    <Typography 
-                        variant="h4" 
-                        fontWeight={700} 
-                        color="text.primary" 
-                        gutterBottom={!!subtitle}
-                        sx={{ 
+                {/* Title block */}
+                <Box sx={{ flex: "1 1 auto", minWidth: 0 }}>
+                    <Typography
+                        variant="h5"
+                        component="h1"
+                        sx={{
+                            fontWeight: 700,
+                            color: "text.primary",
+                            lineHeight: 1.25,
+                            letterSpacing: "-0.2px",
                             wordBreak: "break-word",
-                            lineHeight: 1.2
                         }}
                     >
                         {title}
                     </Typography>
+
                     {subtitle && (
-                        <Typography variant="body1" color="text.secondary">
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mt: 0.5, lineHeight: 1.5 }}
+                        >
                             {subtitle}
                         </Typography>
                     )}
                 </Box>
+
+                {/* Action slot */}
                 {action && (
-                    <Box sx={{ flex: '0 0 auto' }}>
+                    <Box sx={{ flex: "0 0 auto" }}>
                         {action}
                     </Box>
                 )}
             </Stack>
+
+            <Divider sx={{ mt: 2 }} />
         </Box>
     );
 };

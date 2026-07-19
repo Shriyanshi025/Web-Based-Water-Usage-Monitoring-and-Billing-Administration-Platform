@@ -74,15 +74,32 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
+        // Log the actual error for debugging
+        System.err.println("Unexpected Error: " + ex.getMessage());
+        ex.printStackTrace();
 
         Map<String, Object> response = new HashMap<>();
-
         response.put("success", false);
         response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("message", ex.getMessage());
+        response.put("message", "An unexpected server error occurred. Please try again later.");
         response.put("timestamp", LocalDateTime.now());
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(
+            org.springframework.dao.DataIntegrityViolationException ex) {
+        System.err.println("Database Integrity Violation: " + ex.getMessage());
+        ex.printStackTrace();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("message", "Unable to complete transaction. A database conflict or constraint violation occurred.");
+        response.put("timestamp", LocalDateTime.now());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -352,5 +369,25 @@ public class GlobalExceptionHandler {
         response.put("status", HttpStatus.CONFLICT.value());
         response.put("timestamp", LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<Map<String, Object>> handleSecurityException(SecurityException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.FORBIDDEN.value());
+        response.put("timestamp", LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", false);
+        response.put("message", ex.getMessage());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
+        response.put("timestamp", LocalDateTime.now());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 }

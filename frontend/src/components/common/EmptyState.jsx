@@ -1,51 +1,81 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
 import InboxIcon from "@mui/icons-material/Inbox";
-import { motion } from "framer-motion";
 
 /**
- * Reusable EmptyState component
- * @param {Object} props
- * @param {string} props.title - Main title
- * @param {string} props.message - Subtitle or message
- * @param {React.ReactNode} [props.icon] - Custom icon component
- * @param {React.ReactNode} [props.action] - Optional action element (usually a button)
+ * Reusable EmptyState component — shown when a list or data view has no records.
+ *
+ * @param {Object}           props
+ * @param {string}           [props.title="No Data Found"]
+ * @param {string}           [props.message]
+ * @param {React.ReactNode}  [props.icon]   - Custom icon; defaults to InboxIcon
+ * @param {React.ReactNode}  [props.action] - Optional CTA (usually a Button)
  */
-const EmptyState = ({ title = "No Data Found", message = "There is currently no data to display.", icon, action }) => {
+const EmptyState = ({
+    title = "No Data Found",
+    message = "There is currently no data to display.",
+    icon,
+    action,
+}) => {
     return (
         <Box
-            component={motion.div}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
             sx={{
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                p: 6,
+                py: 7,
+                px: 4,
                 textAlign: "center",
-                color: "text.secondary",
-                borderRadius: 2,
                 bgcolor: "background.paper",
+                borderRadius: 2,
                 border: "1px dashed",
-                borderColor: "divider"
+                borderColor: "divider",
+                width: "100%",
             }}
         >
-            <Box sx={{ mb: 2, color: "text.disabled", "& > svg": { fontSize: 64 } }}>
+            {/* Icon */}
+            <Box
+                sx={{
+                    mb: 2,
+                    color: "text.disabled",
+                    "& .MuiSvgIcon-root": { fontSize: "3rem" },
+                    "& > svg": { fontSize: "3rem" },
+                }}
+            >
                 {icon || <InboxIcon />}
             </Box>
-            <Typography variant="h6" color="text.primary" fontWeight={600} gutterBottom>
+
+            {/* Title */}
+            <Typography
+                variant="h6"
+                sx={{
+                    fontWeight: 600,
+                    color: "text.primary",
+                    fontSize: "0.9375rem",
+                    lineHeight: 1.4,
+                    mb: 0.75,
+                }}
+            >
                 {title}
             </Typography>
-            <Typography variant="body2" sx={{ maxWidth: 400, mb: action ? 3 : 0 }}>
+
+            {/* Message */}
+            <Typography
+                variant="body2"
+                sx={{
+                    color: "text.secondary",
+                    maxWidth: 360,
+                    lineHeight: 1.6,
+                    fontSize: "0.8125rem",
+                    ...(action && { mb: 3 }),
+                }}
+            >
                 {message}
             </Typography>
-            {action && (
-                <Box>
-                    {action}
-                </Box>
-            )}
+
+            {/* Optional action */}
+            {action && <Box>{action}</Box>}
         </Box>
     );
 };

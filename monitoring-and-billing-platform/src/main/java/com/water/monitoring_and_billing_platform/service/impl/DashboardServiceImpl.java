@@ -31,6 +31,10 @@ public class DashboardServiceImpl implements DashboardService {
     private final UserRepository userRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final ActivityLogRepository activityLogRepository;
+    private final TariffPlanRepository tariffPlanRepository;
+    private final BillRepository billRepository;
+    private final BillingCycleRepository billingCycleRepository;
+    private final com.water.monitoring_and_billing_platform.service.BillService billService;
 
     @Override
     public DashboardResponse getMainAdminDashboard() {
@@ -113,11 +117,29 @@ public class DashboardServiceImpl implements DashboardService {
                     .mapToDouble(WaterUsage::getUnitsConsumed)
                     .sum();
 
-            double unbilledUnits = usageList.stream()
-                    .filter(u -> !u.isBilled())
-                    .mapToDouble(WaterUsage::getUnitsConsumed)
-                    .sum();
-            currentBill = unbilledUnits * 15.0;
+            BillingCycle cycle = billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc().orElse(null);
+            if (cycle != null) {
+                Optional<Bill> existingBill = billRepository.findByResidentProfileIdAndBillingCycleId(profile.getId(), cycle.getId());
+                if (existingBill.isPresent()) {
+                    currentBill = existingBill.get().getTotalAmount().doubleValue();
+                } else {
+                    currentBill = billService.estimateBillForResident(profile.getId(), cycle.getId()).doubleValue();
+                }
+            } else {
+                double unbilledUnits = usageList.stream()
+                        .filter(u -> !u.isBilled())
+                        .mapToDouble(WaterUsage::getUnitsConsumed)
+                        .sum();
+                TariffPlan plan = tariffPlanRepository.findByActiveTrue().stream().findFirst().orElse(null);
+                if (plan != null) {
+                    double fixed = plan.getFixedCharge() != null ? plan.getFixedCharge().doubleValue() : 0.0;
+                    double rate = plan.getRatePerUnit() != null ? plan.getRatePerUnit().doubleValue() : 15.0;
+                    double subtotal = fixed + (unbilledUnits * rate);
+                    currentBill = subtotal * 1.05; // 5% tax
+                } else {
+                    currentBill = unbilledUnits * 15.0;
+                }
+            }
 
         }
 

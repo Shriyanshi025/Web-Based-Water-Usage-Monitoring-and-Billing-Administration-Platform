@@ -8,6 +8,7 @@ import com.water.monitoring_and_billing_platform.dto.ResidentProfileResponse;
 import com.water.monitoring_and_billing_platform.entity.*;
 import com.water.monitoring_and_billing_platform.exception.*;
 import com.water.monitoring_and_billing_platform.repository.*;
+import com.water.monitoring_and_billing_platform.service.AlertService;
 import com.water.monitoring_and_billing_platform.service.ResidentProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,20 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     private final ActivityLogRepository activityLogRepository;
 
     private final WaterUsageRepository waterUsageRepository;
+
+    private final AlertService alertService;
+
+    private final PaymentRepository paymentRepository;
+
+    private final InvoiceRepository invoiceRepository;
+
+    private final AlertRepository alertRepository;
+
+    private final ComplaintRepository complaintRepository;
+
+    private final NotificationRepository notificationRepository;
+
+    private final InvitationRepository invitationRepository;
 
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
@@ -110,6 +125,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResidentProfileResponse getResidentById(String adminEmail, Long id) {
         if (id == null) {
             throw new ResidentProfileNotFoundException();
@@ -128,6 +144,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ResidentProfileResponse> getAllResidents(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
         
@@ -165,6 +182,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResidentProfileResponse getSelfProfile(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
@@ -243,6 +261,28 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
             throw new ResidentProfileNotFoundException();
         }
         
+        User residentUser = resident.getUser();
+        
+        // 1. Delete Payments
+        List<Payment> payments = paymentRepository.findByResidentId(id);
+        paymentRepository.deleteAll(payments);
+        
+        // 2. Delete Invoices linked to Resident's Bills
+        List<Bill> bills = billRepository.findByResidentProfileId(id);
+        for (Bill bill : bills) {
+            invoiceRepository.findByBillId(bill.getId()).ifPresent(invoiceRepository::delete);
+        }
+        
+        // 3. Delete Alerts linked to Resident Profile or Recipient User
+        alertRepository.deleteAll(alertRepository.findByResidentId(id));
+        if (residentUser != null) {
+            alertRepository.deleteAll(alertRepository.findByRecipientIdOrderByCreatedDateDesc(residentUser.getId()));
+        }
+        
+        // 4. Delete Bills
+        billRepository.deleteAll(bills);
+        
+        // 5. Delete WaterUsage and WaterMeter
         java.util.Optional<WaterMeter> waterMeterOpt = waterMeterRepository.findByResidentProfileId(id);
         if (waterMeterOpt.isPresent()) {
             WaterMeter meter = waterMeterOpt.get();
@@ -251,15 +291,42 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
             waterMeterRepository.delete(meter);
         }
         
-        List<Bill> bills = billRepository.findByResidentProfileId(id);
-        billRepository.deleteAll(bills);
+        // 6. Delete Complaints created by Resident or nullify assigned/updated links
+        complaintRepository.deleteAll(complaintRepository.findByResidentIdOrderByCreatedAtDesc(id));
+        if (residentUser != null) {
+            List<Complaint> assignedComplaints = complaintRepository.findByAssignedToId(residentUser.getId());
+            for (Complaint c : assignedComplaints) {
+                c.setAssignedTo(null);
+                complaintRepository.save(c);
+            }
+            List<Complaint> updatedComplaints = complaintRepository.findByLastUpdatedById(residentUser.getId());
+            for (Complaint c : updatedComplaints) {
+                c.setLastUpdatedBy(null);
+                complaintRepository.save(c);
+            }
+        }
         
-        User residentUser = resident.getUser();
+        // 7. Delete Notifications & Invitations
+        if (residentUser != null) {
+            if (residentUser.getEmail() != null) {
+                notificationRepository.deleteAll(notificationRepository.findByRecipient(residentUser.getEmail()));
+                invitationRepository.deleteAll(invitationRepository.findByEmail(residentUser.getEmail()));
+            }
+            if (resident.getPhoneNumber() != null) {
+                notificationRepository.deleteAll(notificationRepository.findByRecipient(resident.getPhoneNumber()));
+            }
+        }
         
-        residentProfileRepository.delete(resident);
-        
+        // 8. Delete Activity Logs
         if (residentUser != null) {
             activityLogRepository.deleteByUserId(residentUser.getId());
+        }
+        
+        // 9. Delete Resident Profile
+        residentProfileRepository.delete(resident);
+        
+        // 10. Delete User account
+        if (residentUser != null) {
             userRepository.delete(residentUser);
         }
     }
@@ -294,6 +361,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ResidentProfileResponse> getPendingResidents(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
         return residentProfileRepository.findByCommunityIdAndVerifiedFalseAndUserApprovalStatus(adminProfile.getCommunity().getId(), ApprovalStatus.PENDING)
@@ -373,6 +441,17 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                 waterMeterRepository.save(meter);
             }
             
+            alertService.createInAppNotification(
+                    user,
+                    savedProfile,
+                    savedProfile.getCommunity(),
+                    "Registration Approved",
+                    "Your registration has been approved. Your Resident ID is " + officialUserId,
+                    com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
+                    null
+            );
+
             activityLogRepository.save(ActivityLog.builder()
                 .title("Resident Approved")
                 .description("Resident profile approved for " + user.getFullName() + ". Assigned ID: " + officialUserId)

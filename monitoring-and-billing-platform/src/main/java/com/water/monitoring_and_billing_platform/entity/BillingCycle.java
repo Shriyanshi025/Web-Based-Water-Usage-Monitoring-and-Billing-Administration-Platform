@@ -3,6 +3,8 @@ package com.water.monitoring_and_billing_platform.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.water.monitoring_and_billing_platform.enums.BillingCycleStatus;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -31,6 +33,10 @@ public class BillingCycle {
     @Column(nullable = false)
     private boolean active;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private BillingCycleStatus status;
+
     private LocalDate generatedAt;
 
     @Column(nullable = false, updatable = false)
@@ -42,6 +48,9 @@ public class BillingCycle {
     public void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = BillingCycleStatus.CLOSED;
+        }
     }
 
     @PreUpdate

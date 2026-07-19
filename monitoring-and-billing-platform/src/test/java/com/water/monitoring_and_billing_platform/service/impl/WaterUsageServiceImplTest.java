@@ -69,7 +69,7 @@ class WaterUsageServiceImplTest {
 
         when(userRepository.findByEmail(adminEmail)).thenReturn(Optional.of(user));
         when(communityAdminProfileRepository.findByUserId(10L)).thenReturn(Optional.of(adminProfile));
-        when(waterUsageRepository.existsByWaterMeterIdAndReadingDateAndCurrentReading(1L, request.getReadingDate(), request.getCurrentReading()))
+        when(waterUsageRepository.existsByWaterMeterIdAndReadingDate(1L, request.getReadingDate()))
                 .thenReturn(true);
 
         assertThrows(DuplicateWaterUsageException.class, () -> waterUsageService.addReading(adminEmail, request));

@@ -13,5 +13,6 @@ public class BillingCycleResponse {
     private LocalDate periodStart;
     private LocalDate periodEnd;
     private boolean active;
+    private String status;
     private LocalDate generatedAt;
 }

@@ -25,14 +25,16 @@ export const NAVIGATION_CONFIG = {
             path: ROUTES.MAIN_ADMIN_APPROVALS, 
             icon: "DomainVerificationIcon" 
         },
-        // Example of nested support (future ready)
-        // {
-        //     label: "Settings",
-        //     icon: "SettingsIcon",
-        //     children: [
-        //         { label: "General", path: "/main-admin/settings/general" }
-        //     ]
-        // }
+        { 
+            label: "Notifications", 
+            path: ROUTES.MAIN_ADMIN_NOTIFICATIONS, 
+            icon: "MailIcon" 
+        },
+        { 
+            label: "My Profile", 
+            path: ROUTES.MAIN_ADMIN_PROFILE, 
+            icon: "PersonIcon" 
+        },
     ],
     [ROLES.COMMUNITY_ADMIN]: [
         { 
@@ -85,6 +87,21 @@ export const NAVIGATION_CONFIG = {
             path: ROUTES.COMMUNITY_ADMIN_INVITATIONS, 
             icon: "MailIcon" 
         },
+        {
+            label: "Complaints",
+            path: ROUTES.COMMUNITY_ADMIN_COMPLAINTS,
+            icon: "MailIcon"
+        },
+        {
+            label: "Notifications",
+            path: ROUTES.COMMUNITY_ADMIN_NOTIFICATIONS,
+            icon: "MailIcon"
+        },
+        {
+            label: "My Profile",
+            path: ROUTES.COMMUNITY_ADMIN_PROFILE,
+            icon: "PersonIcon"
+        },
     ],
     [ROLES.USER]: [
         { 
@@ -98,6 +115,11 @@ export const NAVIGATION_CONFIG = {
             icon: "ReceiptIcon" 
         },
         { 
+            label: "Payment History", 
+            path: ROUTES.RESIDENT_PAYMENTS, 
+            icon: "ReceiptIcon" 
+        },
+        { 
             label: "Usage History", 
             path: ROUTES.RESIDENT_USAGE, 
             icon: "TimelineIcon" 
@@ -106,6 +128,21 @@ export const NAVIGATION_CONFIG = {
             label: "Meter Details", 
             path: ROUTES.RESIDENT_METER, 
             icon: "WaterDropIcon" 
+        },
+        { 
+            label: "Raise Complaint", 
+            path: ROUTES.RESIDENT_COMPLAINTS + "?tab=raise", 
+            icon: "MailIcon" 
+        },
+        { 
+            label: "Complaint History", 
+            path: ROUTES.RESIDENT_COMPLAINTS + "?tab=history", 
+            icon: "MailIcon" 
+        },
+        { 
+            label: "Notifications", 
+            path: ROUTES.RESIDENT_NOTIFICATIONS, 
+            icon: "MailIcon" 
         },
         { 
             label: "My Profile", 

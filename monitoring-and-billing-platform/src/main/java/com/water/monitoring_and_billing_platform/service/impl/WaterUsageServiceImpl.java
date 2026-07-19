@@ -28,6 +28,8 @@ import com.water.monitoring_and_billing_platform.service.WaterUsageService;
 import com.water.monitoring_and_billing_platform.service.BillingService;
 import com.water.monitoring_and_billing_platform.entity.ResidentProfile;
 import com.water.monitoring_and_billing_platform.repository.ResidentProfileRepository;
+import com.water.monitoring_and_billing_platform.repository.BillingCycleRepository;
+import com.water.monitoring_and_billing_platform.entity.BillingCycle;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +44,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
     private final ResidentProfileRepository residentProfileRepository;
     private final BillingService billingService;
     private final com.water.monitoring_and_billing_platform.repository.ActivityLogRepository activityLogRepository;
+    private final BillingCycleRepository billingCycleRepository;
 
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
@@ -54,7 +57,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
     @org.springframework.transaction.annotation.Transactional
     public WaterUsageResponse addReading(String adminEmail, WaterUsageRequest request) {
         validateReadingRequest(adminEmail, request.getWaterMeterId(), request.getCurrentReading(), request.getReadingDate());
-        if (waterUsageRepository.existsByWaterMeterIdAndReadingDateAndCurrentReading(request.getWaterMeterId(), request.getReadingDate(), request.getCurrentReading())) {
+        if (waterUsageRepository.existsByWaterMeterIdAndReadingDate(request.getWaterMeterId(), request.getReadingDate())) {
             throw new DuplicateWaterUsageException();
         }
 
@@ -67,8 +70,15 @@ public class WaterUsageServiceImpl implements WaterUsageService {
             throw new WaterMeterNotFoundException();
         }
 
-        double previousReading = meter.getCurrentReading();
+        java.util.Optional<WaterUsage> prevOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(meter.getId(), request.getReadingDate());
+        double previousReading = prevOpt.isPresent() ? prevOpt.get().getCurrentReading() : meter.getInitialReading();
+
         if (request.getCurrentReading() < previousReading) {
+            throw new InvalidMeterReadingException();
+        }
+
+        java.util.Optional<WaterUsage> nextOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(meter.getId(), request.getReadingDate());
+        if (nextOpt.isPresent() && nextOpt.get().getCurrentReading() < request.getCurrentReading()) {
             throw new InvalidMeterReadingException();
         }
 
@@ -84,8 +94,8 @@ public class WaterUsageServiceImpl implements WaterUsageService {
                 .build();
 
         usage = waterUsageRepository.save(usage);
-        meter.setCurrentReading(request.getCurrentReading());
-        waterMeterRepository.save(meter);
+
+        recalculateMeterReadings(meter);
 
         billingService.generateBillForReading(usage);
 
@@ -138,27 +148,36 @@ public class WaterUsageServiceImpl implements WaterUsageService {
                 if (!meter.getResidentProfile().getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
                     throw new WaterMeterNotFoundException();
                 }
-                if (waterUsageRepository.existsByWaterMeterIdAndReadingDateAndCurrentReading(meterId, readingDate, currentReading)) {
+                if (waterUsageRepository.existsByWaterMeterIdAndReadingDate(meterId, readingDate)) {
                     continue;
                 }
 
-                double previousReading = meter.getCurrentReading();
+                java.util.Optional<WaterUsage> prevOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(meter.getId(), readingDate);
+                double previousReading = prevOpt.isPresent() ? prevOpt.get().getCurrentReading() : meter.getInitialReading();
+
                 if (currentReading < previousReading) {
                     throw new InvalidMeterReadingException();
                 }
+
+                java.util.Optional<WaterUsage> nextOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(meter.getId(), readingDate);
+                if (nextOpt.isPresent() && nextOpt.get().getCurrentReading() < currentReading) {
+                    throw new InvalidMeterReadingException();
+                }
+
+                double unitsConsumed = currentReading - previousReading;
 
                 WaterUsage usage = WaterUsage.builder()
                         .waterMeter(meter)
                         .previousReading(previousReading)
                         .currentReading(currentReading)
-                        .unitsConsumed(currentReading - previousReading)
+                        .unitsConsumed(unitsConsumed)
                         .readingDate(readingDate)
                         .billed(false)
                         .build();
 
                 usage = waterUsageRepository.save(usage);
-                meter.setCurrentReading(currentReading);
-                waterMeterRepository.save(meter);
+
+                recalculateMeterReadings(meter);
                 
                 billingService.generateBillForReading(usage);
                 
@@ -247,6 +266,100 @@ public class WaterUsageServiceImpl implements WaterUsageService {
             throw new IllegalArgumentException("Reading date is required.");
         }
         getAdminProfile(adminEmail);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public WaterUsageResponse updateReading(String adminEmail, Long readingId, WaterUsageRequest request) {
+        validateReadingRequest(adminEmail, request.getWaterMeterId(), request.getCurrentReading(), request.getReadingDate());
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+
+        WaterUsage usage = waterUsageRepository.findById(readingId)
+                .orElseThrow(com.water.monitoring_and_billing_platform.exception.WaterUsageNotFoundException::new);
+
+        WaterMeter meter = usage.getWaterMeter();
+        if (!meter.getResidentProfile().getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new WaterMeterNotFoundException();
+        }
+
+        // Prevent duplicate readings for the same meter and date (except if it is the current record we are updating)
+        java.util.Optional<WaterUsage> duplicateOpt = waterUsageRepository.findByWaterMeterIdAndReadingDate(request.getWaterMeterId(), request.getReadingDate());
+        if (duplicateOpt.isPresent() && !duplicateOpt.get().getId().equals(readingId)) {
+            throw new DuplicateWaterUsageException();
+        }
+
+        // Find previous reading before the new reading date (excluding this reading itself)
+        java.util.Optional<WaterUsage> prevOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(meter.getId(), request.getReadingDate());
+        double previousReading = prevOpt.isPresent() && !prevOpt.get().getId().equals(readingId) ? prevOpt.get().getCurrentReading() : meter.getInitialReading();
+
+        if (request.getCurrentReading() < previousReading) {
+            throw new InvalidMeterReadingException();
+        }
+
+        // Find next reading after the new reading date (excluding this reading itself)
+        java.util.Optional<WaterUsage> nextOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(meter.getId(), request.getReadingDate());
+        if (nextOpt.isPresent() && !nextOpt.get().getId().equals(readingId)) {
+            if (nextOpt.get().getCurrentReading() < request.getCurrentReading()) {
+                throw new InvalidMeterReadingException();
+            }
+        }
+
+        usage.setCurrentReading(request.getCurrentReading());
+        usage.setReadingDate(request.getReadingDate());
+        waterUsageRepository.save(usage);
+
+        recalculateMeterReadings(meter);
+
+        return mapToResponse(usage);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteReading(String adminEmail, Long readingId) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        WaterUsage usage = waterUsageRepository.findById(readingId)
+                .orElseThrow(com.water.monitoring_and_billing_platform.exception.WaterUsageNotFoundException::new);
+
+        WaterMeter meter = usage.getWaterMeter();
+        if (!meter.getResidentProfile().getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new WaterMeterNotFoundException();
+        }
+
+        waterUsageRepository.delete(usage);
+
+        recalculateMeterReadings(meter);
+    }
+
+    @Override
+    public List<WaterUsageResponse> getReadingsByBillingCycle(String adminEmail, Long billingCycleId) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        BillingCycle cycle = billingCycleRepository.findById(billingCycleId)
+                .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found"));
+
+        return waterUsageRepository.findByWaterMeterResidentProfileCommunityIdAndReadingDateBetween(
+                adminProfile.getCommunity().getId(),
+                cycle.getPeriodStart(),
+                cycle.getPeriodEnd()
+        ).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    private void recalculateMeterReadings(WaterMeter meter) {
+        List<WaterUsage> readings = waterUsageRepository.findByWaterMeterId(meter.getId()).stream()
+                .sorted(java.util.Comparator.comparing(WaterUsage::getReadingDate).thenComparing(WaterUsage::getId))
+                .toList();
+
+        double currentPrev = meter.getInitialReading();
+        for (WaterUsage u : readings) {
+            u.setPreviousReading(currentPrev);
+            u.setUnitsConsumed(u.getCurrentReading() - currentPrev);
+            waterUsageRepository.save(u);
+            currentPrev = u.getCurrentReading();
+        }
+
+        meter.setCurrentReading(currentPrev);
+        waterMeterRepository.save(meter);
     }
 
     private WaterUsageResponse mapToResponse(WaterUsage usage) {

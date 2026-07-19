@@ -1,143 +1,258 @@
 import React from "react";
-import { Box, Typography, Stack, Avatar, Skeleton } from "@mui/material";
+import { Box, Typography, Stack, Skeleton, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-import { motion } from "framer-motion";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
+import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 
 /**
- * Reusable StatCard for top-level KPIs
- * @param {Object} props
- * @param {string} props.title
- * @param {string|number} props.value
- * @param {React.ReactNode} props.icon
- * @param {string} props.color - Theme color string (e.g. "primary.main")
- * @param {number} [props.trend] - Percentage trend (positive or negative)
- * @param {string} [props.trendLabel] - E.g., "vs last month"
+ * AnimatedCounter — counts up from 0 to `value` using rAF.
+ * For string values it renders directly.
  */
 const AnimatedCounter = ({ value, formatValue }) => {
     const [count, setCount] = React.useState(0);
-    
+
     React.useEffect(() => {
-        if (typeof value !== 'number') {
+        if (typeof value !== "number") {
             setCount(value);
             return;
         }
-        
-        let start = 0;
-        const duration = 1500;
-        const end = value;
+
         let startTime = null;
+        const duration = 1200;
+        const end = value;
 
         const animate = (timestamp) => {
             if (!startTime) startTime = timestamp;
-            const progress = timestamp - startTime;
-            const current = Math.min(progress / duration, 1);
-            // Ease out quart
-            const easeOut = 1 - Math.pow(1 - current, 4);
-            
-            setCount(start + (end - start) * easeOut);
-            
-            if (current < 1) {
-                requestAnimationFrame(animate);
-            } else {
-                setCount(end);
-            }
+            const progress = Math.min((timestamp - startTime) / duration, 1);
+            // Ease-out quart
+            const easeOut = 1 - Math.pow(1 - progress, 4);
+            setCount(end * easeOut);
+            if (progress < 1) requestAnimationFrame(animate);
+            else setCount(end);
         };
+
         requestAnimationFrame(animate);
     }, [value]);
 
-    if (typeof value !== 'number') return <>{value}</>;
+    if (typeof value !== "number") return <>{value}</>;
     return <>{formatValue ? formatValue(count) : Math.round(count).toLocaleString()}</>;
 };
 
-const StatCard = ({ title, value, icon, color = "primary.main", trend, trendLabel, formatValue, loading, error, empty }) => {
+// ─── Shared card shell sx ────────────────────────────────────────────────────
+const cardShell = {
+    p: "20px 24px",
+    bgcolor: "background.paper",
+    borderRadius: 2,
+    border: "1px solid",
+    borderColor: "divider",
+    boxShadow: "0 1px 3px rgba(12, 25, 41, 0.06), 0 1px 2px rgba(12, 25, 41, 0.04)",
+    height: "100%",
+    transition: "box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+    "&:hover": {
+        boxShadow: "0 4px 12px rgba(12, 25, 41, 0.08)",
+    },
+};
+
+/**
+ * StatCard — top-level KPI card.
+ *
+ * Layout (top → bottom):
+ *   Row:  [icon avatar]          [optional trend badge]
+ *         [value]
+ *         [title / label]
+ *         [trend label text]
+ *
+ * @param {Object}           props
+ * @param {string}           props.title
+ * @param {string|number}    props.value
+ * @param {React.ReactNode}  props.icon
+ * @param {string}           [props.color="primary.main"] - Resolved theme color path
+ * @param {number}           [props.trend]      - % change (positive or negative)
+ * @param {string}           [props.trendLabel] - e.g. "vs last month"
+ * @param {function}         [props.formatValue]
+ * @param {boolean}          [props.loading]
+ * @param {string}           [props.error]
+ * @param {boolean}          [props.empty]
+ */
+const StatCard = ({
+    title,
+    value,
+    icon,
+    color = "primary.main",
+    trend,
+    trendLabel,
+    formatValue,
+    loading,
+    error,
+    empty,
+    onClick,
+}) => {
+    const theme = useTheme();
+
+    // Resolve color path string → actual hex from theme palette
+    const resolveColor = (colorPath) => {
+        const keys = colorPath.split(".");
+        let resolved = theme.palette;
+        for (const k of keys) {
+            resolved = resolved?.[k];
+        }
+        return typeof resolved === "string" ? resolved : theme.palette.primary.main;
+    };
+
+    const resolvedColor = resolveColor(color);
+
+    // ── Loading ──────────────────────────────────────────────────────────────
     if (loading) {
         return (
-            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 3, boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)", border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-                <Skeleton variant="circular" width={56} height={56} />
-                <Box flexGrow={1}>
-                    <Skeleton variant="text" width="60%" height={20} />
-                    <Skeleton variant="text" width="80%" height={40} />
-                </Box>
+            <Box sx={{ ...cardShell, "&:hover": undefined }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "8px" }} />
+                    <Skeleton variant="text" width="30%" height={20} />
+                </Stack>
+                <Skeleton variant="text" width="50%" height={36} sx={{ mb: 0.5 }} />
+                <Skeleton variant="text" width="65%" height={16} />
             </Box>
         );
     }
 
+    // ── Error ────────────────────────────────────────────────────────────────
     if (error) {
         return (
-            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 3, boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)", border: "1px solid", borderColor: "error.main", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-                <Typography color="error" variant="body2">{error}</Typography>
+            <Box sx={{ ...cardShell, borderColor: "error.main" }}>
+                <Typography variant="body2" color="error.main" fontWeight={500}>
+                    {error}
+                </Typography>
             </Box>
         );
     }
 
+    // ── Empty ────────────────────────────────────────────────────────────────
     if (empty) {
         return (
-            <Box sx={{ p: 3, bgcolor: "background.paper", borderRadius: 3, boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)", border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 2, height: "100%" }}>
-                <Typography color="text.secondary" variant="body2">No data</Typography>
+            <Box sx={cardShell}>
+                <Typography variant="body2" color="text.disabled">
+                    No data available
+                </Typography>
             </Box>
         );
     }
 
+    // ── Trend visuals ────────────────────────────────────────────────────────
+    const trendUp    = trend > 0;
+    const trendDown  = trend < 0;
+    const trendFlat  = trend === 0;
+    const trendColor = trendUp ? "success.main" : trendDown ? "error.main" : "text.secondary";
+    const TrendIcon  = trendUp ? TrendingUpIcon : trendDown ? TrendingDownIcon : TrendingFlatIcon;
+
     return (
-        <Box
-            component={motion.div}
-            whileHover={{ y: -4 }}
-            sx={{
-                p: 3,
-                bgcolor: "background.paper",
-                borderRadius: 3,
-                boxShadow: "0px 4px 20px rgba(0, 0, 0, 0.03)",
-                border: "1px solid",
-                borderColor: "divider",
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                height: "100%"
+        <Box 
+            sx={{ 
+                ...cardShell,
+                cursor: onClick ? "pointer" : "default",
+                transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
+                "&:hover": {
+                    boxShadow: "0 4px 12px rgba(12, 25, 41, 0.08)",
+                    transform: onClick ? "translateY(-2px)" : "none",
+                    borderColor: onClick ? "primary.light" : "divider"
+                }
             }}
+            onClick={onClick}
         >
-            <Avatar sx={{ 
-                bgcolor: (theme) => {
-                    const colorPath = color.split('.');
-                    let themeColor = theme.palette;
-                    for (const key of colorPath) {
-                        if (themeColor[key]) themeColor = themeColor[key];
-                    }
-                    return typeof themeColor === 'string' ? alpha(themeColor, 0.15) : alpha(theme.palette.primary.main, 0.15);
-                }, 
-                color: color, 
-                width: 56, 
-                height: 56 
-            }}>
-                {icon}
-            </Avatar>
-            <Box flexGrow={1}>
-                <Typography variant="body2" color="text.secondary" fontWeight={500} gutterBottom>
-                    {title}
-                </Typography>
-                <Typography variant="h4" fontWeight={700} color="text.primary">
-                    <AnimatedCounter value={value} formatValue={formatValue} />
-                </Typography>
-                
+            {/* ── Top row: icon mark + trend badge ── */}
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                {/* Icon container */}
+                <Box
+                    sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: "8px",
+                        bgcolor: alpha(resolvedColor, 0.12),
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: resolvedColor,
+                        flexShrink: 0,
+                        "& .MuiSvgIcon-root": { fontSize: "1.25rem" },
+                    }}
+                >
+                    {icon}
+                </Box>
+
+                {/* Trend badge (only if provided) */}
                 {trend !== undefined && (
-                    <Stack direction="row" spacing={0.5} alignItems="center" mt={0.5}>
-                        {trend >= 0 ? (
-                            <TrendingUpIcon sx={{ fontSize: 16, color: "success.main" }} />
-                        ) : (
-                            <TrendingDownIcon sx={{ fontSize: 16, color: "error.main" }} />
-                        )}
-                        <Typography variant="caption" fontWeight={600} color={trend >= 0 ? "success.main" : "error.main"}>
+                    <Stack
+                        direction="row"
+                        alignItems="center"
+                        spacing={0.25}
+                        sx={{
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: "4px",
+                            bgcolor: trendUp
+                                ? alpha(theme.palette.success.main, 0.10)
+                                : trendDown
+                                    ? alpha(theme.palette.error.main, 0.10)
+                                    : "action.hover",
+                        }}
+                    >
+                        <TrendIcon sx={{ fontSize: "0.875rem", color: trendColor }} />
+                        <Typography
+                            sx={{
+                                fontSize: "0.6875rem",
+                                fontWeight: 600,
+                                color: trendColor,
+                                lineHeight: 1,
+                            }}
+                        >
                             {Math.abs(trend)}%
                         </Typography>
-                        {trendLabel && (
-                            <Typography variant="caption" color="text.secondary">
-                                {trendLabel}
-                            </Typography>
-                        )}
                     </Stack>
                 )}
-            </Box>
+            </Stack>
+
+            {/* ── Value ── */}
+            <Typography
+                variant="h4"
+                sx={{
+                    fontWeight: 700,
+                    color: "text.primary",
+                    lineHeight: 1.1,
+                    letterSpacing: "-0.5px",
+                    mb: 0.5,
+                }}
+            >
+                <AnimatedCounter value={value} formatValue={formatValue} />
+            </Typography>
+
+            {/* ── Title / Label ── */}
+            <Typography
+                variant="body2"
+                sx={{
+                    fontWeight: 500,
+                    color: "text.secondary",
+                    fontSize: "0.8125rem",
+                    lineHeight: 1.4,
+                }}
+            >
+                {title}
+            </Typography>
+
+            {/* ── Trend label text (below title) ── */}
+            {trend !== undefined && trendLabel && (
+                <Typography
+                    variant="caption"
+                    sx={{
+                        display: "block",
+                        mt: 0.5,
+                        fontSize: "0.75rem",
+                        color: "text.disabled",
+                        lineHeight: 1.3,
+                    }}
+                >
+                    {trendLabel}
+                </Typography>
+            )}
         </Box>
     );
 };

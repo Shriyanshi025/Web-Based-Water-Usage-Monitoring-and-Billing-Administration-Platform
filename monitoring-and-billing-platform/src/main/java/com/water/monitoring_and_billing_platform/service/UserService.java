@@ -13,4 +13,6 @@ public interface UserService {
 
     UserMeResponse getCurrentUser(String email);
 
+    void changePassword(String email, com.water.monitoring_and_billing_platform.dto.ChangePasswordRequest request);
+
 }

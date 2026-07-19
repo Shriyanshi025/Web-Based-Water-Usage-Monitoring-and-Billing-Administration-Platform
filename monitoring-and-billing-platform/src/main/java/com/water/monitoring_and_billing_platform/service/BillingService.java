@@ -17,4 +17,5 @@ public interface BillingService {
     List<BillResponse> getMyBills(String userEmail);
     BillResponse getMyBillById(String userEmail, Long billId);
     BillResponse payMyBill(String userEmail, Long billId);
+    void deleteBillsForCycle(String adminEmail, Long billingCycleId);
 }

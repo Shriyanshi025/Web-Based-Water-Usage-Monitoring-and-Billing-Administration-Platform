@@ -115,4 +115,22 @@ public class UserServiceImpl implements UserService {
                 .lastLogin(user.getLastLogin())
                 .build();
     }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public void changePassword(String email, com.water.monitoring_and_billing_platform.dto.ChangePasswordRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("Current password does not match");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new IllegalArgumentException("New passwords do not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+    }
 }

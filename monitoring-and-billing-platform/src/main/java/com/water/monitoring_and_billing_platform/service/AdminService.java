@@ -26,4 +26,8 @@ public interface AdminService {
 
     List<CommunityAdminProfileResponse> getPendingCommunityAdmins();
 
+    UserMeResponse getSelfProfile(String email);
+
+    UserMeResponse updateSelfProfile(String email, String fullName);
+
 }

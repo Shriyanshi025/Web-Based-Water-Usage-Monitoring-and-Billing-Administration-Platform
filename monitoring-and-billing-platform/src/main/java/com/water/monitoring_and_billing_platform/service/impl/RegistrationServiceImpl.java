@@ -8,6 +8,7 @@ import com.water.monitoring_and_billing_platform.enums.ApprovalStatus;
 import com.water.monitoring_and_billing_platform.enums.Role;
 import com.water.monitoring_and_billing_platform.exception.*;
 import com.water.monitoring_and_billing_platform.repository.*;
+import com.water.monitoring_and_billing_platform.service.AlertService;
 import com.water.monitoring_and_billing_platform.service.RegistrationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,6 +31,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final InvitationRepository invitationRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AlertService alertService;
 
     @Override
     @Transactional
@@ -117,7 +119,22 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .officialUserId(null)
                 .build();
 
-        residentProfileRepository.save(residentProfile);
+        ResidentProfile savedProfile = residentProfileRepository.save(residentProfile);
+
+        // Notify Community Admin
+        java.util.List<CommunityAdminProfile> admins = communityAdminProfileRepository.findByCommunityIdAndActiveTrue(community.getId());
+        for (CommunityAdminProfile admin : admins) {
+            alertService.createInAppNotification(
+                    admin.getUser(),
+                    savedProfile,
+                    community,
+                    "New Resident Registration",
+                    "A new resident registration is awaiting approval.",
+                    com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_PENDING,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.MEDIUM,
+                    null
+            );
+        }
 
         if (invitation != null) {
             invitation.setStatus(com.water.monitoring_and_billing_platform.enums.InvitationStatus.REGISTERED);
@@ -179,7 +196,22 @@ public class RegistrationServiceImpl implements RegistrationService {
                 .officialAdminId(null)
                 .build();
 
-        communityAdminProfileRepository.save(adminProfile);
+        CommunityAdminProfile savedAdminProfile = communityAdminProfileRepository.save(adminProfile);
+
+        // Notify Main Admin(s)
+        java.util.List<User> mainAdmins = userRepository.findByRole(Role.MAIN_ADMIN);
+        for (User admin : mainAdmins) {
+            alertService.createInAppNotification(
+                    admin,
+                    null,
+                    community,
+                    "Community Admin Registered",
+                    "A new Community Admin registration request for '" + community.getCommunityName() + "' is awaiting approval.",
+                    com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_PENDING,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.MEDIUM,
+                    null
+            );
+        }
 
         return new AuthResponse(
                 "Registration Successful",

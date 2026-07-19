@@ -40,6 +40,10 @@ public class Unit {
     @Column(nullable = false)
     private boolean active;
 
+    private Double area;
+
+    private Integer occupancy;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

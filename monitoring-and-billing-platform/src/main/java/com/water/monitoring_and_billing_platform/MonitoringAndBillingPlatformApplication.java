@@ -10,6 +10,7 @@ import com.water.monitoring_and_billing_platform.entity.User;
 import org.springframework.context.annotation.Profile;
 
 @SpringBootApplication
+@org.springframework.scheduling.annotation.EnableScheduling
 public class MonitoringAndBillingPlatformApplication {
 
 	public static void main(String[] args) {

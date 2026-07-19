@@ -72,4 +72,34 @@ public class WaterUsageController {
                 waterUsageService.getMyReadings(userDetails.getUsername())
         );
     }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<WaterUsageResponse> updateReading(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody WaterUsageRequest request) {
+        return ResponseEntity.ok(
+                waterUsageService.updateReading(userDetails.getUsername(), id, request)
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<Void> deleteReading(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @PathVariable Long id) {
+        waterUsageService.deleteReading(userDetails.getUsername(), id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/billing-cycle/{billingCycleId}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<WaterUsageResponse>> getReadingsByBillingCycle(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @PathVariable Long billingCycleId) {
+        return ResponseEntity.ok(
+                waterUsageService.getReadingsByBillingCycle(userDetails.getUsername(), billingCycleId)
+        );
+    }
 }

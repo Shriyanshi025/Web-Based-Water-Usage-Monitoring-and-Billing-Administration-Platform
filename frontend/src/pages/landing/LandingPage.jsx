@@ -38,7 +38,7 @@ export default function LandingPage() {
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Stack direction="row" alignItems="center" spacing={1}>
                             <WaterDropIcon sx={{ color: 'primary.main', fontSize: 32 }} />
-                            <Typography variant="h6" fontWeight="800" color="text.primary">AquaBase</Typography>
+                            <Typography variant="h6" fontWeight="800" color="text.primary">HydroSync</Typography>
                         </Stack>
                         <Stack direction="row" spacing={2}>
                             <Button variant="text" onClick={() => navigate('/login')}>Sign In</Button>
@@ -192,7 +192,7 @@ export default function LandingPage() {
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
                             <Box sx={{ p: 4, bgcolor: '#f8fafc', borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
                                 <Stack spacing={3}>
-                                    {['Meter registers usage', 'Data synced to AquaBase cloud', 'Algorithms analyze patterns', 'Dashboard updates in real-time', 'Invoices generated automatically'].map((step, i) => (
+                                    {['Meter registers usage', 'Data synced to HydroSync cloud', 'Algorithms analyze patterns', 'Dashboard updates in real-time', 'Invoices generated automatically'].map((step, i) => (
                                         <Stack direction="row" alignItems="center" spacing={2} key={i}>
                                             <Box sx={{ width: 32, height: 32, borderRadius: '50%', bgcolor: 'primary.main', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
                                                 {i + 1}
@@ -219,7 +219,7 @@ export default function LandingPage() {
                                 <Card sx={{ bgcolor: 'rgba(255,255,255,0.05)', color: 'white', borderRadius: 4, border: '1px solid rgba(255,255,255,0.1)' }}>
                                     <CardContent sx={{ p: 4 }}>
                                         <Typography sx={{ fontStyle: 'italic', mb: 3, opacity: 0.8 }}>
-                                            "Since implementing AquaBase, our community's water waste has dropped by 30%, and billing disputes are completely gone."
+                                            "Since implementing HydroSync, our community's water waste has dropped by 30%, and billing disputes are completely gone."
                                         </Typography>
                                         <Stack direction="row" alignItems="center" spacing={2}>
                                             <Box sx={{ width: 48, height: 48, borderRadius: '50%', bgcolor: 'rgba(255,255,255,0.2)' }} />
@@ -243,7 +243,7 @@ export default function LandingPage() {
                 </Box>
                 <Box sx={{ maxWidth: 800, mx: 'auto' }}>
                     {[
-                        { q: 'How is the data collected?', a: 'AquaBase integrates with standard IoT water meters to securely transmit data to our cloud infrastructure.' },
+                        { q: 'How is the data collected?', a: 'HydroSync integrates with standard IoT water meters to securely transmit data to our cloud infrastructure.' },
                         { q: 'Can residents pay bills through the platform?', a: 'Yes, residents can view and securely pay their monthly invoices directly from their dashboard.' },
                         { q: 'What happens if a leak is detected?', a: 'The system instantly triggers an alert (email/SMS) to both the resident and the community admin.' }
                     ].map((faq, i) => (
@@ -263,7 +263,7 @@ export default function LandingPage() {
             <Section bg="primary.main">
                 <Box textAlign="center">
                     <Typography variant="h3" fontWeight="800" color="white" gutterBottom>Ready to modernize your water management?</Typography>
-                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', mb: 4 }}>Join AquaBase today and take control of your community's resources.</Typography>
+                    <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', mb: 4 }}>Join HydroSync today and take control of your community's resources.</Typography>
                     <Button variant="contained" size="large" sx={{ bgcolor: 'white', color: 'primary.main', px: 6, py: 2, fontSize: '1.2rem', '&:hover': { bgcolor: '#f8fafc' } }} onClick={() => navigate('/register')}>
                         Get Started Now
                     </Button>
@@ -277,7 +277,7 @@ export default function LandingPage() {
                         <Grid item xs={12} md={4}>
                             <Stack direction="row" alignItems="center" spacing={1} mb={2}>
                                 <WaterDropIcon sx={{ color: 'primary.main' }} />
-                                <Typography variant="h6" fontWeight="800" color="white">AquaBase</Typography>
+                                <Typography variant="h6" fontWeight="800" color="white">HydroSync</Typography>
                             </Stack>
                             <Typography variant="body2">Smart Water Management & Billing Platform.</Typography>
                         </Grid>
@@ -310,7 +310,7 @@ export default function LandingPage() {
                         </Grid>
                     </Grid>
                     <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 4 }} />
-                    <Typography variant="body2" align="center">© {new Date().getFullYear()} AquaBase Inc. All rights reserved.</Typography>
+                    <Typography variant="body2" align="center">© {new Date().getFullYear()} HydroSync Inc. All rights reserved.</Typography>
                 </Container>
             </Box>
         </Box>

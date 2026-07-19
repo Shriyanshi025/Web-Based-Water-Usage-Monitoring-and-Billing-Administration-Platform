@@ -79,7 +79,7 @@ export const QUICK_ACTIONS_CONFIG = {
             path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "manage_billing",
-            hidden: false,
+            hidden: true,
             disabled: true
         },
         {
@@ -92,7 +92,7 @@ export const QUICK_ACTIONS_CONFIG = {
             path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "view_reports",
-            hidden: false,
+            hidden: true,
             disabled: true
         },
         {
@@ -105,7 +105,7 @@ export const QUICK_ACTIONS_CONFIG = {
             path: "#",
             requiredRole: "MAIN_ADMIN",
             requiredPermission: "manage_settings",
-            hidden: false,
+            hidden: true,
             disabled: true
         }
     ],
@@ -189,17 +189,43 @@ export const QUICK_ACTIONS_CONFIG = {
             disabled: false
         },
         {
+            id: "generate-bills",
+            title: "Generate Bills",
+            description: "Run bulk or individual billing",
+            icon: <ReceiptIcon />,
+            color: "warning",
+            comingSoon: false,
+            path: ROUTES.COMMUNITY_ADMIN_BILLS,
+            requiredRole: "COMMUNITY_ADMIN",
+            requiredPermission: "manage_billing",
+            hidden: false,
+            disabled: false
+        },
+        {
+            id: "manage-complaints",
+            title: "Manage Complaints",
+            description: "Review and resolve resident issues",
+            icon: <ReportProblemIcon />,
+            color: "error",
+            comingSoon: false,
+            path: ROUTES.COMMUNITY_ADMIN_COMPLAINTS,
+            requiredRole: "COMMUNITY_ADMIN",
+            requiredPermission: "manage_complaints",
+            hidden: false,
+            disabled: false
+        },
+        {
             id: "update-profile",
             title: "Update Profile",
             description: "Manage your community settings",
             icon: <ManageAccountsIcon />,
             color: "primary",
-            comingSoon: true,
+            comingSoon: false,
             path: ROUTES.COMMUNITY_ADMIN_PROFILE,
             requiredRole: "COMMUNITY_ADMIN",
             requiredPermission: "manage_profile",
             hidden: false,
-            disabled: true
+            disabled: false
         }
     ],
     USER: [
@@ -261,12 +287,12 @@ export const QUICK_ACTIONS_CONFIG = {
             description: "Get your latest bill PDF",
             icon: <DownloadIcon />,
             color: "warning",
-            comingSoon: true,
+            comingSoon: false,
             path: ROUTES.RESIDENT_BILLS,
             requiredRole: "USER",
             requiredPermission: "download_bill",
             hidden: false,
-            disabled: true
+            disabled: false
         },
         {
             id: "raise-complaint",
@@ -274,12 +300,12 @@ export const QUICK_ACTIONS_CONFIG = {
             description: "Report an issue or leak",
             icon: <ReportProblemIcon />,
             color: "error",
-            comingSoon: true,
-            path: "#",
+            comingSoon: false,
+            path: ROUTES.RESIDENT_COMPLAINTS,
             requiredRole: "USER",
             requiredPermission: "raise_complaint",
             hidden: false,
-            disabled: true
+            disabled: false
         }
     ]
 };

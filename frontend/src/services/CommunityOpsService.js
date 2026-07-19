@@ -126,8 +126,48 @@ class CommunityOpsService {
         return response.data;
     }
 
+    async getAdminTariffPlans() {
+        const response = await api.get("/tariff-plans");
+        return response.data;
+    }
+
+    async getTariffPlanById(id) {
+        const response = await api.get(`/tariff-plans/${id}`);
+        return response.data;
+    }
+
+    async createAdminTariffPlan(data) {
+        const response = await api.post("/tariff-plans", data);
+        return response.data;
+    }
+
+    async updateAdminTariffPlan(id, data) {
+        const response = await api.put(`/tariff-plans/${id}`, data);
+        return response.data;
+    }
+
+    async deleteTariffPlan(id) {
+        const response = await api.delete(`/tariff-plans/${id}`);
+        return response.data;
+    }
+
+    async activateTariffPlan(id) {
+        const response = await api.put(`/tariff-plans/${id}/activate`);
+        return response.data;
+    }
+
+    async deactivateTariffPlan(id) {
+        const response = await api.put(`/tariff-plans/${id}/deactivate`);
+        return response.data;
+    }
+
     async generateBills(data) {
         const response = await api.post("/billing/generate", data);
+        return response.data;
+    }
+
+    async generateBillForResident(residentId) {
+        const response = await api.post(`/bills/generate/${residentId}`);
         return response.data;
     }
 

@@ -1,137 +1,176 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { 
-    Box, 
-    Button, 
-    IconButton, 
-    Tooltip, 
-    Menu, 
-    MenuItem, 
-    ListItemIcon, 
+import {
+    Box,
+    Button,
+    IconButton,
+    Tooltip,
+    Menu,
+    MenuItem,
+    ListItemIcon,
     ListItemText,
-    Drawer,
     Typography,
-    Divider,
     Stack,
     TextField,
     Dialog,
     DialogTitle,
     DialogContent,
-    DialogActions
+    DialogActions,
+    Chip,
+    Divider,
+    FormControl,
+    InputLabel,
+    Select,
 } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
+
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import BlockIcon from "@mui/icons-material/Block";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import PeopleIcon from "@mui/icons-material/People";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import PersonOffIcon from "@mui/icons-material/PersonOff";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
+import { useNotification } from "../../context/NotificationContext";
+import SectionHeader from "../../components/common/SectionHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import SearchBar from "../../components/common/SearchBar";
-import FilterBar from "../../components/common/FilterBar";
 import StatusBadge from "../../components/common/StatusBadge";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
+import ActionButton from "../../components/common/ActionButton";
+import ErrorState from "../../components/common/ErrorState";
 
 import CommunityOpsService from "../../services/CommunityOpsService";
 
+// ─── Detail field — label + value pair used in dialogs ───────────────────────
+const DetailField = ({ label, value, children }) => (
+    <Box>
+        <Typography
+            variant="caption"
+            sx={{ display: "block", fontWeight: 500, color: "text.secondary", mb: 0.25, textTransform: "uppercase", letterSpacing: "0.5px", fontSize: "0.6875rem" }}
+        >
+            {label}
+        </Typography>
+        {children || (
+            <Typography variant="body2" sx={{ fontWeight: 500, color: value ? "text.primary" : "text.disabled" }}>
+                {value || "—"}
+            </Typography>
+        )}
+    </Box>
+);
+
+// ─── Action menu config ───────────────────────────────────────────────────────
 const ACTION_CONFIG = {
-    VIEW: { label: "View Details", icon: <VisibilityIcon fontSize="small" />, enabled: true, backendSupported: true },
-    EDIT: { label: "Edit Resident", icon: <EditIcon fontSize="small" />, enabled: true, backendSupported: true },
-    ACTIVATE: { label: "Activate", icon: <CheckCircleIcon fontSize="small" color="success" />, enabled: true, backendSupported: true },
-    DEACTIVATE: { label: "Deactivate", icon: <BlockIcon fontSize="small" color="error" />, enabled: true, backendSupported: true },
-    DELETE: { label: "Delete", icon: <DeleteIcon fontSize="small" color="error" />, enabled: true, backendSupported: true },
+    VIEW:       { label: "View Details",  icon: <VisibilityIcon fontSize="small" />,                        enabled: true },
+    EDIT:       { label: "Edit Resident", icon: <EditIcon fontSize="small" />,                               enabled: true },
+    GENERATE_BILL: { label: "Generate Bill", icon: <ReceiptIcon fontSize="small" color="primary" />,        enabled: true },
+    ACTIVATE:   { label: "Activate",      icon: <CheckCircleIcon fontSize="small" color="success" />,        enabled: true },
+    DEACTIVATE: { label: "Deactivate",    icon: <BlockIcon fontSize="small" color="warning" />,              enabled: true },
+    DELETE:     { label: "Delete",        icon: <DeleteIcon fontSize="small" color="error" />,               enabled: true },
 };
 
-const ResidentsPage = () => {
-    const [residents, setResidents] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [statusFilter, setStatusFilter] = useState("ALL");
-    
-    // UI State
-    const [anchorEl, setAnchorEl] = useState(null);
-    const [selectedRow, setSelectedRow] = useState(null);
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", content: "", onConfirm: null });
-    const [editDialogOpen, setEditDialogOpen] = useState(false);
-    const [editForm, setEditForm] = useState({ phoneNumber: "", officialUserId: "", verified: false, active: true });
+const STATUS_FILTER_OPTIONS = [
+    { value: "ALL",      label: "All Statuses" },
+    { value: "ACTIVE",   label: "Active" },
+    { value: "INACTIVE", label: "Inactive" },
+];
 
+const ResidentsPage = () => {
+    const theme = useTheme();
+    const { showNotification } = useNotification();
+    const [residents, setResidents]     = useState([]);
+    const [loading, setLoading]         = useState(true);
+    const [error, setError]             = useState(null);
+    const [searchTerm, setSearchTerm]   = useState("");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+
+    // UI state
+    const [anchorEl, setAnchorEl]         = useState(null);
+    const [selectedRow, setSelectedRow]   = useState(null);
+    const [viewOpen, setViewOpen]         = useState(false);
+    const [editOpen, setEditOpen]         = useState(false);
+    const [editForm, setEditForm]         = useState({ phoneNumber: "", officialUserId: "", verified: false, active: true });
+    const [dialogConfig, setDialogConfig] = useState({ open: false, title: "", message: "", onConfirm: null, confirmText: "", confirmColor: "primary" });
+
+    // ── Data fetching ─────────────────────────────────────────────────────────
     const fetchResidents = useCallback(async () => {
+        setLoading(true);
+        setError(null);
         try {
-            setLoading(true);
-            setError(null);
             const data = await CommunityOpsService.getAllResidents();
             setResidents(data || []);
         } catch (err) {
-            setError(err.message || "Failed to fetch residents");
+            setError(err?.response?.data?.message || err.message || "Failed to load residents.");
         } finally {
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        fetchResidents();
-    }, [fetchResidents]);
+    useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
-    const handleMenuClick = useCallback((event, row) => {
-        event.stopPropagation();
-        setAnchorEl(event.currentTarget);
-        setSelectedRow(row);
-    }, []);
+    // ── Menu handlers ─────────────────────────────────────────────────────────
+    const handleMenuOpen  = useCallback((event, row) => { event.stopPropagation(); setAnchorEl(event.currentTarget); setSelectedRow(row); }, []);
+    const handleMenuClose = useCallback(() => setAnchorEl(null), []);
 
-    const handleMenuClose = useCallback(() => {
-        setAnchorEl(null);
-    }, []);
+    const handleGenerateBill = useCallback(async (resident) => {
+        try {
+            await CommunityOpsService.generateBillForResident(resident.id);
+            showNotification(`Bill generated successfully for ${resident.fullName}.`, "success");
+        } catch (err) {
+            showNotification(err?.response?.data?.message || err.message || "Failed to generate bill.", "error");
+        }
+    }, [showNotification]);
 
     const handleAction = useCallback((actionKey) => {
-        const config = ACTION_CONFIG[actionKey];
-        if (!config.enabled || config.comingSoon) {
-            handleMenuClose();
-            return;
-        }
-        
-        setAnchorEl(null); // Close the menu when an action is clicked
-
-        if (actionKey === "VIEW") {
-            setDrawerOpen(true);
-        } else if (actionKey === "EDIT") {
-            setEditForm({
-                phoneNumber: selectedRow?.phoneNumber || "",
-                officialUserId: selectedRow?.officialUserId || "",
-                verified: selectedRow?.verified || false,
-                active: selectedRow?.active ?? true
-            });
-            setEditDialogOpen(true);
-        } else if (actionKey === "ACTIVATE") {
-            CommunityOpsService.updateResidentStatus(selectedRow?.id, "ACTIVE")
-                .then(() => fetchResidents())
-                .catch(err => console.error(err));
-        } else if (actionKey === "DEACTIVATE") {
-            CommunityOpsService.updateResidentStatus(selectedRow?.id, "INACTIVE")
-                .then(() => fetchResidents())
-                .catch(err => console.error(err));
-        } else if (actionKey === "DELETE") {
-            setDialogConfig({
-                open: true,
-                title: "Delete Resident",
-                content: `Are you sure you want to permanently delete ${selectedRow?.fullName || "this resident"}? This will completely remove their profile and all dependent records.`,
-                onConfirm: async () => {
-                    try {
-                        await CommunityOpsService.deleteResident(selectedRow?.id);
-                        fetchResidents();
-                    } catch (err) {
-                        console.error(err);
-                    } finally {
-                        setDialogConfig(prev => ({ ...prev, open: false }));
-                    }
-                }
-            });
-        }
         handleMenuClose();
-    }, [handleMenuClose, selectedRow, fetchResidents]);
+        switch (actionKey) {
+            case "VIEW":
+                setViewOpen(true);
+                break;
+            case "EDIT":
+                setEditForm({ phoneNumber: selectedRow?.phoneNumber || "", officialUserId: selectedRow?.officialUserId || "", verified: selectedRow?.verified || false, active: selectedRow?.active ?? true });
+                setEditOpen(true);
+                break;
+            case "GENERATE_BILL":
+                handleGenerateBill(selectedRow);
+                break;
+            case "ACTIVATE":
+                CommunityOpsService.updateResidentStatus(selectedRow?.id, "ACTIVE")
+                    .then(fetchResidents).catch(console.error);
+                break;
+            case "DEACTIVATE":
+                setDialogConfig({
+                    open: true, title: "Deactivate Resident",
+                    message: `Deactivate ${selectedRow?.fullName || "this resident"}? They will lose access to resident services.`,
+                    confirmText: "Deactivate", confirmColor: "warning",
+                    onConfirm: async () => {
+                        try { await CommunityOpsService.updateResidentStatus(selectedRow?.id, "INACTIVE"); fetchResidents(); }
+                        catch (err) { console.error(err); }
+                        finally { setDialogConfig(p => ({ ...p, open: false })); }
+                    }
+                });
+                break;
+            case "DELETE":
+                setDialogConfig({
+                    open: true, title: "Delete Resident",
+                    message: `Permanently delete ${selectedRow?.fullName || "this resident"}? This will remove their profile and all dependent records. This action cannot be undone.`,
+                    confirmText: "Delete", confirmColor: "error",
+                    onConfirm: async () => {
+                        try { await CommunityOpsService.deleteResident(selectedRow?.id); fetchResidents(); }
+                        catch (err) { console.error(err); }
+                        finally { setDialogConfig(p => ({ ...p, open: false })); }
+                    }
+                });
+                break;
+            default: break;
+        }
+    }, [handleMenuClose, selectedRow, fetchResidents, handleGenerateBill]);
 
     const handleEditSave = useCallback(async () => {
         try {
@@ -139,287 +178,293 @@ const ResidentsPage = () => {
                 phoneNumber: editForm.phoneNumber,
                 officialUserId: editForm.officialUserId || undefined,
                 verified: editForm.verified,
-                active: editForm.active
+                active: editForm.active,
             });
             await fetchResidents();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setEditDialogOpen(false);
-        }
+        } catch (err) { console.error(err); }
+        finally { setEditOpen(false); }
     }, [editForm, fetchResidents, selectedRow]);
 
+    // ── Filtering ─────────────────────────────────────────────────────────────
     const filteredRows = useMemo(() => {
+        const term = searchTerm.toLowerCase();
         return residents.filter(row => {
-            const fullName = `${row.fullName || ""}`.toLowerCase();
-            const matchesSearch = searchTerm === "" || 
-                fullName.includes(searchTerm.toLowerCase()) ||
-                (row.email || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (row.unitNumber || "").toLowerCase().includes(searchTerm.toLowerCase());
-            
-            const statusValue = row.active ? "ACTIVE" : "INACTIVE";
-            const matchesStatus = statusFilter === "ALL" || statusValue === statusFilter;
-            
+            const matchesSearch = !term ||
+                (row.fullName  || "").toLowerCase().includes(term) ||
+                (row.email     || "").toLowerCase().includes(term) ||
+                (row.unitNumber|| "").toLowerCase().includes(term) ||
+                (row.phoneNumber|| "").toLowerCase().includes(term);
+            const status = row.active !== false ? "ACTIVE" : "INACTIVE";
+            const matchesStatus = statusFilter === "ALL" || status === statusFilter;
             return matchesSearch && matchesStatus;
         });
     }, [residents, searchTerm, statusFilter]);
 
+    // ── Summary counts ────────────────────────────────────────────────────────
+    const activeCount   = useMemo(() => residents.filter(r => r.active !== false).length, [residents]);
+    const inactiveCount = useMemo(() => residents.filter(r => r.active === false).length, [residents]);
+
+    // ── Columns ───────────────────────────────────────────────────────────────
     const columns = useMemo(() => [
-        { 
-            field: "fullName", 
-            headerName: "Resident Name", 
-            flex: 1, 
-            minWidth: 220,
+        {
+            field: "fullName", headerName: "Resident", flex: 1, minWidth: 200,
             renderCell: (params) => (
-                <Typography variant="body2" fontWeight={500}>
-                    {params.row.fullName || "Unnamed Resident"}
-                </Typography>
+                <Box>
+                    <Typography variant="body2" fontWeight={600} lineHeight={1.3}>
+                        {params.row.fullName || "Unnamed Resident"}
+                    </Typography>
+                    {params.row.email && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                            {params.row.email}
+                        </Typography>
+                    )}
+                </Box>
             )
         },
-        { field: "unitNumber", headerName: "Unit", width: 120 },
-        { field: "email", headerName: "Email", flex: 1, minWidth: 220 },
-        { field: "phoneNumber", headerName: "Contact", width: 150 },
-        { 
-            field: "status", 
-            headerName: "Status", 
-            width: 150,
-            renderCell: (params) => {
-                const isActive = params.row.active !== false;
-                return (
-                    <StatusBadge status={isActive ? "ACTIVE" : "INACTIVE"} />
-                );
-            }
+        { field: "unitNumber",   headerName: "Unit",    width: 100,  renderCell: (p) => <Typography variant="body2">{p.row.unitNumber || "—"}</Typography> },
+        { field: "phoneNumber",  headerName: "Contact", width: 140,  renderCell: (p) => <Typography variant="body2" color={p.row.phoneNumber ? "text.primary" : "text.disabled"}>{p.row.phoneNumber || "—"}</Typography> },
+        {
+            field: "status", headerName: "Status", width: 120,
+            renderCell: (params) => <StatusBadge status={params.row.active !== false ? "ACTIVE" : "INACTIVE"} />
         },
-        { 
-            field: "actions", 
-            headerName: "Actions", 
-            width: 100, 
-            sortable: false,
-            align: "center",
+        {
+            field: "actions", headerName: "", width: 56, sortable: false, align: "center", headerAlign: "center",
             renderCell: (params) => (
-                <IconButton size="small" onClick={(e) => handleMenuClick(e, params.row)}>
-                    <MoreVertIcon fontSize="small" />
-                </IconButton>
+                <Tooltip title="Actions" arrow>
+                    <IconButton size="small" onClick={(e) => handleMenuOpen(e, params.row)} aria-label={`Actions for ${params.row.fullName}`}
+                        sx={{ borderRadius: "6px", color: "text.secondary", "&:hover": { bgcolor: "action.hover" } }}>
+                        <MoreVertIcon fontSize="small" />
+                    </IconButton>
+                </Tooltip>
             )
         }
-    ], [handleMenuClick]);
+    ], [handleMenuOpen]);
 
-    const statusOptions = [
-        { value: "ALL", label: "All Statuses" },
-        { value: "ACTIVE", label: "Active" },
-        { value: "INACTIVE", label: "Inactive" }
-    ];
-
+    // ── Render ────────────────────────────────────────────────────────────────
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="Residents Management" 
-                subtitle="Manage and monitor community residents."
+            <PageHeader
+                title="Residents"
+                subtitle="Manage and monitor all community resident accounts."
+                action={
+                    <ActionButton variant="outlined" startIcon={<RefreshIcon />} onClick={fetchResidents} disabled={loading} sx={{ fontSize: "0.8125rem" }}>
+                        Refresh
+                    </ActionButton>
+                }
             />
 
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
-                <TableToolbar 
-                    title="Resident Directory" 
+            {/* ── Summary strip ─────────────────────────────────────────────── */}
+            {!loading && !error && (
+                <Stack direction="row" spacing={2} sx={{ mb: 3 }} flexWrap="wrap">
+                    <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
+                        <PeopleIcon sx={{ fontSize: "1rem", color: "info.main" }} />
+                        <Typography variant="body2" fontWeight={500} color="text.secondary">Total:</Typography>
+                        <Typography variant="body2" fontWeight={700}>{residents.length}</Typography>
+                    </Box>
+                    <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
+                        <CheckCircleIcon sx={{ fontSize: "1rem", color: "success.main" }} />
+                        <Typography variant="body2" fontWeight={500} color="text.secondary">Active:</Typography>
+                        <Typography variant="body2" fontWeight={700} color="success.main">{activeCount}</Typography>
+                    </Box>
+                    <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
+                        <PersonOffIcon sx={{ fontSize: "1rem", color: "text.disabled" }} />
+                        <Typography variant="body2" fontWeight={500} color="text.secondary">Inactive:</Typography>
+                        <Typography variant="body2" fontWeight={700} color="text.secondary">{inactiveCount}</Typography>
+                    </Box>
+                </Stack>
+            )}
+
+            {/* ── Full-page error ───────────────────────────────────────────── */}
+            {error && !residents.length && (
+                <Box sx={{ mb: 3 }}>
+                    <ErrorState title="Failed to load residents" message={error} onRetry={fetchResidents} />
+                </Box>
+            )}
+
+            {/* ── Main table panel ──────────────────────────────────────────── */}
+            <Box sx={{ bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+                <TableToolbar
+                    title="Resident Directory"
                     action={
-                        <Stack direction="row" spacing={2}>
-                            <SearchBar 
-                                value={searchTerm} 
-                                onChange={setSearchTerm} 
-                                placeholder="Search residents..." 
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                            <SearchBar
+                                value={searchTerm}
+                                onChange={setSearchTerm}
+                                onClear={() => setSearchTerm("")}
+                                placeholder="Search by name, email, or unit…"
+                                sx={{ width: { xs: "100%", sm: 260 } }}
                             />
-                            <FilterBar 
-                                value={statusFilter}
-                                options={statusOptions}
-                                onChange={setStatusFilter}
-                            />
+                            <FormControl size="small" sx={{ minWidth: 140 }}>
+                                <InputLabel id="status-filter-label">Status</InputLabel>
+                                <Select
+                                    labelId="status-filter-label"
+                                    label="Status"
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
+                                >
+                                    {STATUS_FILTER_OPTIONS.map(opt => (
+                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                            {(searchTerm || statusFilter !== "ALL") && (
+                                <Chip
+                                    label={`${filteredRows.length} of ${residents.length}`}
+                                    size="small"
+                                    variant="outlined"
+                                    sx={{ fontSize: "0.75rem", height: 26 }}
+                                    onDelete={() => { setSearchTerm(""); setStatusFilter("ALL"); }}
+                                />
+                            )}
                         </Stack>
                     }
                 />
-                
-                <Box sx={{ height: 500 }}>
-                    <DataGrid 
-                        rows={filteredRows} 
-                        columns={columns} 
+                <Box sx={{ height: 520 }}>
+                    <DataGrid
+                        rows={filteredRows}
+                        columns={columns}
                         loading={loading}
-                        error={error}
+                        error={error && residents.length ? error : null}
                         onRetry={fetchResidents}
                         disableRowSelectionOnClick
+                        pageSize={10}
                     />
                 </Box>
             </Box>
 
-            {/* Actions Menu */}
+            {/* ── Row actions menu ──────────────────────────────────────────── */}
             <Menu
                 anchorEl={anchorEl}
                 open={Boolean(anchorEl)}
                 onClose={handleMenuClose}
-                PaperProps={{
-                    elevation: 3,
-                    sx: { minWidth: 200, mt: 1, borderRadius: 2 }
-                }}
+                PaperProps={{ elevation: 3, sx: { minWidth: 200, mt: 0.5, borderRadius: 2, border: "1px solid", borderColor: "divider" } }}
+                transformOrigin={{ horizontal: "right", vertical: "top" }}
+                anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             >
-                {Object.entries(ACTION_CONFIG).map(([key, config]) => (
-                    <Tooltip key={key} title={config.comingSoon ? "Backend Support Pending" : ""} placement="left" arrow>
-                        <span>
-                            <MenuItem 
-                                onClick={() => handleAction(key)}
-                                disabled={!config.enabled || config.comingSoon}
-                                sx={{ py: 1.5 }}
-                            >
-                                <ListItemIcon>{config.icon}</ListItemIcon>
-                                <ListItemText 
-                                    primary={config.label} 
-                                    secondary={config.comingSoon ? "Coming Soon" : null}
-                                    secondaryTypographyProps={{ variant: "caption", color: "warning.main" }}
-                                />
-                            </MenuItem>
-                        </span>
-                    </Tooltip>
-                ))}
+                {Object.entries(ACTION_CONFIG).map(([key, config], index, arr) => [
+                    key === "DELETE" && <Divider key="divider" sx={{ my: 0.5 }} />,
+                    <MenuItem
+                        key={key}
+                        onClick={() => handleAction(key)}
+                        disabled={!config.enabled}
+                        sx={{
+                            py: 1, px: 1.5, fontSize: "0.8125rem",
+                            color: key === "DELETE" ? "error.main" : "text.primary",
+                        }}
+                    >
+                        <ListItemIcon sx={{ minWidth: 32 }}>{config.icon}</ListItemIcon>
+                        <ListItemText primary={config.label} primaryTypographyProps={{ fontSize: "0.8125rem" }} />
+                    </MenuItem>
+                ])}
             </Menu>
 
-            {/* View Details Dialog */}
-            <Dialog 
-                open={drawerOpen} 
-                onClose={() => {
-                    setDrawerOpen(false);
-                    setSelectedRow(null);
-                }}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle sx={{ fontWeight: 600, borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}>
-                    Resident Details
-                </DialogTitle>
-                <DialogContent sx={{ mt: 2, pb: 4 }}>
+            {/* ── View Details dialog ───────────────────────────────────────── */}
+            <Dialog open={viewOpen} onClose={() => { setViewOpen(false); setSelectedRow(null); }} maxWidth="sm" fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}>
+                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
+                    Resident Profile
                     {selectedRow && (
-                        <Stack spacing={4}>
-                            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr' }} gap={4}>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Full Name</Typography>
-                                    <Typography variant="body1" fontWeight={500}>{selectedRow.fullName || "Unnamed Resident"}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400, mt: 0.25 }}>
+                            {selectedRow.email}
+                        </Typography>
+                    )}
+                </DialogTitle>
+                <DialogContent sx={{ pt: 3 }}>
+                    {selectedRow && (
+                        <Box display="grid" gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr" }} gap={3}>
+                            <DetailField label="Full Name"    value={selectedRow.fullName} />
+                            <DetailField label="Unit / Flat"  value={selectedRow.unitNumber} />
+                            <DetailField label="Block"        value={selectedRow.blockName} />
+                            <DetailField label="Community"    value={selectedRow.communityName} />
+                            <DetailField label="Contact"      value={selectedRow.phoneNumber} />
+                            <DetailField label="Official ID"  value={selectedRow.officialUserId} />
+                            <DetailField label="Meter Serial" value={selectedRow.meterSerialNumber} />
+                            <DetailField label="Account Status">
+                                <Box sx={{ mt: 0.5 }}>
+                                    <StatusBadge status={selectedRow.active !== false ? "ACTIVE" : "INACTIVE"} />
                                 </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Community</Typography>
-                                    <Typography variant="body1">{selectedRow.communityName || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Block</Typography>
-                                    <Typography variant="body1">{selectedRow.blockName || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Unit</Typography>
-                                    <Typography variant="body1">{selectedRow.unitNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Meter Serial</Typography>
-                                    <Typography variant="body1">{selectedRow.meterSerialNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Email Address</Typography>
-                                    <Typography variant="body1">{selectedRow.email || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Contact Number</Typography>
-                                    <Typography variant="body1">{selectedRow.phoneNumber || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Official ID</Typography>
-                                    <Typography variant="body1">{selectedRow.officialUserId || "—"}</Typography>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Account Status</Typography>
-                                    <Box sx={{ mt: 0.5 }}>
-                                        <StatusBadge status={selectedRow.active !== false ? "ACTIVE" : "INACTIVE"} />
-                                    </Box>
-                                </Box>
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Approval Status</Typography>
-                                    <Typography variant="body1">{selectedRow.approvalStatus || "—"}</Typography>
-                                </Box>
-                            </Box>
-                            <Box display="flex" justifyContent="flex-end" pt={2} sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
-                                <Button 
-                                    variant="outlined"
-                                    onClick={() => {
-                                        setDrawerOpen(false);
-                                        setEditDialogOpen(true);
-                                        setEditForm({
-                                            phoneNumber: selectedRow?.phoneNumber || "",
-                                            officialUserId: selectedRow?.officialUserId || "",
-                                            verified: selectedRow?.verified || false,
-                                            active: selectedRow?.active ?? true
-                                        });
-                                    }}
-                                    disabled={ACTION_CONFIG.EDIT.comingSoon}
-                                    startIcon={<EditIcon />}
-                                >
-                                    {ACTION_CONFIG.EDIT.comingSoon ? "Edit (Coming Soon)" : "Edit Profile"}
-                                </Button>
-                            </Box>
-                        </Stack>
+                            </DetailField>
+                        </Box>
                     )}
                 </DialogContent>
+                <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", px: 3, py: 2, gap: 1 }}>
+                    <Button onClick={() => { setViewOpen(false); }} sx={{ textTransform: "none" }}>Close</Button>
+                    <Button
+                        variant="outlined"
+                        startIcon={<EditIcon />}
+                        sx={{ textTransform: "none" }}
+                        onClick={() => {
+                            setViewOpen(false);
+                            setEditForm({ phoneNumber: selectedRow?.phoneNumber || "", officialUserId: selectedRow?.officialUserId || "", verified: selectedRow?.verified || false, active: selectedRow?.active ?? true });
+                            setEditOpen(true);
+                        }}
+                    >
+                        Edit Profile
+                    </Button>
+                </DialogActions>
             </Dialog>
 
-            <Dialog open={editDialogOpen} onClose={() => {
-                setEditDialogOpen(false);
-                setSelectedRow(null);
-            }} maxWidth="sm" fullWidth>
-                <DialogTitle>Edit Resident</DialogTitle>
+            {/* ── Edit Resident dialog ──────────────────────────────────────── */}
+            <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="sm" fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}>
+                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
+                    Edit Resident
+                    {selectedRow && (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400, mt: 0.25 }}>
+                            {selectedRow.fullName}
+                        </Typography>
+                    )}
+                </DialogTitle>
                 <DialogContent>
-                    <Stack spacing={2} sx={{ mt: 1 }}>
+                    <Stack spacing={2.5} sx={{ mt: 2.5 }}>
                         <TextField
                             label="Phone Number"
                             value={editForm.phoneNumber}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                            fullWidth
+                            onChange={(e) => setEditForm(p => ({ ...p, phoneNumber: e.target.value }))}
+                            fullWidth size="small"
                         />
                         <TextField
                             label="Official User ID"
                             value={editForm.officialUserId}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, officialUserId: e.target.value }))}
-                            fullWidth
+                            onChange={(e) => setEditForm(p => ({ ...p, officialUserId: e.target.value }))}
+                            fullWidth size="small"
                         />
-                        <TextField
-                            select
-                            label="Verification"
-                            value={editForm.verified ? "true" : "false"}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, verified: e.target.value === "true" }))}
-                            SelectProps={{ native: true }}
-                            fullWidth
-                        >
-                            <option value="true">Verified</option>
-                            <option value="false">Pending</option>
-                        </TextField>
-                        <TextField
-                            select
-                            label="Status"
-                            value={editForm.active ? "active" : "inactive"}
-                            onChange={(e) => setEditForm(prev => ({ ...prev, active: e.target.value === "active" }))}
-                            SelectProps={{ native: true }}
-                            fullWidth
-                        >
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </TextField>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Verification</InputLabel>
+                            <Select label="Verification" value={editForm.verified ? "true" : "false"}
+                                onChange={(e) => setEditForm(p => ({ ...p, verified: e.target.value === "true" }))}>
+                                <MenuItem value="true">Verified</MenuItem>
+                                <MenuItem value="false">Pending</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Account Status</InputLabel>
+                            <Select label="Account Status" value={editForm.active ? "active" : "inactive"}
+                                onChange={(e) => setEditForm(p => ({ ...p, active: e.target.value === "active" }))}>
+                                <MenuItem value="active">Active</MenuItem>
+                                <MenuItem value="inactive">Inactive</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Stack>
                 </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-                    <Button variant="contained" onClick={handleEditSave}>Save</Button>
+                <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", px: 3, py: 2, gap: 1 }}>
+                    <Button onClick={() => setEditOpen(false)} sx={{ textTransform: "none" }}>Cancel</Button>
+                    <ActionButton variant="contained" onClick={handleEditSave} sx={{ textTransform: "none" }}>
+                        Save Changes
+                    </ActionButton>
                 </DialogActions>
             </Dialog>
 
-            {/* Confirmation Dialog */}
-            <ConfirmationDialog 
+            {/* ── Confirmation Dialog ───────────────────────────────────────── */}
+            <ConfirmationDialog
                 open={dialogConfig.open}
                 title={dialogConfig.title}
-                content={dialogConfig.content}
+                message={dialogConfig.message}
                 onConfirm={dialogConfig.onConfirm}
-                onCancel={() => setDialogConfig(prev => ({ ...prev, open: false }))}
-                confirmColor="error"
-                confirmText={dialogConfig.title === "Delete Resident" ? "Delete" : "Deactivate"}
+                onClose={() => setDialogConfig(p => ({ ...p, open: false }))}
+                color={dialogConfig.confirmColor}
+                confirmText={dialogConfig.confirmText}
             />
         </DashboardLayout>
     );

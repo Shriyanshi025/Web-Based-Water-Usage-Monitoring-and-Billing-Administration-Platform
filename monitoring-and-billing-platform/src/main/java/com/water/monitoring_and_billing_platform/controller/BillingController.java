@@ -104,4 +104,16 @@ public class BillingController {
                 .data(billingService.payMyBill(userDetails.getUsername(), id))
                 .build());
     }
+
+    @DeleteMapping("/billing-cycle/{billingCycleId}/bills")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteBillsForCycle(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long billingCycleId) {
+        billingService.deleteBillsForCycle(userDetails.getUsername(), billingCycleId);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Bills deleted successfully for cycle")
+                .build());
+    }
 }

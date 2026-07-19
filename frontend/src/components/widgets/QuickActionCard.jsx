@@ -1,65 +1,166 @@
 import React from "react";
-import { Box, Typography, Card, CardActionArea, CardContent, Chip } from "@mui/material";
-import { motion } from "framer-motion";
+import { Box, Typography, Card, CardActionArea, Chip, useTheme } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 /**
- * Reusable QuickActionCard for main actions
- * @param {Object} props
- * @param {string} props.title
- * @param {string} props.description
+ * QuickActionCard — navigable action tile for the dashboard.
+ *
+ * @param {Object}          props
+ * @param {string}          props.title
+ * @param {string}          props.description
  * @param {React.ReactNode} props.icon
- * @param {string} [props.color="primary"]
- * @param {boolean} [props.comingSoon]
- * @param {function} props.onClick
+ * @param {string}          [props.color="primary"]   - MUI palette key (e.g. "primary", "info")
+ * @param {boolean}         [props.comingSoon]
+ * @param {boolean}         [props.disabled]
+ * @param {function}        [props.onClick]
  */
-const QuickActionCard = ({ title, description, icon, color = "primary", comingSoon = false, disabled = false, onClick }) => {
+const QuickActionCard = ({
+    title,
+    description,
+    icon,
+    color = "primary",
+    comingSoon = false,
+    disabled = false,
+    onClick,
+}) => {
+    const theme = useTheme();
     const isDisabled = comingSoon || disabled;
-    
+
+    // Safely resolve the palette color
+    const resolvedColor =
+        theme.palette[color]?.main ?? theme.palette.primary.main;
+
     return (
         <Card
-            component={motion.div}
-            whileHover={!isDisabled ? { y: -4 } : {}}
             elevation={0}
             sx={{
                 border: "1px solid",
                 borderColor: "divider",
-                borderRadius: 3,
+                borderRadius: 2,
                 height: "100%",
-                opacity: isDisabled ? 0.7 : 1,
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                "&:hover": {
-                    borderColor: !isDisabled ? `${color}.main` : "divider",
-                    boxShadow: !isDisabled ? "0 12px 24px rgba(0,0,0,0.06)" : "none",
-                }
+                bgcolor: "background.paper",
+                boxShadow: "0 1px 3px rgba(12,25,41,0.06), 0 1px 2px rgba(12,25,41,0.04)",
+                opacity: isDisabled ? 0.65 : 1,
+                transition: "border-color 160ms ease, box-shadow 160ms ease",
+                ...(!isDisabled && {
+                    "&:hover": {
+                        borderColor: alpha(resolvedColor, 0.45),
+                        boxShadow: `0 4px 12px ${alpha(resolvedColor, 0.08)}`,
+                    },
+                }),
             }}
         >
-            <CardActionArea 
-                onClick={isDisabled ? undefined : onClick} 
+            <CardActionArea
+                onClick={isDisabled ? undefined : onClick}
                 disabled={isDisabled}
-                sx={{ height: "100%", p: 2, display: "flex", flexDirection: "column", alignItems: "flex-start", justifyContent: "flex-start" }}
+                disableRipple={isDisabled}
+                sx={{
+                    height: "100%",
+                    p: "20px 20px 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "flex-start",
+                    justifyContent: "flex-start",
+                    // Override default CardActionArea hover so our Card hover takes over
+                    "&:hover": { bgcolor: "transparent" },
+                }}
             >
-                <CardContent sx={{ p: 0, width: "100%", textAlign: "left" }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-                        <Box sx={{ 
-                            p: 1.5, 
-                            borderRadius: 2, 
-                            bgcolor: `${color}.main` + "15", // 15% opacity background
-                            color: `${color}.main`,
-                            display: "flex"
-                        }}>
-                            {icon}
-                        </Box>
-                        {comingSoon && (
-                            <Chip label="Coming Soon" size="small" variant="outlined" color="default" sx={{ fontSize: "0.7rem", height: 20 }} />
-                        )}
+                {/* ── Top row: icon + coming-soon badge ── */}
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "flex-start",
+                        width: "100%",
+                        mb: 1.75,
+                    }}
+                >
+                    {/* Icon mark */}
+                    <Box
+                        sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: "8px",
+                            bgcolor: alpha(resolvedColor, 0.10),
+                            color: resolvedColor,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            "& .MuiSvgIcon-root": { fontSize: "1.25rem" },
+                        }}
+                    >
+                        {icon}
                     </Box>
-                    <Typography variant="h6" fontWeight={700} gutterBottom sx={{ fontSize: "1.1rem" }}>
-                        {title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {description}
-                    </Typography>
-                </CardContent>
+
+                    {/* Coming Soon badge */}
+                    {comingSoon && (
+                        <Chip
+                            label="Soon"
+                            size="small"
+                            sx={{
+                                height: 20,
+                                fontSize: "0.6875rem",
+                                fontWeight: 600,
+                                bgcolor: "action.selected",
+                                color: "text.secondary",
+                                border: "1px solid",
+                                borderColor: "divider",
+                                "& .MuiChip-label": { px: 0.75 },
+                            }}
+                        />
+                    )}
+                </Box>
+
+                {/* ── Title ── */}
+                <Typography
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: "0.875rem",
+                        color: "text.primary",
+                        lineHeight: 1.35,
+                        mb: 0.5,
+                    }}
+                >
+                    {title}
+                </Typography>
+
+                {/* ── Description ── */}
+                <Typography
+                    sx={{
+                        fontSize: "0.75rem",
+                        color: "text.secondary",
+                        lineHeight: 1.5,
+                        flexGrow: 1,
+                    }}
+                >
+                    {description}
+                </Typography>
+
+                {/* ── Arrow indicator (active cards only) ── */}
+                {!isDisabled && (
+                    <Box
+                        sx={{
+                            mt: 1.5,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.25,
+                        }}
+                    >
+                        <Typography
+                            sx={{
+                                fontSize: "0.6875rem",
+                                fontWeight: 600,
+                                color: resolvedColor,
+                                lineHeight: 1,
+                            }}
+                        >
+                            Open
+                        </Typography>
+                        <ArrowForwardIcon sx={{ fontSize: "0.75rem", color: resolvedColor }} />
+                    </Box>
+                )}
             </CardActionArea>
         </Card>
     );

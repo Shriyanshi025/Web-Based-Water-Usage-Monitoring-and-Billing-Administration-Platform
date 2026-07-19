@@ -15,6 +15,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.water.monitoring_and_billing_platform.enums.AlertSeverity;
+import com.water.monitoring_and_billing_platform.enums.AlertType;
+import com.water.monitoring_and_billing_platform.enums.Role;
+import com.water.monitoring_and_billing_platform.service.AlertService;
+
 @Service
 @RequiredArgsConstructor
 public class CommunityServiceImpl implements CommunityService {
@@ -26,6 +31,8 @@ public class CommunityServiceImpl implements CommunityService {
     private final WaterMeterRepository waterMeterRepository;
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
+    private final UserRepository userRepository;
+    private final AlertService alertService;
 
     @Override
     @Transactional
@@ -48,18 +55,33 @@ public class CommunityServiceImpl implements CommunityService {
                 .active(true)
                 .build();
 
-        community = communityRepository.save(community);
+        Community savedCommunity = communityRepository.save(community);
 
         activityLogRepository.save(com.water.monitoring_and_billing_platform.entity.ActivityLog.builder()
                 .title("Community Created")
-                .description("New community added: " + community.getCommunityName())
+                .description("New community added: " + savedCommunity.getCommunityName())
                 .timestamp(java.time.LocalDateTime.now())
                 .icon("DomainAdd")
                 .color("success.main")
-                .community(community)
+                .community(savedCommunity)
                 .build());
 
-        return mapToResponse(community);
+        // Notify Main Admin(s)
+        List<com.water.monitoring_and_billing_platform.entity.User> mainAdmins = userRepository.findByRole(Role.MAIN_ADMIN);
+        for (com.water.monitoring_and_billing_platform.entity.User admin : mainAdmins) {
+            alertService.createInAppNotification(
+                    admin,
+                    null,
+                    savedCommunity,
+                    "Community Created",
+                    "New community '" + savedCommunity.getCommunityName() + "' has been successfully created.",
+                    AlertType.SYSTEM_NOTIFICATION,
+                    AlertSeverity.LOW,
+                    null
+            );
+        }
+
+        return mapToResponse(savedCommunity);
     }
 
     @Override

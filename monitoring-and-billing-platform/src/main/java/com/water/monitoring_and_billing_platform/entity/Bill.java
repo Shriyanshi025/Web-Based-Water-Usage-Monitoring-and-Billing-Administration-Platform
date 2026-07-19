@@ -48,6 +48,52 @@ public class Bill {
     @Column(nullable = false)
     private boolean paid;
 
+    @Column(unique = true)
+    private String billNumber;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "water_meter_id")
+    private WaterMeter waterMeter;
+
+    private Integer billingMonth;
+    private Integer billingYear;
+
+    private Double previousReading;
+    private Double currentReading;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal ratePerUnit;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal fixedCharge;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal additionalCharge;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal subtotal;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal tax;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal sharedWaterCost;
+
+    private String distributionStrategy;
+
+    private LocalDate generatedDate;
+    private LocalDate dueDate;
+    private LocalDate paidDate;
+
+    private String paymentStatus;
+    private String billStatus;
+
+    @Column(length = 500)
+    private String remarks;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

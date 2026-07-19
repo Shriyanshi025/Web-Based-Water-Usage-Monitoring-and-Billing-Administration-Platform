@@ -72,6 +72,7 @@ function MainAdminDashboard() {
             trend={12.5} 
             trendLabel="vs last month"
             color="primary.main"
+            onClick={() => navigate("/main-admin/communities")}
         />,
         <StatCard 
             key="active-residents"
@@ -81,6 +82,7 @@ function MainAdminDashboard() {
             trend={18.4} 
             trendLabel="vs last month"
             color="success.main"
+            onClick={() => navigate("/main-admin/communities")}
         />,
         <StatCard 
             key="pending-approvals"
@@ -90,6 +92,7 @@ function MainAdminDashboard() {
             trend={-5.2} 
             trendLabel="vs last week"
             color="warning.main"
+            onClick={() => navigate("/main-admin/approvals")}
         />,
         <StatCard 
             key="community-admins"
@@ -99,6 +102,7 @@ function MainAdminDashboard() {
             trend={8.1} 
             trendLabel="vs last month"
             color="info.main"
+            onClick={() => navigate("/main-admin/community-admins")}
         />,
         <StatCard 
             key="water-consumption"
@@ -109,6 +113,7 @@ function MainAdminDashboard() {
             trend={4.3} 
             trendLabel="vs last month"
             color="primary.main"
+            onClick={() => navigate("/main-admin/communities")}
         />,
         <StatCard 
             key="revenue-summary"
@@ -119,6 +124,7 @@ function MainAdminDashboard() {
             trend={15.2} 
             trendLabel="vs last month"
             color="success.main"
+            onClick={() => navigate("/main-admin/communities")}
         />
     ], [dashboard]);
 

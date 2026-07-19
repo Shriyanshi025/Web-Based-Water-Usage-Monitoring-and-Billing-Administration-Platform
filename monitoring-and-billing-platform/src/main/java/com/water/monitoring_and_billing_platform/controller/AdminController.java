@@ -9,6 +9,7 @@ import com.water.monitoring_and_billing_platform.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -108,6 +109,35 @@ public class AdminController {
                         .success(true)
                         .message("Pending community admins fetched successfully.")
                         .data(adminService.getPendingCommunityAdmins())
+                        .build()
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserMeResponse>> getSelfProfile(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        return ResponseEntity.ok(
+                ApiResponse.<UserMeResponse>builder()
+                        .success(true)
+                        .message("Self profile fetched successfully.")
+                        .data(adminService.getSelfProfile(userDetails.getUsername()))
+                        .build()
+        );
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<UserMeResponse>> updateSelfProfile(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestBody java.util.Map<String, String> request) {
+        String fullName = request.get("fullName");
+        if (fullName == null || fullName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Full Name cannot be blank");
+        }
+        return ResponseEntity.ok(
+                ApiResponse.<UserMeResponse>builder()
+                        .success(true)
+                        .message("Self profile updated successfully.")
+                        .data(adminService.updateSelfProfile(userDetails.getUsername(), fullName))
                         .build()
         );
     }

@@ -24,5 +24,15 @@ public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
     List<WaterUsage> findByWaterMeterResidentProfileCommunityId(Long communityId);
 
     boolean existsByWaterMeterIdAndReadingDateAndCurrentReading(Long waterMeterId, LocalDate readingDate, Double currentReading);
+    boolean existsByWaterMeterIdAndReadingDate(Long waterMeterId, LocalDate readingDate);
+    java.util.Optional<WaterUsage> findByWaterMeterIdAndReadingDate(Long waterMeterId, LocalDate readingDate);
+    
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"waterMeter", "waterMeter.residentProfile", "waterMeter.residentProfile.user"})
+    List<WaterUsage> findByWaterMeterResidentProfileCommunityIdAndReadingDateBetween(Long communityId, LocalDate start, LocalDate end);
 
+    java.util.Optional<WaterUsage> findFirstByWaterMeterResidentProfileIdOrderByReadingDateDescIdDesc(Long residentProfileId);
+    java.util.Optional<WaterUsage> findFirstByWaterMeterIdOrderByReadingDateDescIdDesc(Long waterMeterId);
+    java.util.Optional<WaterUsage> findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(Long waterMeterId, LocalDate readingDate);
+    java.util.Optional<WaterUsage> findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(Long waterMeterId, LocalDate readingDate);
+    List<WaterUsage> findByWaterMeterIdAndReadingDateBetween(Long waterMeterId, LocalDate start, LocalDate end);
 }

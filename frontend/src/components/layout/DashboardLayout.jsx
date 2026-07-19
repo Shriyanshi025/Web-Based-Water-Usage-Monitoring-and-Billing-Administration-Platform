@@ -17,7 +17,7 @@ function DashboardLayout({ children }) {
     };
 
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#FAFBFC" }}>
+        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
             {/* Sidebar acts as left panel */}
             <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 

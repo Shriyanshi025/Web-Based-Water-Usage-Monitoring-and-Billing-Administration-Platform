@@ -20,4 +20,5 @@ public interface CommunityAdminProfileRepository
 
     List<CommunityAdminProfile> findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus approvalStatus);
     long countByCommunityId(Long communityId);
+    List<CommunityAdminProfile> findByCommunityIdAndActiveTrue(Long communityId);
 }

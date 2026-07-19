@@ -3,30 +3,30 @@ import { Chip } from "@mui/material";
 import { STATUS_COLORS } from "../../constants/statusColors";
 
 /**
- * Reusable StatusBadge component
+ * HydroSync StatusBadge
+ *
+ * Renders a domain-specific status chip for any entity status value.
+ * Colors are sourced entirely from STATUS_COLORS — no hardcoded values here.
+ *
  * @param {Object} props
- * @param {string} props.status - Status string (e.g., ACTIVE, PENDING)
- * @param {string} [props.size="small"] - Size of the badge ('small' | 'medium')
- * @param {object} [props.sx] - Additional styles
+ * @param {string}  props.status   - Status key (e.g., "ACTIVE", "PENDING", "OVERDUE")
+ * @param {string}  [props.size]   - MUI Chip size: "small" (default) | "medium"
+ * @param {object}  [props.sx]     - Additional MUI sx overrides
  */
 const StatusBadge = ({ status, size = "small", sx = {} }) => {
-    // Fallback to a default grey if status not found
-    const colorConfig = STATUS_COLORS[status?.toUpperCase()] || {
-        bg: "#F3F4F6",
-        text: "#374151",
-    };
+    const colorConfig =
+        STATUS_COLORS[status?.toUpperCase()] || STATUS_COLORS._DEFAULT;
 
     return (
         <Chip
             label={status || "UNKNOWN"}
             size={size}
             sx={{
-                bgcolor: colorConfig.bg,
-                color: colorConfig.text,
-                fontWeight: 600,
-                borderRadius: "6px",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
+                bgcolor:      colorConfig.bg,
+                color:        colorConfig.text,
+                border:       `1px solid ${colorConfig.border}`,
+                // Typography, radius, fontWeight, letterSpacing, textTransform
+                // are all set via theme.components.MuiChip — do not duplicate here
                 ...sx,
             }}
         />

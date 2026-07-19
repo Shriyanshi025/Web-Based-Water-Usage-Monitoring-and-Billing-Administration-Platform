@@ -32,6 +32,10 @@ const ResidentBillsPage = lazy(() => import("../pages/resident/BillsPage"));
 const UsagePage = lazy(() => import("../pages/resident/UsagePage"));
 const MeterDetailsPage = lazy(() => import("../pages/resident/MeterDetailsPage"));
 const ProfilePage = lazy(() => import("../pages/resident/ProfilePage"));
+const ResidentComplaintsPage = lazy(() => import("../pages/resident/ComplaintsPage"));
+const CommunityComplaintsPage = lazy(() => import("../pages/community-admin/ComplaintsPage"));
+const NotificationsPage = lazy(() => import("../pages/common/NotificationsPage"));
+const PaymentHistoryPage = lazy(() => import("../pages/resident/PaymentHistoryPage"));
 
 // Error Pages
 import UnauthorizedPage from "../pages/error/401";
@@ -93,6 +97,11 @@ function AppRoutes() {
                         <MainAdminApprovalsPage />
                     </ProtectedRoute>
                 } />
+                <Route path={ROUTES.MAIN_ADMIN_PROFILE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                } />
                 
                 {/* Community Admin Routes */}
                 <Route path={ROUTES.COMMUNITY_ADMIN_DASHBOARD} element={
@@ -150,6 +159,11 @@ function AppRoutes() {
                         <ProfilePage />
                     </ProtectedRoute>
                 } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_COMPLAINTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <CommunityComplaintsPage />
+                    </ProtectedRoute>
+                } />
 
                 {/* Resident Routes */}
                 <Route path={ROUTES.RESIDENT_DASHBOARD} element={
@@ -175,6 +189,31 @@ function AppRoutes() {
                 <Route path={ROUTES.RESIDENT_PROFILE} element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <ProfilePage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.RESIDENT_COMPLAINTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <ResidentComplaintsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.RESIDENT_NOTIFICATIONS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.RESIDENT_PAYMENTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <PaymentHistoryPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_NOTIFICATIONS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.MAIN_ADMIN_NOTIFICATIONS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
+                        <NotificationsPage />
                     </ProtectedRoute>
                 } />
 

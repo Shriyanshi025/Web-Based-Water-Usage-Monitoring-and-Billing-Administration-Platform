@@ -33,6 +33,7 @@ public class AdminServiceImpl implements AdminService {
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final com.water.monitoring_and_billing_platform.repository.WaterMeterRepository waterMeterRepository;
+    private final com.water.monitoring_and_billing_platform.service.AlertService alertService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -54,6 +55,16 @@ public class AdminServiceImpl implements AdminService {
         if (request.getApprovalStatus() == ApprovalStatus.REJECTED) {
             user.setApprovalStatus(ApprovalStatus.REJECTED);
             userRepository.save(user);
+            alertService.createInAppNotification(
+                    user,
+                    null,
+                    null,
+                    "Registration Rejected",
+                    "Your registration request has been rejected by the administrator.",
+                    com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_REJECTED,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.HIGH,
+                    null
+            );
             return;
         }
 
@@ -96,6 +107,17 @@ public class AdminServiceImpl implements AdminService {
                     waterMeterRepository.save(meter);
                 }
 
+                alertService.createInAppNotification(
+                        user,
+                        savedProfile,
+                        savedProfile.getCommunity(),
+                        "Registration Approved",
+                        "Your registration request has been approved by the administrator. Welcome to HydroSync!",
+                        com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
+                        com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
+                        null
+                );
+
             } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
                 CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(user.getId())
                         .orElseThrow(() -> new RuntimeException("Community Admin profile not found."));
@@ -115,6 +137,17 @@ public class AdminServiceImpl implements AdminService {
 
                 userRepository.save(user);
                 communityAdminProfileRepository.save(profile);
+
+                alertService.createInAppNotification(
+                        user,
+                        null,
+                        profile.getCommunity(),
+                        "Registration Approved",
+                        "Your community administrator registration request has been approved. Welcome to HydroSync!",
+                        com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
+                        com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
+                        null
+                );
             } else {
                 user.setApprovalStatus(ApprovalStatus.APPROVED);
                 userRepository.save(user);
@@ -245,6 +278,23 @@ public class AdminServiceImpl implements AdminService {
         return communityAdminProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING).stream()
                 .map(this::mapToCommunityAdminProfileResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public UserMeResponse getSelfProfile(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+        return mapToUserMeResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserMeResponse updateSelfProfile(String email, String fullName) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(UserNotFoundException::new);
+        user.setFullName(fullName);
+        User savedUser = userRepository.save(user);
+        return mapToUserMeResponse(savedUser);
     }
 
 }

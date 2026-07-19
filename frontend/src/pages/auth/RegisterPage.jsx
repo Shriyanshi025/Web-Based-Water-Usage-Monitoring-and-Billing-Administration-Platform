@@ -124,14 +124,18 @@ export default function RegisterPage() {
             }
             navigate("/pending-approval");
         } catch (err) {
-            setGlobalError(err.response?.data?.message || "Registration failed. Please try again.");
+            let msg = err.response?.data?.message || "Registration failed. Please try again.";
+            if (msg.toLowerCase().includes("constraint") || msg.toLowerCase().includes("statement") || msg.toLowerCase().includes("sql") || msg.toLowerCase().includes("database") || msg.toLowerCase().includes("internal server error")) {
+                msg = "A resident registration request is already pending approval, or the selected details are invalid.";
+            }
+            setGlobalError(msg);
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <AuthLayout title="Create Account" subtitle="Join AquaBase and manage your water footprint." alignTop>
+        <AuthLayout title="Create Account" subtitle="Join HydroSync and manage your water footprint." alignTop>
             <Box sx={{ mb: 3 }}>
                 <Stepper activeStep={activeStep} alternativeLabel>
                     {STEPS.map((label, index) => (
@@ -142,7 +146,23 @@ export default function RegisterPage() {
                 </Stepper>
             </Box>
 
-            {globalError && <Alert severity="error" sx={{ mb: 3 }}>{globalError}</Alert>}
+            {globalError && (
+                <Alert 
+                    severity="error" 
+                    sx={{ 
+                        mb: 3, 
+                        borderRadius: 2,
+                        '& .MuiAlert-message': { width: '100%' }
+                    }}
+                >
+                    <Typography variant="subtitle2" fontWeight="bold">
+                        ❌ Registration Failed
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 0.5 }}>
+                        {globalError}
+                    </Typography>
+                </Alert>
+            )}
 
             <FormProvider {...methods}>
                 <Box sx={{ minHeight: 300, position: 'relative' }}>
