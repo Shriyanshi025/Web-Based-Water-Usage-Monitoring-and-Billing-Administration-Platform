@@ -2,16 +2,16 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import DashboardGrid from "../../components/layout/DashboardGrid";
-import StatCard from "../../components/widgets/StatCard";
+import AdminStatCard from "../../components/common/AdminStatCard";
+import PageHeader from "../../components/common/PageHeader";
 import ChartCard from "../../components/widgets/ChartCard";
 import TimelineWidget from "../../components/widgets/TimelineWidget";
 import DataGrid from "../../components/common/DataGrid";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import QuickActionCard from "../../components/widgets/QuickActionCard";
-import StatusBadge from "../../components/common/StatusBadge";
 import LoadingScreen from "../../components/common/LoadingScreen";
 import ActionButton from "../../components/common/ActionButton";
-import { IconButton, Button } from "@mui/material";
+import { Button } from "@mui/material";
 
 // Icons
 import BusinessIcon from "@mui/icons-material/Business";
@@ -21,11 +21,10 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import AddIcon from "@mui/icons-material/Add";
-import ReceiptIcon from "@mui/icons-material/Receipt";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 import { QUICK_ACTIONS_CONFIG, DATAGRID_COLUMNS } from "../../constants/dashboardConfig";
 import { getMainDashboard } from "../../services/DashboardService";
+import { formatCurrency, formatWaterUsage } from "../../helpers/numberHelper";
 
 function MainAdminDashboard() {
     const navigate = useNavigate();
@@ -64,66 +63,52 @@ function MainAdminDashboard() {
     []);
 
     const memoizedKpiCards = useMemo(() => [
-        <StatCard 
+        <AdminStatCard 
             key="total-communities"
             title="Total Communities" 
             value={dashboard?.totalCommunities || 0} 
             icon={<BusinessIcon />} 
-            trend={12.5} 
-            trendLabel="vs last month"
-            color="primary.main"
+            iconColor="primary.main"
             onClick={() => navigate("/main-admin/communities")}
         />,
-        <StatCard 
+        <AdminStatCard 
             key="active-residents"
             title="Active Residents" 
             value={dashboard?.totalResidents || 0} 
             icon={<PeopleIcon />} 
-            trend={18.4} 
-            trendLabel="vs last month"
-            color="success.main"
+            iconColor="success.main"
             onClick={() => navigate("/main-admin/communities")}
         />,
-        <StatCard 
+        <AdminStatCard 
             key="pending-approvals"
             title="Pending Approvals" 
             value={dashboard?.pendingCommunityAdmins || 0} 
             icon={<PendingActionsIcon />} 
-            trend={-5.2} 
-            trendLabel="vs last week"
-            color="warning.main"
+            iconColor="warning.main"
             onClick={() => navigate("/main-admin/approvals")}
         />,
-        <StatCard 
+        <AdminStatCard 
             key="community-admins"
             title="Community Admins" 
             value={dashboard?.totalCommunityAdmins || 0} 
             icon={<SupervisorAccountIcon />} 
-            trend={8.1} 
-            trendLabel="vs last month"
-            color="info.main"
+            iconColor="info.main"
             onClick={() => navigate("/main-admin/community-admins")}
         />,
-        <StatCard 
+        <AdminStatCard 
             key="water-consumption"
             title="Water Consumption" 
-            value={dashboard?.totalWaterConsumption || 0} 
-            formatValue={(v) => `${v.toFixed(2)} Litres`}
+            value={formatWaterUsage(dashboard?.totalWaterConsumption || 0)} 
             icon={<WaterDropIcon />} 
-            trend={4.3} 
-            trendLabel="vs last month"
-            color="primary.main"
+            iconColor="primary.main"
             onClick={() => navigate("/main-admin/communities")}
         />,
-        <StatCard 
+        <AdminStatCard 
             key="revenue-summary"
             title="Revenue Summary" 
-            value={dashboard?.totalRevenue || 0}
-            formatValue={(v) => `$${v.toLocaleString()}`}
+            value={formatCurrency(dashboard?.totalRevenue || 0)}
             icon={<AttachMoneyIcon />} 
-            trend={15.2} 
-            trendLabel="vs last month"
-            color="success.main"
+            iconColor="success.main"
             onClick={() => navigate("/main-admin/communities")}
         />
     ], [dashboard]);

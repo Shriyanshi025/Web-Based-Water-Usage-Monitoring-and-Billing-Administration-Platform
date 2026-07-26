@@ -21,12 +21,61 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
 
     private final UserRepository userRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
+    private final com.water.monitoring_and_billing_platform.repository.CommunityRepository communityRepository;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
-    public CommunityAdminResponse createAdmin(CommunityAdminRequest request) {
-        throw new UnsupportedOperationException(
-                "Community Admin creation requires user registration flow."
+    @Transactional
+    public CommunityAdminProfileResponse createAdmin(CommunityAdminRegistrationRequest request) {
+        String normalizedEmail = request.getEmail().trim().toLowerCase(java.util.Locale.ROOT);
+
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new com.water.monitoring_and_billing_platform.exception.EmailAlreadyExistsException();
+        }
+
+        Long communityId = request.getCommunityId();
+        if (communityId == null) {
+            throw new IllegalArgumentException("Community ID is required");
+        }
+
+        com.water.monitoring_and_billing_platform.entity.Community community = communityRepository.findById(communityId)
+                .orElseThrow(com.water.monitoring_and_billing_platform.exception.CommunityNotFoundException::new);
+
+        boolean hasActiveAdmin = communityAdminProfileRepository.existsByCommunity_IdAndActiveTrue(community.getId());
+        if (hasActiveAdmin) {
+            throw new IllegalStateException("Community already has an active Community Admin.");
+        }
+
+        User user = User.builder()
+                .fullName(request.getFullName())
+                .email(normalizedEmail)
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(com.water.monitoring_and_billing_platform.enums.Role.COMMUNITY_ADMIN)
+                .active(true)
+                .approvalStatus(com.water.monitoring_and_billing_platform.enums.ApprovalStatus.APPROVED)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        long verifiedCount = communityAdminProfileRepository.countByCommunityIdAndVerifiedTrue(community.getId());
+        String officialAdminId = com.water.monitoring_and_billing_platform.util.IdGenerator.generateOfficialCommunityAdminId(
+                community.getCommunityCode(),
+                verifiedCount + 1
         );
+
+        CommunityAdminProfile adminProfile = CommunityAdminProfile.builder()
+                .user(savedUser)
+                .community(community)
+                .phoneNumber(request.getPhoneNumber())
+                .officeAddress(request.getOfficeAddress())
+                .verified(true)
+                .active(true)
+                .officialAdminId(officialAdminId)
+                .build();
+
+        CommunityAdminProfile savedProfile = communityAdminProfileRepository.save(adminProfile);
+
+        return mapToResponse(savedProfile);
     }
 
     @Override
@@ -118,7 +167,8 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
                 .email(profile.getUser().getEmail())
                 .phoneNumber(profile.getPhoneNumber())
                 .officeAddress(profile.getOfficeAddress())
-                .communityName(profile.getCommunity().getCommunityName())
+                .communityId(profile.getCommunity() != null ? profile.getCommunity().getId() : null)
+                .communityName(profile.getCommunity() != null ? profile.getCommunity().getCommunityName() : null)
                 .verified(profile.isVerified())
                 .active(profile.isActive())
                 .build();

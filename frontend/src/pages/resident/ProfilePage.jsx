@@ -4,7 +4,7 @@ import PageHeader from "../../components/common/PageHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import LoadingScreen from "../../components/common/LoadingScreen";
 import ErrorState from "../../components/common/ErrorState";
-import { Grid, TextField, Button, Box, Typography, Card, CardContent } from "@mui/material";
+import { Grid, TextField, Button, Box, Typography, Card, CardContent, Stack } from "@mui/material";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
@@ -205,7 +205,7 @@ function ProfilePage() {
                                                 color="primary"
                                                 disabled={saving}
                                             >
-                                                {saving ? "Saving..." : "Save Changes"}
+                                                {saving ? "Saving…" : "Save Changes"}
                                             </Button>
                                         </Grid>
                                     </Grid>
@@ -257,7 +257,7 @@ function ProfilePage() {
                                                 color="secondary"
                                                 disabled={changingPassword}
                                             >
-                                                {changingPassword ? "Updating..." : "Change Password"}
+                                                {changingPassword ? "Updating…" : "Change Password"}
                                             </Button>
                                         </Grid>
                                     </Grid>
@@ -302,6 +302,10 @@ function ProfilePage() {
                             </Box>
                         </Box>
                     </WidgetContainer>
+
+                    <Box sx={{ mt: 3 }}>
+                        <EmailPreferencesCard />
+                    </Box>
                 </Grid>
             </Grid>
         </DashboardLayout>
@@ -309,3 +313,115 @@ function ProfilePage() {
 }
 
 export default ProfilePage;
+
+function EmailPreferencesCard() {
+    const { showNotification } = useNotification();
+    const [prefs, setPrefs] = useState({
+        billEmails: true,
+        alertEmails: true,
+        reminderEmails: true,
+        announcementEmails: true,
+    });
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
+    useEffect(() => {
+        api.get("/email-preferences")
+            .then(res => {
+                if (res.data?.data) setPrefs(res.data.data);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
+    const handleToggle = (key) => {
+        setPrefs(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleSave = async () => {
+        try {
+            setSaving(true);
+            await api.put("/email-preferences", prefs);
+            showNotification("Email notification preferences updated successfully", "success");
+        } catch (err) {
+            showNotification("Failed to update email preferences", "error");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (loading) return null;
+
+    return (
+        <WidgetContainer title="Email Notification Preferences">
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Control which automated email notifications you receive from HydroSync.
+            </Typography>
+            <Stack spacing={1.5}>
+                <Grid container alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" fontWeight={600}>Bill & Payment Statements</Typography>
+                    <Button
+                        size="small"
+                        variant={prefs.billEmails ? "contained" : "outlined"}
+                        color={prefs.billEmails ? "success" : "inherit"}
+                        onClick={() => handleToggle("billEmails")}
+                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
+                    >
+                        {prefs.billEmails ? "Enabled" : "Disabled"}
+                    </Button>
+                </Grid>
+
+                <Grid container alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" fontWeight={600}>Water Leak & Usage Alerts</Typography>
+                    <Button
+                        size="small"
+                        variant={prefs.alertEmails ? "contained" : "outlined"}
+                        color={prefs.alertEmails ? "success" : "inherit"}
+                        onClick={() => handleToggle("alertEmails")}
+                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
+                    >
+                        {prefs.alertEmails ? "Enabled" : "Disabled"}
+                    </Button>
+                </Grid>
+
+                <Grid container alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" fontWeight={600}>Bill Due Reminders</Typography>
+                    <Button
+                        size="small"
+                        variant={prefs.reminderEmails ? "contained" : "outlined"}
+                        color={prefs.reminderEmails ? "success" : "inherit"}
+                        onClick={() => handleToggle("reminderEmails")}
+                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
+                    >
+                        {prefs.reminderEmails ? "Enabled" : "Disabled"}
+                    </Button>
+                </Grid>
+
+                <Grid container alignItems="center" justifyContent="space-between">
+                    <Typography variant="body2" fontWeight={600}>Community Announcements</Typography>
+                    <Button
+                        size="small"
+                        variant={prefs.announcementEmails ? "contained" : "outlined"}
+                        color={prefs.announcementEmails ? "success" : "inherit"}
+                        onClick={() => handleToggle("announcementEmails")}
+                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
+                    >
+                        {prefs.announcementEmails ? "Enabled" : "Disabled"}
+                    </Button>
+                </Grid>
+
+                <Box sx={{ pt: 1, textAlign: "right" }}>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={handleSave}
+                        disabled={saving}
+                    >
+                        {saving ? "Saving..." : "Save Preferences"}
+                    </Button>
+                </Box>
+            </Stack>
+        </WidgetContainer>
+    );
+}

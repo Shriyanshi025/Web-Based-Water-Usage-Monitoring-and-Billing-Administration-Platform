@@ -43,7 +43,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     // Helper to get client (overridable in tests or simulated if keys are placeholders)
     protected RazorpayClient getRazorpayClient() throws Exception {
-        return new RazorpayClient(keyId, keySecret);
+        String cleanKeyId = keyId != null ? keyId.trim() : "";
+        String cleanKeySecret = keySecret != null ? keySecret.trim() : "";
+        return new RazorpayClient(cleanKeyId, cleanKeySecret);
     }
 
     private User getUserOrThrow(String email) {
@@ -80,23 +82,31 @@ public class PaymentServiceImpl implements PaymentService {
         int attemptNumber = (int) (attemptCount + 1);
 
         BigDecimal amount = bill.getTotalAmount();
-        int amountInPaise = amount.multiply(BigDecimal.valueOf(100)).intValue();
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Invalid bill amount: " + amount);
+        }
 
-        String orderId = "order_simulated_" + UUID.randomUUID().toString().substring(0, 8);
+        int amountInPaise = amount.setScale(2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100)).intValue();
+        if (amountInPaise < 100) {
+            throw new IllegalArgumentException("Payment amount must be at least ₹1.00 (100 paise).");
+        }
 
-        // Attempt actual Razorpay order creation
-        if (!keyId.contains("placeholder")) {
-            try {
-                RazorpayClient razorpay = getRazorpayClient();
-                JSONObject orderRequest = new JSONObject();
-                orderRequest.put("amount", amountInPaise);
-                orderRequest.put("currency", "INR");
-                orderRequest.put("receipt", paymentNumber + "-A" + attemptNumber);
+        String orderId = null;
+        try {
+            RazorpayClient razorpay = getRazorpayClient();
+            JSONObject orderRequest = new JSONObject();
+            orderRequest.put("amount", amountInPaise);
+            orderRequest.put("currency", "INR");
+            orderRequest.put("receipt", paymentNumber + "-A" + attemptNumber);
 
-                Order order = razorpay.orders.create(orderRequest);
-                orderId = order.get("id");
-            } catch (Exception e) {
-                log.error("Failed to create Razorpay order, falling back to simulated order ID. Error: {}", e.getMessage());
+            Order order = razorpay.orders.create(orderRequest);
+            orderId = order.get("id");
+        } catch (Exception e) {
+            log.error("Error creating order with Razorpay Java SDK: {}", e.getMessage());
+            if (keyId != null && keyId.contains("placeholder")) {
+                orderId = "order_simulated_" + UUID.randomUUID().toString().substring(0, 8);
+            } else {
+                throw new RuntimeException("Failed to create Razorpay Order: " + e.getMessage(), e);
             }
         }
 
@@ -127,27 +137,28 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new IllegalArgumentException("Payment record not found for Order ID: " + request.getRazorpayOrderId()));
 
         if (payment.getPaymentStatus() == PaymentStatus.SUCCESS) {
-            throw new IllegalArgumentException("This payment is already successful and is immutable.");
+            throw new IllegalArgumentException("This payment is already verified and marked as successful.");
         }
 
         boolean verified = false;
 
-        // Perform signature verification
-        if (keyId.contains("placeholder")) {
-            // Simulated validation for test/placeholder mode
-            verified = request.getRazorpaySignature() != null && !request.getRazorpaySignature().isBlank();
-        } else {
-            try {
+        // Perform signature verification using official Razorpay Java SDK method
+        try {
+            if (keyId != null && keyId.contains("placeholder")) {
+                // Placeholder mode for offline local test suites
+                verified = request.getRazorpaySignature() != null && !request.getRazorpaySignature().isBlank();
+            } else {
                 JSONObject options = new JSONObject();
                 options.put("razorpay_order_id", request.getRazorpayOrderId());
                 options.put("razorpay_payment_id", request.getRazorpayPaymentId());
                 options.put("razorpay_signature", request.getRazorpaySignature());
 
-                verified = Utils.verifyPaymentSignature(options, keySecret);
-            } catch (Exception e) {
-                log.error("Signature verification threw an exception: {}", e.getMessage());
-                payment.setFailureReason(e.getMessage());
+                String cleanKeySecret = keySecret != null ? keySecret.trim() : "";
+                verified = Utils.verifyPaymentSignature(options, cleanKeySecret);
             }
+        } catch (Exception e) {
+            log.error("Razorpay signature verification exception: {}", e.getMessage());
+            payment.setFailureReason("Signature verification failed: " + e.getMessage());
         }
 
         if (verified) {

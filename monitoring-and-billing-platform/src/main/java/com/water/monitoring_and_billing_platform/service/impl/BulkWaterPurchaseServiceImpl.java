@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,10 +38,13 @@ public class BulkWaterPurchaseServiceImpl implements BulkWaterPurchaseService {
         Community community = adminProfile.getCommunity();
 
         if (request.getPurchasedVolume() <= 0) {
-            throw new IllegalArgumentException("Purchased volume must be positive");
+            throw new IllegalArgumentException("Purchased volume must be positive.");
         }
-        if (request.getTotalCost().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Total cost must be positive");
+        if (request.getUnitCost() == null || request.getUnitCost().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Unit cost must be positive.");
+        }
+        if (request.getPurchaseDate().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Purchase date cannot be in the future.");
         }
 
         BillingCycle cycle = billingCycleRepository.findById(request.getBillingCycleId())
@@ -50,25 +54,123 @@ public class BulkWaterPurchaseServiceImpl implements BulkWaterPurchaseService {
         boolean exists = bulkWaterPurchaseRepository.existsByCommunityIdAndBillingCycleIdAndSourceIgnoreCaseAndPurchaseDate(
                 community.getId(),
                 cycle.getId(),
-                request.getSource().trim(),
+                request.getSupplierName().trim(),
                 request.getPurchaseDate()
         );
 
         if (exists) {
-            throw new IllegalArgumentException("A duplicate purchase entry already exists for the same source and date in this cycle.");
+            throw new IllegalArgumentException("A duplicate purchase entry already exists for the same supplier and date in this cycle.");
         }
 
+        BigDecimal totalCost = BigDecimal.valueOf(request.getPurchasedVolume())
+                .multiply(request.getUnitCost())
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
         BulkWaterPurchase purchase = BulkWaterPurchase.builder()
-                .source(request.getSource())
+                .source(request.getSupplierName())
                 .purchasedVolume(request.getPurchasedVolume())
-                .totalCost(request.getTotalCost())
+                .unitCost(request.getUnitCost())
+                .totalCost(totalCost)
                 .purchaseDate(request.getPurchaseDate())
+                .notes(request.getNotes())
+                .createdBy(adminEmail)
                 .billingCycle(cycle)
                 .community(community)
                 .build();
 
         BulkWaterPurchase saved = bulkWaterPurchaseRepository.save(purchase);
         return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public BulkWaterPurchaseResponse updatePurchase(String adminEmail, Long id, BulkWaterPurchaseRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        Community community = adminProfile.getCommunity();
+
+        BulkWaterPurchase purchase = bulkWaterPurchaseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Bulk water purchase not found."));
+
+        if (!purchase.getCommunity().getId().equals(community.getId())) {
+            throw new IllegalArgumentException("Unauthorized to modify this bulk water purchase.");
+        }
+
+        if (request.getPurchasedVolume() <= 0) {
+            throw new IllegalArgumentException("Purchased volume must be positive.");
+        }
+        if (request.getUnitCost() == null || request.getUnitCost().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Unit cost must be positive.");
+        }
+        if (request.getPurchaseDate().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException("Purchase date cannot be in the future.");
+        }
+
+        BillingCycle cycle = billingCycleRepository.findById(request.getBillingCycleId())
+                .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found."));
+
+        // Check for duplicates
+        boolean exists = bulkWaterPurchaseRepository.existsDuplicateForUpdate(
+                community.getId(),
+                cycle.getId(),
+                request.getSupplierName().trim(),
+                request.getPurchaseDate(),
+                id
+        );
+
+        if (exists) {
+            throw new IllegalArgumentException("A duplicate purchase entry already exists for the same supplier and date in this cycle.");
+        }
+
+        BigDecimal totalCost = BigDecimal.valueOf(request.getPurchasedVolume())
+                .multiply(request.getUnitCost())
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        purchase.setSource(request.getSupplierName());
+        purchase.setPurchasedVolume(request.getPurchasedVolume());
+        purchase.setUnitCost(request.getUnitCost());
+        purchase.setTotalCost(totalCost);
+        purchase.setPurchaseDate(request.getPurchaseDate());
+        purchase.setNotes(request.getNotes());
+        purchase.setBillingCycle(cycle);
+
+        BulkWaterPurchase saved = bulkWaterPurchaseRepository.save(purchase);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public void deletePurchase(String adminEmail, Long id) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        BulkWaterPurchase purchase = bulkWaterPurchaseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Bulk water purchase not found."));
+
+        if (!purchase.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new IllegalArgumentException("Unauthorized to delete this bulk water purchase.");
+        }
+
+        bulkWaterPurchaseRepository.delete(purchase);
+    }
+
+    @Override
+    public BulkWaterPurchaseResponse getPurchaseById(String adminEmail, Long id) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        BulkWaterPurchase purchase = bulkWaterPurchaseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Bulk water purchase not found."));
+
+        if (!purchase.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new IllegalArgumentException("Unauthorized to view this bulk water purchase.");
+        }
+
+        return mapToResponse(purchase);
+    }
+
+    @Override
+    public List<BulkWaterPurchaseResponse> getAllPurchases(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        return bulkWaterPurchaseRepository.findByCommunityId(adminProfile.getCommunity().getId())
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
@@ -111,13 +213,18 @@ public class BulkWaterPurchaseServiceImpl implements BulkWaterPurchaseService {
     private BulkWaterPurchaseResponse mapToResponse(BulkWaterPurchase purchase) {
         return BulkWaterPurchaseResponse.builder()
                 .id(purchase.getId())
-                .source(purchase.getSource())
+                .supplierName(purchase.getSource())
                 .purchasedVolume(purchase.getPurchasedVolume())
+                .unitCost(purchase.getUnitCost())
                 .totalCost(purchase.getTotalCost())
                 .purchaseDate(purchase.getPurchaseDate())
+                .notes(purchase.getNotes())
+                .createdBy(purchase.getCreatedBy())
                 .billingCycleId(purchase.getBillingCycle().getId())
                 .billingCycleName(purchase.getBillingCycle().getName())
                 .communityId(purchase.getCommunity().getId())
+                .createdAt(purchase.getCreatedAt())
+                .updatedAt(purchase.getUpdatedAt())
                 .build();
     }
 }

@@ -42,6 +42,8 @@ public class BillServiceImplTest {
     private com.water.monitoring_and_billing_platform.service.InvoiceService invoiceService;
     @Mock
     private com.water.monitoring_and_billing_platform.service.AlertService alertService;
+    @Mock
+    private com.water.monitoring_and_billing_platform.service.TariffPlanService tariffPlanService;
 
     @InjectMocks
     private BillServiceImpl billService;
@@ -67,7 +69,7 @@ public class BillServiceImplTest {
     void testFirstBillGeneration_PreviousReadingIsZero() {
         when(residentProfileRepository.findById(1L)).thenReturn(Optional.of(resident));
         when(billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc()).thenReturn(Optional.of(cycle));
-        when(tariffPlanRepository.findByActiveTrue()).thenReturn(java.util.List.of(plan));
+        when(tariffPlanService.getActiveTariffPlan(any())).thenReturn(plan);
         when(waterMeterRepository.findByResidentProfileId(1L)).thenReturn(Optional.of(meter));
 
         // No duplicate exists
@@ -108,7 +110,7 @@ public class BillServiceImplTest {
     void testSecondBillGeneration_PreviousReadingIsLastRecorded() {
         when(residentProfileRepository.findById(1L)).thenReturn(Optional.of(resident));
         when(billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc()).thenReturn(Optional.of(cycle));
-        when(tariffPlanRepository.findByActiveTrue()).thenReturn(java.util.List.of(plan));
+        when(tariffPlanService.getActiveTariffPlan(any())).thenReturn(plan);
         when(waterMeterRepository.findByResidentProfileId(1L)).thenReturn(Optional.of(meter));
 
         when(billRepository.existsByResidentProfileIdAndBillingCycleId(1L, 1L)).thenReturn(false);
@@ -159,7 +161,7 @@ public class BillServiceImplTest {
     void testValidation_CurrentReadingLessThanPreviousReadingThrowsException() {
         when(residentProfileRepository.findById(1L)).thenReturn(Optional.of(resident));
         when(billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc()).thenReturn(Optional.of(cycle));
-        when(tariffPlanRepository.findByActiveTrue()).thenReturn(java.util.List.of(plan));
+        when(tariffPlanService.getActiveTariffPlan(any())).thenReturn(plan);
         when(waterMeterRepository.findByResidentProfileId(1L)).thenReturn(Optional.of(meter));
 
         when(billRepository.existsByResidentProfileIdAndBillingCycleId(1L, 1L)).thenReturn(false);

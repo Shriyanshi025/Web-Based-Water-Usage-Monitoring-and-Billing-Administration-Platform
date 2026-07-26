@@ -24,6 +24,7 @@ import {
     Chip,
 } from "@mui/material";
 import { useAuth } from "../../context/AuthContext";
+import { useAlerts } from "../../context/AlertsContext";
 import MenuIcon from "@mui/icons-material/Menu";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import SearchIcon from "@mui/icons-material/Search";
@@ -32,6 +33,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../../services/api";
+import { AlertService } from "../../services/AlertService";
 
 function TopNavbar({ onMobileNavOpen }) {
     const theme = useTheme();
@@ -59,33 +61,35 @@ function TopNavbar({ onMobileNavOpen }) {
     const [notifications, setNotifications] = React.useState([]);
     const [unreadCount, setUnreadCount] = React.useState(0);
 
-    const handleNotificationsClick = () => {
-        let path = "/user/notifications";
-        if (user?.role === "MAIN_ADMIN") {
-            path = "/main-admin/notifications";
-        } else if (user?.role === "COMMUNITY_ADMIN") {
-            path = "/community-admin/notifications";
-        }
-        navigate(path);
-    };
-
-    const fetchNotifications = React.useCallback(async () => {
+    const fetchUnreadNotificationsCount = React.useCallback(async () => {
         if (!user) return;
         try {
-            const res = await api.get("/alerts/my");
-            const data = res.data.data || [];
-            setNotifications(data);
-            setUnreadCount(data.filter(n => n.status === "ACTIVE").length);
-        } catch (e) {
-            console.error("Failed to load notifications", e);
+            const data = await AlertService.getMyAlerts();
+            const list = Array.isArray(data) ? data : (data?.content ?? data?.data ?? []);
+            const count = list.filter((n) => n.status === "ACTIVE").length;
+            setUnreadCount(count);
+        } catch (err) {
+            // silent catch
         }
     }, [user]);
 
     React.useEffect(() => {
-        fetchNotifications();
-        const interval = setInterval(fetchNotifications, 30000);
+        fetchUnreadNotificationsCount();
+        const interval = setInterval(fetchUnreadNotificationsCount, 15000);
         return () => clearInterval(interval);
-    }, [fetchNotifications]);
+    }, [fetchUnreadNotificationsCount, location.pathname]);
+
+    const handleNotificationsClick = () => {
+        if (user?.role === "COMMUNITY_ADMIN") {
+            navigate("/community-admin/notifications");
+            return;
+        }
+        if (user?.role === "MAIN_ADMIN") {
+            navigate("/main-admin/notifications");
+        } else {
+            navigate("/user/notifications");
+        }
+    };
 
     // Generate dynamic breadcrumbs
     const pathnames = location.pathname.split("/").filter((x) => x);

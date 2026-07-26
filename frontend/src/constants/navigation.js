@@ -82,10 +82,30 @@ export const NAVIGATION_CONFIG = {
             path: ROUTES.COMMUNITY_ADMIN_TARIFF_PLANS,
             icon: "PriceChangeIcon"
         },
+        {
+            label: "Bulk Purchases",
+            path: ROUTES.COMMUNITY_ADMIN_BULK_PURCHASE,
+            icon: "WaterDropIcon"
+        },
+        {
+            label: "Cost Distribution",
+            path: ROUTES.COMMUNITY_ADMIN_COST_DISTRIBUTION,
+            icon: "TimelineIcon"
+        },
+        {
+            label: "Alerts Management",
+            path: ROUTES.COMMUNITY_ADMIN_ALERTS,
+            icon: "NotificationsActiveIcon"
+        },
+        {
+            label: "Email History",
+            path: ROUTES.COMMUNITY_ADMIN_EMAIL_HISTORY,
+            icon: "MarkEmailReadIcon"
+        },
         { 
             label: "Invitations", 
             path: ROUTES.COMMUNITY_ADMIN_INVITATIONS, 
-            icon: "MailIcon" 
+            icon: "MailOutlineIcon" 
         },
         {
             label: "Complaints",

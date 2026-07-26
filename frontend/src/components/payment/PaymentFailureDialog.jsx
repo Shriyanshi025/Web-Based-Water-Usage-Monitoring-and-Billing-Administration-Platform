@@ -1,74 +1,117 @@
 import React from "react";
-import { Dialog, DialogContent, DialogActions, Box, Typography, Button, Stack } from "@mui/material";
+import {
+    Dialog,
+    DialogContent,
+    DialogActions,
+    Box,
+    Typography,
+    Button,
+    Divider,
+    Stack,
+} from "@mui/material";
+import ReplayIcon from "@mui/icons-material/Replay";
+import CloseIcon from "@mui/icons-material/Close";
+import ShieldIcon from "@mui/icons-material/Shield";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
-export default function PaymentFailureDialog({ open, onClose, onRetry, bill }) {
+export default function PaymentFailureDialog({ open, onClose, bill, onRetry }) {
+    if (!open) return null;
+
     return (
-        <Dialog 
-            open={open} 
+        <Dialog
+            open={open}
             onClose={onClose}
-            maxWidth="xs"
-            fullWidth
-            PaperProps={{ sx: { borderRadius: 3 } }}
+            maxWidth={false}
+            PaperProps={{
+                sx: {
+                    width: { xs: "100%", sm: 440 },
+                    maxWidth: "100%",
+                    borderRadius: { xs: 0, sm: "16px" },
+                    overflow: "hidden",
+                    m: { xs: 0, sm: 2 },
+                    boxShadow: "0 24px 48px rgba(0,0,0,0.18)",
+                }
+            }}
+            TransitionProps={{ timeout: 200 }}
         >
-            <DialogContent sx={{ p: 4, textAlign: 'center' }}>
-                {/* Failure Icon */}
-                <Box 
-                    sx={{ 
-                        width: 72, 
-                        height: 72, 
-                        borderRadius: '50%', 
-                        bgcolor: 'error.light', 
-                        color: 'error.main',
-                        mx: 'auto', 
-                        mb: 2.5,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '2.5rem',
-                        fontWeight: 'bold',
-                        border: '4px solid',
-                        borderColor: 'error.main'
-                    }}
-                >
-                    ❌
-                </Box>
+            <DialogContent sx={{ p: 4, textAlign: "center" }}>
                 
-                <Typography variant="h5" fontWeight="bold" color="error.main" gutterBottom>
-                    Payment Failed
+                {/* Understated Neutral Icon */}
+                <Box sx={{
+                    width: 52, height: 52,
+                    borderRadius: "50%",
+                    bgcolor: "#FFFBEB",
+                    border: "2px solid #F59E0B",
+                    color: "#D97706",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    mx: "auto", mb: 2,
+                }}>
+                    <InfoOutlinedIcon sx={{ fontSize: "1.6rem" }} />
+                </Box>
+
+                <Typography variant="h6" fontWeight={700} sx={{ color: "#0F172A", mb: 0.5, letterSpacing: "-0.3px" }}>
+                    We Couldn't Process This Payment
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                    Your payment could not be completed.
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3, fontSize: "0.82rem", maxWidth: 340, mx: "auto" }}>
+                    Your bank or payment network could not complete the request. No money was deducted from your account.
                 </Typography>
 
-                <Box sx={{ p: 2, bgcolor: '#fdf3f3', border: '1px solid', borderColor: '#fcd3d3', borderRadius: 2, textAlign: 'left' }}>
-                    <Typography variant="caption" color="error.main" fontWeight="bold" display="block" gutterBottom>
-                        Possible reasons:
+                {/* Common Reasons Card */}
+                <Box sx={{
+                    bgcolor: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: 2.5,
+                    p: 2.5,
+                    textAlign: "left",
+                    mb: 3,
+                }}>
+                    <Typography variant="caption" sx={{ color: "#64748B", fontWeight: 700, letterSpacing: "0.06em", display: "block", mb: 1.5 }}>
+                        COMMON REASONS FOR UNSUCCESSFUL PAYMENTS
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" component="ul" sx={{ pl: 2, m: 0 }}>
-                        <li>Incorrect card details or UPI ID</li>
-                        <li>Incorrect OTP verification code</li>
-                        <li>Payment request cancelled or timed out</li>
-                        <li>Temporary network issues or bank downtime</li>
-                    </Typography>
+
+                    <Stack spacing={1}>
+                        {[
+                            "Temporary bank server delay or timeout",
+                            "Incorrect OTP or security code entered",
+                            "Insufficient balance or daily transaction limit exceeded",
+                        ].map((reason, idx) => (
+                            <Stack key={idx} direction="row" spacing={1} alignItems="flex-start">
+                                <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: "#94A3B8", mt: 0.95, flexShrink: 0 }} />
+                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.78rem" }}>
+                                    {reason}
+                                </Typography>
+                            </Stack>
+                        ))}
+                    </Stack>
                 </Box>
+
+                {/* Security Note */}
+                <Stack direction="row" spacing={0.8} sx={{ justifyContent: "center", alignItems: "center", color: "#64748B", opacity: 0.8 }}>
+                    <ShieldIcon sx={{ fontSize: "0.82rem" }} />
+                    <Typography variant="caption" sx={{ fontSize: "0.72rem" }}>
+                        Your payment information remains 100% secure
+                    </Typography>
+                </Stack>
             </DialogContent>
-            <DialogActions sx={{ p: 3, pt: 1, flexDirection: 'column', gap: 1.5 }}>
-                <Button 
-                    variant="contained" 
-                    color="primary" 
+
+            <DialogActions sx={{ px: 4, pb: 4, pt: 0, flexDirection: "column", gap: 1 }}>
+                <Button
+                    variant="contained"
                     fullWidth
-                    sx={{ py: 1.2, fontWeight: 'bold' }}
+                    startIcon={<ReplayIcon />}
                     onClick={onRetry}
+                    sx={{ textTransform: "none", py: 1.1, bgcolor: "#0F172A", "&:hover": { bgcolor: "#1E293B" }, fontWeight: 600 }}
                 >
-                    Retry Payment
+                    Try Again
                 </Button>
-                <Button 
-                    variant="outlined" 
-                    color="secondary" 
+                <Button
+                    variant="outlined"
                     fullWidth
+                    startIcon={<CloseIcon />}
                     onClick={onClose}
+                    sx={{ textTransform: "none", py: 1, color: "#64748B", borderColor: "#CBD5E1" }}
                 >
-                    Close
+                    Cancel & Return to Bills
                 </Button>
             </DialogActions>
         </Dialog>

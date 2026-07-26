@@ -75,6 +75,20 @@ public class InvoiceController {
                 .build());
     }
 
+    @GetMapping("/bill/{billId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<InvoiceResponse>> getInvoiceByBillId(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long billId
+    ) {
+        InvoiceResponse response = invoiceService.getInvoiceByBillId(userDetails.getUsername(), billId);
+        return ResponseEntity.ok(ApiResponse.<InvoiceResponse>builder()
+                .success(true)
+                .message("Invoice retrieved successfully")
+                .data(response)
+                .build());
+    }
+
     @GetMapping("/{id}/pdf")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<byte[]> downloadInvoicePdf(

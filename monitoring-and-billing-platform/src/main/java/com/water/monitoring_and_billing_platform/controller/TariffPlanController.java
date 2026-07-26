@@ -1,6 +1,7 @@
 package com.water.monitoring_and_billing_platform.controller;
 
 import com.water.monitoring_and_billing_platform.dto.ApiResponse;
+import com.water.monitoring_and_billing_platform.dto.TariffPlanPreviewResponse;
 import com.water.monitoring_and_billing_platform.dto.TariffPlanRequest;
 import com.water.monitoring_and_billing_platform.dto.TariffPlanResponse;
 import com.water.monitoring_and_billing_platform.service.TariffPlanService;
@@ -104,6 +105,56 @@ public class TariffPlanController {
                 .success(true)
                 .message("Tariff plan deactivated successfully")
                 .data(tariffPlanService.deactivateTariffPlan(userDetails.getUsername(), id))
+                .build());
+    }
+
+    @PutMapping("/{id}/archive")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<TariffPlanResponse>> archiveTariffPlan(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.<TariffPlanResponse>builder()
+                .success(true)
+                .message("Tariff policy archived successfully")
+                .data(tariffPlanService.archiveTariffPlan(userDetails.getUsername(), id))
+                .build());
+    }
+
+    @PostMapping("/{id}/duplicate")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<TariffPlanResponse>> duplicateTariffPlan(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<TariffPlanResponse>builder()
+                .success(true)
+                .message("Tariff plan duplicated successfully")
+                .data(tariffPlanService.duplicateTariffPlan(userDetails.getUsername(), id))
+                .build());
+    }
+
+    @GetMapping("/{id}/preview")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<TariffPlanPreviewResponse>> previewTariffPlan(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @RequestParam(required = false) List<Double> units) {
+        return ResponseEntity.ok(ApiResponse.<TariffPlanPreviewResponse>builder()
+                .success(true)
+                .message("Tariff plan preview generated successfully")
+                .data(tariffPlanService.previewTariffPlan(userDetails.getUsername(), id, units))
+                .build());
+    }
+
+    @PostMapping("/preview-unsaved")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<TariffPlanPreviewResponse>> previewUnsavedTariffPlan(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody TariffPlanRequest request,
+            @RequestParam(required = false) List<Double> units) {
+        return ResponseEntity.ok(ApiResponse.<TariffPlanPreviewResponse>builder()
+                .success(true)
+                .message("Unsaved tariff plan preview generated successfully")
+                .data(tariffPlanService.previewUnsavedTariffPlan(userDetails.getUsername(), request, units))
                 .build());
     }
 }

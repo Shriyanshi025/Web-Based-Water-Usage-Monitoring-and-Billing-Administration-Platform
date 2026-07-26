@@ -133,10 +133,10 @@ const ApprovalsPage = () => {
         {
             field: "fullName", headerName: "Applicant", flex: 1, minWidth: 200,
             renderCell: (params) => (
-                <Box>
-                    <Typography variant="body2" fontWeight={600}>{params.row.fullName || "Unnamed"}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "1px", overflow: "hidden", width: "100%" }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>{params.row.fullName || "Unnamed"}</Typography>
                     {params.row.email && (
-                        <Typography variant="caption" color="text.secondary">{params.row.email}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>{params.row.email}</Typography>
                     )}
                 </Box>
             )
@@ -238,9 +238,10 @@ const ApprovalsPage = () => {
             )}
 
             {/* ── Main table panel ──────────────────────────────────────────── */}
-            <Box sx={{ bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+            <Box sx={{ bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider", overflow: "hidden", boxShadow: "0 1px 4px rgba(12, 25, 41, 0.05)" }}>
                 <TableToolbar
                     title="Pending Applications"
+                    count={filteredRows.length}
                     action={
                         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
                             <SearchBar
@@ -272,7 +273,7 @@ const ApprovalsPage = () => {
                         </Stack>
                     }
                 />
-                <Box sx={{ height: 500 }}>
+                <Box sx={{ height: 520 }}>
                     <DataGrid
                         rows={filteredRows}
                         columns={columns}

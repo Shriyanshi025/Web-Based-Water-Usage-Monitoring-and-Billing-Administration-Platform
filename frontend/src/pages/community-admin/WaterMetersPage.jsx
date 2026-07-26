@@ -186,12 +186,12 @@ const WaterMetersPage = () => {
         {
             field: "residentName", headerName: "Assigned To", flex: 1, minWidth: 180,
             renderCell: (params) => (
-                <Box>
-                    <Typography variant="body2" fontWeight={500} color={params.row.residentName ? "text.primary" : "text.disabled"}>
+                <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "1px", overflow: "hidden", width: "100%" }}>
+                    <Typography variant="body2" fontWeight={500} color={params.row.residentName ? "text.primary" : "text.disabled"} noWrap>
                         {params.row.residentName || "Unassigned"}
                     </Typography>
                     {params.row.officialUserId && (
-                        <Typography variant="caption" color="text.secondary">ID: {params.row.officialUserId}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>ID: {params.row.officialUserId}</Typography>
                     )}
                 </Box>
             )

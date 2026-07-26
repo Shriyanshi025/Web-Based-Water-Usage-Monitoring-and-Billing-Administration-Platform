@@ -10,6 +10,8 @@ import com.water.monitoring_and_billing_platform.enums.Role;
 import com.water.monitoring_and_billing_platform.exception.EmailAlreadyExistsException;
 import com.water.monitoring_and_billing_platform.exception.InvalidPasswordException;
 import com.water.monitoring_and_billing_platform.exception.UserNotFoundException;
+import com.water.monitoring_and_billing_platform.repository.CommunityAdminProfileRepository;
+import com.water.monitoring_and_billing_platform.repository.ResidentProfileRepository;
 import com.water.monitoring_and_billing_platform.repository.UserRepository;
 import com.water.monitoring_and_billing_platform.security.JwtService;
 import com.water.monitoring_and_billing_platform.service.UserService;
@@ -26,6 +28,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final CommunityAdminProfileRepository communityAdminProfileRepository;
+    private final ResidentProfileRepository residentProfileRepository;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -105,6 +109,17 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(UserNotFoundException::new);
 
+        Long communityId = null;
+        if (user.getRole() == Role.COMMUNITY_ADMIN) {
+            communityId = communityAdminProfileRepository.findByUserId(user.getId())
+                    .map(p -> p.getCommunity() != null ? p.getCommunity().getId() : null)
+                    .orElse(null);
+        } else if (user.getRole() == Role.USER) {
+            communityId = residentProfileRepository.findByUserId(user.getId())
+                    .map(p -> p.getCommunity() != null ? p.getCommunity().getId() : null)
+                    .orElse(null);
+        }
+
         return UserMeResponse.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
@@ -113,6 +128,7 @@ public class UserServiceImpl implements UserService {
                 .approvalStatus(user.getApprovalStatus().name())
                 .active(user.isActive())
                 .lastLogin(user.getLastLogin())
+                .communityId(communityId)
                 .build();
     }
 

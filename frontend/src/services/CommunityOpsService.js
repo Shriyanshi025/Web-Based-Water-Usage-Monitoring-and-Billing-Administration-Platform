@@ -84,6 +84,26 @@ class CommunityOpsService {
         return response.data;
     }
 
+    async getResetStatus() {
+        const response = await api.get("/water-usage/reset-status");
+        return response.data;
+    }
+
+    async resetMeterReading(data) {
+        const response = await api.post("/water-usage/reset-meter", data);
+        return response.data;
+    }
+
+    async bulkResetMeterReadings(data) {
+        const response = await api.post("/water-usage/reset-all-meters", data);
+        return response.data;
+    }
+
+    async getResetLogs() {
+        const response = await api.get("/water-usage/reset-logs");
+        return response.data;
+    }
+
     async getMeterById(id) {
         const response = await api.get(`/water-meters/${id}`);
         return response.data;
@@ -117,7 +137,32 @@ class CommunityOpsService {
     }
 
     async getActiveBillingCycle() {
-        const response = await api.get("/billing/billing-cycle/active");
+        const response = await api.get("/billing-cycles/active");
+        return response.data;
+    }
+
+    async getAllBillingCycles() {
+        const response = await api.get("/billing-cycles");
+        return response.data;
+    }
+
+    async createBillingCycle(data) {
+        const response = await api.post("/billing-cycles", data);
+        return response.data;
+    }
+
+    async openBillingCycle(id) {
+        const response = await api.put(`/billing-cycles/${id}/open`);
+        return response.data;
+    }
+
+    async closeBillingCycle(id) {
+        const response = await api.put(`/billing-cycles/${id}/close`);
+        return response.data;
+    }
+
+    async archiveBillingCycle(id) {
+        const response = await api.put(`/billing-cycles/${id}/archive`);
         return response.data;
     }
 
@@ -151,6 +196,11 @@ class CommunityOpsService {
         return response.data;
     }
 
+    async duplicateTariffPlan(id) {
+        const response = await api.post(`/tariff-plans/${id}/duplicate`);
+        return response.data;
+    }
+
     async activateTariffPlan(id) {
         const response = await api.put(`/tariff-plans/${id}/activate`);
         return response.data;
@@ -158,6 +208,23 @@ class CommunityOpsService {
 
     async deactivateTariffPlan(id) {
         const response = await api.put(`/tariff-plans/${id}/deactivate`);
+        return response.data;
+    }
+
+    async archiveTariffPlan(id) {
+        const response = await api.put(`/tariff-plans/${id}/archive`);
+        return response.data;
+    }
+
+    async previewTariffPlan(id, sampleUnits) {
+        const query = sampleUnits && sampleUnits.length ? `?units=${sampleUnits.join(",")}` : "";
+        const response = await api.get(`/tariff-plans/${id}/preview${query}`);
+        return response.data;
+    }
+
+    async previewUnsavedTariffPlan(data, sampleUnits) {
+        const query = sampleUnits && sampleUnits.length ? `?units=${sampleUnits.join(",")}` : "";
+        const response = await api.post(`/tariff-plans/preview-unsaved${query}`, data);
         return response.data;
     }
 
@@ -180,6 +247,115 @@ class CommunityOpsService {
     async revokeInvitation(id) {
         const response = await api.put(`/community-admins/me/invitations/${id}/revoke`);
         return response.data;
+    }
+
+    // ==========================================
+    // BULK WATER PURCHASES
+    // ==========================================
+
+    async getBulkPurchases() {
+        const response = await api.get("/bulk-purchases");
+        return response.data;
+    }
+
+    async getBulkPurchaseById(id) {
+        const response = await api.get(`/bulk-purchases/${id}`);
+        return response.data;
+    }
+
+    async createBulkPurchase(data) {
+        const response = await api.post("/bulk-purchases", data);
+        return response.data;
+    }
+
+    async updateBulkPurchase(id, data) {
+        const response = await api.put(`/bulk-purchases/${id}`, data);
+        return response.data;
+    }
+
+    async deleteBulkPurchase(id) {
+        const response = await api.delete(`/bulk-purchases/${id}`);
+        return response.data;
+    }
+
+    async getBulkPurchasesForCycle(cycleId) {
+        const response = await api.get(`/bulk-purchases/cycle/${cycleId}`);
+        return response.data;
+    }
+
+    async getBulkPurchaseSummaryForCycle(cycleId) {
+        const response = await api.get(`/bulk-purchases/cycle/${cycleId}/summary`);
+        return response.data;
+    }
+
+    async getBillingCycles() {
+        const response = await api.get("/billing-cycles");
+        return response.data;
+    }
+
+    async getCostDistribution(cycleId) {
+        const response = await api.get(`/cost-distribution/cycle/${cycleId}`);
+        return response.data;
+    }
+
+    async getCommunityAlerts(communityId) {
+        const response = await api.get(`/alerts/community/${communityId}`);
+        return response.data;
+    }
+
+    async getMyAlerts() {
+        const response = await api.get("/alerts/my");
+        return response.data;
+    }
+
+    async markAlertRead(id) {
+        const response = await api.post(`/alerts/${id}/read`);
+        return response.data;
+    }
+
+    async acknowledgeAlert(id) {
+        const response = await api.post(`/alerts/${id}/acknowledge`);
+        return response.data;
+    }
+
+    async resolveAlert(id) {
+        const response = await api.post(`/alerts/${id}/resolve`);
+        return response.data;
+    }
+
+    async deleteAlert(id) {
+        const response = await api.delete(`/alerts/${id}`);
+        return response.data;
+    }
+
+    async markAllAlertsRead() {
+        const response = await api.post("/alerts/read-all");
+        return response.data;
+    }
+
+    async bulkMarkAlertsRead(ids) {
+        const response = await api.post("/alerts/bulk-read", ids);
+        return response.data;
+    }
+
+    async bulkDeleteAlerts(ids) {
+        const response = await api.post("/alerts/bulk-delete", ids);
+        return response.data;
+    }
+
+    async getInvoiceByBillId(billId) {
+        const response = await api.get(`/invoices/bill/${billId}`);
+        return response.data;
+    }
+
+    async getInvoiceByNumber(invoiceNumber) {
+        const response = await api.get(`/invoices/number/${invoiceNumber}`);
+        return response.data;
+    }
+
+    async downloadInvoicePdf(invoiceId) {
+        const response = await api.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
+        return response;
     }
 }
 

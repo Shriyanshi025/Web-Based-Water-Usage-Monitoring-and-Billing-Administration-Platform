@@ -33,6 +33,11 @@ class MainAdminOpsService {
         return response.data;
     }
 
+    async createCommunityAdmin(data) {
+        const response = await api.post("/community-admins", data);
+        return response.data;
+    }
+
     async updateCommunityAdmin(id, data) {
         const response = await api.put(`/community-admins/${id}`, data);
         return response.data;

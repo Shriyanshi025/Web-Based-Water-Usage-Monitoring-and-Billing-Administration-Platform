@@ -6,8 +6,8 @@ import java.util.List;
 
 public interface CommunityAdminService {
 
-    CommunityAdminResponse createAdmin(
-            CommunityAdminRequest request
+    CommunityAdminProfileResponse createAdmin(
+            CommunityAdminRegistrationRequest request
     );
 
     CommunityAdminProfileResponse getAdmin(

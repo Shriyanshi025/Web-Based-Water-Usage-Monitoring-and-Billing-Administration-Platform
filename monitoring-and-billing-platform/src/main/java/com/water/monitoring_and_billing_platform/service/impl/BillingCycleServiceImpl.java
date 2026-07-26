@@ -88,6 +88,13 @@ public class BillingCycleServiceImpl implements BillingCycleService {
         return mapToResponse(cycle);
     }
 
+    private BillingCycleStatus getEffectiveStatus(BillingCycle cycle) {
+        if (cycle.getStatus() != null) {
+            return cycle.getStatus();
+        }
+        return cycle.isActive() ? BillingCycleStatus.ACTIVE : BillingCycleStatus.CLOSED;
+    }
+
     @Override
     @Transactional
     public BillingCycleResponse openBillingCycle(String adminEmail, Long id) {
@@ -96,7 +103,7 @@ public class BillingCycleServiceImpl implements BillingCycleService {
         BillingCycle cycle = billingCycleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found."));
 
-        if (cycle.getStatus() != BillingCycleStatus.CLOSED) {
+        if (getEffectiveStatus(cycle) != BillingCycleStatus.CLOSED) {
             throw new IllegalStateException("Only CLOSED billing cycles can be opened.");
         }
 
@@ -120,30 +127,12 @@ public class BillingCycleServiceImpl implements BillingCycleService {
         BillingCycle cycle = billingCycleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found."));
 
-        if (cycle.getStatus() != BillingCycleStatus.ACTIVE) {
+        if (getEffectiveStatus(cycle) != BillingCycleStatus.ACTIVE) {
             throw new IllegalStateException("Only ACTIVE billing cycles can be closed.");
         }
 
-        cycle.setActive(false);
-        cycle.setStatus(BillingCycleStatus.CLOSED);
-
-        cycle = billingCycleRepository.save(cycle);
-
-        // Notify Main Admin(s)
-        java.util.List<User> mainAdmins = userRepository.findByRole(com.water.monitoring_and_billing_platform.enums.Role.MAIN_ADMIN);
-        for (User admin : mainAdmins) {
-            alertService.createInAppNotification(
-                    admin,
-                    null,
-                    null,
-                    "Billing Cycle Closed",
-                    "Billing cycle '" + cycle.getName() + "' has been closed.",
-                    com.water.monitoring_and_billing_platform.enums.AlertType.SYSTEM_NOTIFICATION,
-                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
-                    null
-            );
-        }
-
+        billingCycleRepository.updateStatusAndActive(id, false, BillingCycleStatus.CLOSED);
+        cycle = billingCycleRepository.findById(id).orElseThrow();
         return mapToResponse(cycle);
     }
 
@@ -155,17 +144,16 @@ public class BillingCycleServiceImpl implements BillingCycleService {
         BillingCycle cycle = billingCycleRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found."));
 
-        if (cycle.getStatus() != BillingCycleStatus.CLOSED) {
-            if (cycle.getStatus() == BillingCycleStatus.ACTIVE) {
+        BillingCycleStatus status = getEffectiveStatus(cycle);
+        if (status != BillingCycleStatus.CLOSED) {
+            if (status == BillingCycleStatus.ACTIVE) {
                 throw new IllegalArgumentException("ACTIVE billing cycle cannot be archived directly.");
             }
             throw new IllegalArgumentException("A billing cycle must be CLOSED before it can be ARCHIVED.");
         }
 
-        cycle.setActive(false);
-        cycle.setStatus(BillingCycleStatus.ARCHIVED);
-
-        cycle = billingCycleRepository.save(cycle);
+        billingCycleRepository.updateStatusAndActive(id, false, BillingCycleStatus.ARCHIVED);
+        cycle = billingCycleRepository.findById(id).orElseThrow();
         return mapToResponse(cycle);
     }
 
@@ -199,19 +187,28 @@ public class BillingCycleServiceImpl implements BillingCycleService {
         getAdminProfile(adminEmail);
 
         return billingCycleRepository.findAll().stream()
-                .sorted((c1, c2) -> c2.getPeriodStart().compareTo(c1.getPeriodStart()))
+                .sorted((c1, c2) -> {
+                    if (c1.getPeriodStart() == null && c2.getPeriodStart() == null) return 0;
+                    if (c1.getPeriodStart() == null) return 1;
+                    if (c2.getPeriodStart() == null) return -1;
+                    return c2.getPeriodStart().compareTo(c1.getPeriodStart());
+                })
                 .map(this::mapToResponse)
                 .toList();
     }
 
     private BillingCycleResponse mapToResponse(BillingCycle cycle) {
+        BillingCycleStatus effectiveStatus = cycle.getStatus();
+        if (effectiveStatus == null) {
+            effectiveStatus = cycle.isActive() ? BillingCycleStatus.ACTIVE : BillingCycleStatus.CLOSED;
+        }
         return BillingCycleResponse.builder()
                 .id(cycle.getId())
                 .name(cycle.getName())
                 .periodStart(cycle.getPeriodStart())
                 .periodEnd(cycle.getPeriodEnd())
                 .active(cycle.isActive())
-                .status(cycle.getStatus() != null ? cycle.getStatus().name() : null)
+                .status(effectiveStatus.name())
                 .generatedAt(cycle.getGeneratedAt())
                 .build();
     }

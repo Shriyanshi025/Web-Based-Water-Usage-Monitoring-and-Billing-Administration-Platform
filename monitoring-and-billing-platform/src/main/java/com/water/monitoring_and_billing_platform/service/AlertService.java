@@ -11,6 +11,7 @@ public interface AlertService {
     List<AlertResponse> getCommunityAlerts(String email, Long communityId);
     AlertResponse getAlertById(String email, Long id);
     AlertResponse markAsRead(String email, Long id);
+    AlertResponse acknowledgeAlert(String email, Long id);
     AlertResponse resolveAlert(String email, Long id);
     AlertResponse createSystemAnnouncement(String email, SystemAnnouncementRequest request);
     AlertStatisticsResponse getStatistics(String email);
@@ -28,4 +29,7 @@ public interface AlertService {
             com.water.monitoring_and_billing_platform.enums.AlertSeverity severity,
             Long relatedBillId
     );
+    void deleteAlert(String email, Long id);
+    void bulkMarkAsRead(String email, List<Long> ids);
+    void bulkDelete(String email, List<Long> ids);
 }

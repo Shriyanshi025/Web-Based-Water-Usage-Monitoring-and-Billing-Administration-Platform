@@ -143,8 +143,15 @@ public class ComplaintServiceImpl implements ComplaintService {
     ) {
         User user = getUserOrThrow(email);
         CommunityAdminProfile admin = getCommunityAdminProfileOrThrow(user);
-        return complaintRepository.searchComplaints(admin.getCommunity().getId(), status, priority, category, search)
+        String term = (search != null) ? search.trim().toLowerCase() : "";
+        return complaintRepository.findByCommunityIdOrderByCreatedAtDesc(admin.getCommunity().getId())
                 .stream()
+                .filter(c -> status == null || c.getStatus() == status)
+                .filter(c -> priority == null || c.getPriority() == priority)
+                .filter(c -> category == null || c.getCategory() == category)
+                .filter(c -> term.isEmpty() || 
+                        (c.getTicketNumber() != null && c.getTicketNumber().toLowerCase().contains(term)) ||
+                        (c.getDescription() != null && c.getDescription().toLowerCase().contains(term)))
                 .map(this::mapToResponse)
                 .toList();
     }

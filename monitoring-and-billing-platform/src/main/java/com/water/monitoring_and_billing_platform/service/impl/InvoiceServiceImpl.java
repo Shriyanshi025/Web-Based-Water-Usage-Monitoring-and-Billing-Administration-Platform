@@ -133,6 +133,17 @@ public class InvoiceServiceImpl implements InvoiceService {
         return mapToResponse(invoice);
     }
 
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public InvoiceResponse getInvoiceByBillId(String email, Long billId) {
+        User user = getUserOrThrow(email);
+        Invoice invoice = invoiceRepository.findByBillId(billId)
+                .orElseThrow(() -> new IllegalArgumentException("Invoice not found with bill id: " + billId));
+
+        validateAccess(user, invoice);
+        return mapToResponse(invoice);
+    }
+
     private void validateAccess(User user, Invoice invoice) {
         if (user.getRole() == Role.COMMUNITY_ADMIN) {
             Long adminCommunityId = getCommunityIdForAdmin(user);
@@ -295,18 +306,61 @@ public class InvoiceServiceImpl implements InvoiceService {
         costTable.setWidthPercentage(100);
         costTable.setWidths(new float[]{60, 40});
         
+        // Fixed base charge
         costTable.addCell(createStyledCell("Fixed Charges (Base connection fee)", bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + invoice.getFixedCharge().toString(), bodyFont, false));
+        costTable.addCell(createStyledCell("INR " + (invoice.getFixedCharge() != null ? invoice.getFixedCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
         
-        costTable.addCell(createStyledCell("Variable Charges (Water consumption fee)", bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + invoice.getVariableCharge().toString(), bodyFont, false));
+        // Tiered slab breakdown
+        String slabJson = (invoice.getBill() != null) ? invoice.getBill().getSlabBreakdown() : null;
+        boolean hasSlabs = false;
+        if (slabJson != null && !slabJson.trim().isEmpty() && !slabJson.equals("[]")) {
+            try {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                java.util.List<java.util.Map<String, Object>> list = mapper.readValue(
+                    slabJson, 
+                    new com.fasterxml.jackson.core.type.TypeReference<java.util.List<java.util.Map<String, Object>>>(){}
+                );
+                for (java.util.Map<String, Object> map : list) {
+                    String range = (String) map.get("range");
+                    Number units = (Number) map.get("units");
+                    Number rate = (Number) map.get("rate");
+                    Number amount = (Number) map.get("amount");
+                    
+                    String label = String.format("Water Charge (Slab %s: %.2f units @ INR %.2f)", range, units.doubleValue(), rate.doubleValue());
+                    BigDecimal val = BigDecimal.valueOf(amount.doubleValue()).setScale(2, java.math.RoundingMode.HALF_UP);
+                    
+                    costTable.addCell(createStyledCell(label, bodyFont, false));
+                    costTable.addCell(createStyledCell("INR " + val.toString(), bodyFont, false));
+                }
+                hasSlabs = true;
+            } catch (Exception e) {
+                // Ignore and fallback
+            }
+        }
         
-        costTable.addCell(createStyledCell("Shared Cost (" + invoice.getDistributionStrategy() + " distribution strategy)", bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + invoice.getSharedWaterCost().toString(), bodyFont, false));
+        if (!hasSlabs) {
+            costTable.addCell(createStyledCell("Variable Charges (Water consumption fee)", bodyFont, false));
+            costTable.addCell(createStyledCell("INR " + (invoice.getVariableCharge() != null ? invoice.getVariableCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
+        }
         
+        // Shared bulk purchase allocation cost
+        costTable.addCell(createStyledCell("Shared Cost (" + (invoice.getDistributionStrategy() != null ? invoice.getDistributionStrategy() : "EQUAL") + " distribution strategy)", bodyFont, false));
+        costTable.addCell(createStyledCell("INR " + (invoice.getSharedWaterCost() != null ? invoice.getSharedWaterCost().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
+        
+        // Tax
+        BigDecimal taxVal = (invoice.getBill() != null && invoice.getBill().getTax() != null) ? invoice.getBill().getTax() : BigDecimal.ZERO;
+        String pdfTaxLabel = "Taxes (GST)";
+        if (invoice.getBill() != null && invoice.getBill().getTariffPlan() != null && invoice.getBill().getTariffPlan().getTaxRate() != null) {
+            BigDecimal rate = invoice.getBill().getTariffPlan().getTaxRate();
+            BigDecimal pct = rate.multiply(new BigDecimal("100")).setScale(1, java.math.RoundingMode.HALF_UP);
+            pdfTaxLabel = "Taxes (GST @ " + pct.toString() + "%)";
+        }
+        costTable.addCell(createStyledCell(pdfTaxLabel, bodyFont, false));
+        costTable.addCell(createStyledCell("INR " + taxVal.setScale(2, java.math.RoundingMode.HALF_UP).toString(), bodyFont, false));
+
         PdfPCell totalLabelCell = createStyledCell("GRAND TOTAL AMOUNT DUE", boldBodyFont, true);
         totalLabelCell.setBackgroundColor(new java.awt.Color(230, 242, 255));
-        PdfPCell totalValCell = createStyledCell("INR " + invoice.getTotalAmount().toString(), boldBodyFont, false);
+        PdfPCell totalValCell = createStyledCell("INR " + (invoice.getTotalAmount() != null ? invoice.getTotalAmount().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), boldBodyFont, false);
         totalValCell.setBackgroundColor(new java.awt.Color(230, 242, 255));
         
         costTable.addCell(totalLabelCell);
@@ -378,6 +432,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .paymentStatus(invoice.getPaymentStatus())
                 .generatedDate(invoice.getGeneratedDate())
                 .dueDate(invoice.getDueDate())
+                .slabBreakdown(invoice.getBill() != null ? invoice.getBill().getSlabBreakdown() : null)
                 .build();
     }
 }

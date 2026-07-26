@@ -38,6 +38,61 @@ public class BulkWaterPurchaseController {
                 .build());
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<BulkWaterPurchaseResponse>> updatePurchase(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id,
+            @Valid @RequestBody BulkWaterPurchaseRequest request
+    ) {
+        BulkWaterPurchaseResponse response = bulkWaterPurchaseService.updatePurchase(userDetails.getUsername(), id, request);
+        return ResponseEntity.ok(ApiResponse.<BulkWaterPurchaseResponse>builder()
+                .success(true)
+                .message("Bulk water purchase updated successfully")
+                .data(response)
+                .build());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deletePurchase(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        bulkWaterPurchaseService.deletePurchase(userDetails.getUsername(), id);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Bulk water purchase deleted successfully")
+                .build());
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<List<BulkWaterPurchaseResponse>>> getAllPurchases(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        List<BulkWaterPurchaseResponse> response = bulkWaterPurchaseService.getAllPurchases(userDetails.getUsername());
+        return ResponseEntity.ok(ApiResponse.<List<BulkWaterPurchaseResponse>>builder()
+                .success(true)
+                .message("Bulk water purchases retrieved successfully")
+                .data(response)
+                .build());
+    }
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<ApiResponse<BulkWaterPurchaseResponse>> getPurchaseById(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        BulkWaterPurchaseResponse response = bulkWaterPurchaseService.getPurchaseById(userDetails.getUsername(), id);
+        return ResponseEntity.ok(ApiResponse.<BulkWaterPurchaseResponse>builder()
+                .success(true)
+                .message("Bulk water purchase retrieved successfully")
+                .data(response)
+                .build());
+    }
+
     @GetMapping("/cycle/{cycleId}")
     @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
     public ResponseEntity<ApiResponse<List<BulkWaterPurchaseResponse>>> getPurchasesForCycle(

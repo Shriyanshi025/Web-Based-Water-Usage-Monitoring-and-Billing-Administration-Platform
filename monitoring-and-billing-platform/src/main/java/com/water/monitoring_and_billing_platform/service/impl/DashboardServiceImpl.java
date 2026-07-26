@@ -117,29 +117,11 @@ public class DashboardServiceImpl implements DashboardService {
                     .mapToDouble(WaterUsage::getUnitsConsumed)
                     .sum();
 
-            BillingCycle cycle = billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc().orElse(null);
-            if (cycle != null) {
-                Optional<Bill> existingBill = billRepository.findByResidentProfileIdAndBillingCycleId(profile.getId(), cycle.getId());
-                if (existingBill.isPresent()) {
-                    currentBill = existingBill.get().getTotalAmount().doubleValue();
-                } else {
-                    currentBill = billService.estimateBillForResident(profile.getId(), cycle.getId()).doubleValue();
-                }
-            } else {
-                double unbilledUnits = usageList.stream()
-                        .filter(u -> !u.isBilled())
-                        .mapToDouble(WaterUsage::getUnitsConsumed)
-                        .sum();
-                TariffPlan plan = tariffPlanRepository.findByActiveTrue().stream().findFirst().orElse(null);
-                if (plan != null) {
-                    double fixed = plan.getFixedCharge() != null ? plan.getFixedCharge().doubleValue() : 0.0;
-                    double rate = plan.getRatePerUnit() != null ? plan.getRatePerUnit().doubleValue() : 15.0;
-                    double subtotal = fixed + (unbilledUnits * rate);
-                    currentBill = subtotal * 1.05; // 5% tax
-                } else {
-                    currentBill = unbilledUnits * 15.0;
-                }
-            }
+            List<Bill> residentBills = billRepository.findByResidentProfileId(profile.getId());
+            currentBill = residentBills.stream()
+                    .filter(b -> "UNPAID".equalsIgnoreCase(b.getPaymentStatus()))
+                    .mapToDouble(b -> b.getTotalAmount() != null ? b.getTotalAmount().doubleValue() : 0.0)
+                    .sum();
 
         }
 

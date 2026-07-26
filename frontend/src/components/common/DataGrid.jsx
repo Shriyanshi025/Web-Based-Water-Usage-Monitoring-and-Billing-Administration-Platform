@@ -6,18 +6,7 @@ import EmptyState from "./EmptyState";
 import ErrorState from "./ErrorState";
 
 /**
- * Reusable DataGrid component wrapping MUI DataGrid
- * Applies consistent styling, loading states, and error handling
- * 
- * @param {Object} props
- * @param {Array} props.rows
- * @param {Array} props.columns
- * @param {boolean} [props.loading]
- * @param {string} [props.error]
- * @param {function} [props.onRetry]
- * @param {function} [props.onRowClick]
- * @param {boolean} [props.checkboxSelection]
- * @param {number} [props.pageSize=10]
+ * Reusable DataGrid wrapper with consistent loading, error, and empty states.
  */
 const DataGrid = ({
     rows = [],
@@ -29,16 +18,19 @@ const DataGrid = ({
     checkboxSelection = false,
     pageSize = 10,
     autoHeight = false,
+    emptyTitle = "No Records Found",
+    emptyMessage = "Try adjusting your filters or search terms.",
+    getRowClassName,
+    sx = {},
     ...rest
 }) => {
     const [paginationModel, setPaginationModel] = React.useState({
-        pageSize: pageSize,
+        pageSize,
         page: 0,
     });
 
-    // Reset page to 0 if rows count changes (e.g. on search/filtering)
     React.useEffect(() => {
-        setPaginationModel(prev => ({ ...prev, page: 0 }));
+        setPaginationModel((prev) => ({ ...prev, page: 0 }));
     }, [rows.length]);
 
     if (error) {
@@ -50,40 +42,120 @@ const DataGrid = ({
     }
 
     return (
-        <Box sx={{ 
-            height: '100%', 
-            width: '100%',
-            '& .MuiDataGrid-root': {
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
-                bgcolor: 'background.paper',
-            },
-            '& .MuiDataGrid-cell:focus': {
-                outline: 'none',
-            },
-            '& .MuiDataGrid-columnHeaders': {
-                bgcolor: 'background.default',
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-            },
-            '& .MuiDataGrid-row:hover': {
-                bgcolor: 'action.hover',
-            }
-        }}>
+        <Box
+            sx={{
+                height: "100%",
+                width: "100%",
+                // Focus ring suppression
+                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
+                    outline: "none",
+                },
+                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
+                    outline: "none",
+                },
+                // Row cursor
+                ...(onRowClick && {
+                    "& .MuiDataGrid-row": { cursor: "pointer" },
+                }),
+                // ── Professional table styling ──────────────────────────────
+                // Column headers
+                "& .MuiDataGrid-columnHeaders": {
+                    bgcolor: "#F0F4F8",
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                    fontWeight: 600,
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                },
+                // Rows
+                "& .MuiDataGrid-row": {
+                    "&:hover": {
+                        bgcolor: "action.hover",
+                    },
+                    "&.Mui-selected": {
+                        bgcolor: "action.selected",
+                        "&:hover": { bgcolor: "action.selected" },
+                    },
+                },
+                // Cells
+                "& .MuiDataGrid-cell": {
+                    fontSize: "0.8125rem",
+                    color: "text.primary",
+                    borderBottom: "1px solid",
+                    borderColor: "divider",
+                    display: "flex",
+                    alignItems: "center",
+                    py: 0,
+                },
+                // Row height
+                "& .MuiDataGrid-row--lastVisible .MuiDataGrid-cell": {
+                    borderBottom: "none",
+                },
+                // Pagination
+                "& .MuiDataGrid-footerContainer": {
+                    borderTop: "1px solid",
+                    borderColor: "divider",
+                    minHeight: 48,
+                    bgcolor: "background.paper",
+                },
+                "& .MuiTablePagination-toolbar": {
+                    fontSize: "0.8125rem",
+                    color: "text.secondary",
+                },
+                "& .MuiTablePagination-displayedRows, & .MuiTablePagination-selectLabel": {
+                    fontSize: "0.8125rem",
+                    color: "text.secondary",
+                    margin: 0,
+                },
+                // Sort icon
+                "& .MuiDataGrid-sortIcon": {
+                    fontSize: "1rem",
+                    color: "text.secondary",
+                },
+                // Column separator
+                "& .MuiDataGrid-columnSeparator": {
+                    display: "none",
+                },
+                // No border on the grid itself
+                "& .MuiDataGrid-root": {
+                    border: "none",
+                },
+                ...sx,
+            }}
+        >
             <MuiDataGrid
                 rows={rows}
                 columns={columns}
                 loading={loading}
                 paginationModel={paginationModel}
                 onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[5, 10, 25, 50, 100]}
+                pageSizeOptions={[5, 10, 25, 50]}
                 checkboxSelection={checkboxSelection}
                 disableRowSelectionOnClick
                 onRowClick={onRowClick}
                 autoHeight={autoHeight}
+                getRowClassName={getRowClassName}
+                rowHeight={52}
                 slots={{
-                    noRowsOverlay: () => <EmptyState title="No Records Found" message="Try adjusting your filters or search." />,
+                    noRowsOverlay: () => (
+                        <EmptyState
+                            title={emptyTitle}
+                            message={emptyMessage}
+                            compact
+                        />
+                    ),
+                }}
+                sx={{
+                    border: "none",
+                    borderRadius: 0,
+                    "--DataGrid-rowBorderColor": "transparent",
+                    "& .MuiDataGrid-virtualScroller": {
+                        bgcolor: "background.paper",
+                    },
                 }}
                 {...rest}
             />

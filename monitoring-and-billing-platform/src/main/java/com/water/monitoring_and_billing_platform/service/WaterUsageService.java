@@ -3,8 +3,7 @@ package com.water.monitoring_and_billing_platform.service;
 import java.io.InputStream;
 import java.util.List;
 
-import com.water.monitoring_and_billing_platform.dto.WaterUsageRequest;
-import com.water.monitoring_and_billing_platform.dto.WaterUsageResponse;
+import com.water.monitoring_and_billing_platform.dto.*;
 
 public interface WaterUsageService {
 
@@ -24,4 +23,12 @@ public interface WaterUsageService {
 
     List<WaterUsageResponse> getReadingsByBillingCycle(String adminEmail, Long billingCycleId);
 
+    // Software Reading Reset Methods
+    MeterResetLogResponse resetMeterReading(String adminEmail, MeterResetRequest request);
+
+    List<MeterResetLogResponse> bulkResetMeterReadings(String adminEmail, BulkMeterResetRequest request);
+
+    List<MeterResetLogResponse> getResetLogs(String adminEmail);
+
+    boolean isResetAllowed(String adminEmail);
 }

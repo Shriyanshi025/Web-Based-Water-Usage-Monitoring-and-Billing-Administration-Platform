@@ -209,12 +209,12 @@ const ResidentsPage = () => {
         {
             field: "fullName", headerName: "Resident", flex: 1, minWidth: 200,
             renderCell: (params) => (
-                <Box>
-                    <Typography variant="body2" fontWeight={600} lineHeight={1.3}>
+                <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "1px", overflow: "hidden", width: "100%" }}>
+                    <Typography variant="body2" fontWeight={600} lineHeight={1.3} noWrap>
                         {params.row.fullName || "Unnamed Resident"}
                     </Typography>
                     {params.row.email && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                        <Typography variant="caption" color="text.secondary" noWrap>
                             {params.row.email}
                         </Typography>
                     )}
@@ -282,11 +282,12 @@ const ResidentsPage = () => {
             )}
 
             {/* ── Main table panel ──────────────────────────────────────────── */}
-            <Box sx={{ bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+            <Box sx={{ bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider", overflow: "hidden", boxShadow: "0 1px 4px rgba(12, 25, 41, 0.05)" }}>
                 <TableToolbar
                     title="Resident Directory"
+                    count={filteredRows.length}
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
                             <SearchBar
                                 value={searchTerm}
                                 onChange={setSearchTerm}
@@ -301,10 +302,10 @@ const ResidentsPage = () => {
                                     label="Status"
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
+                                    sx={{ fontSize: "0.8125rem" }}
                                 >
                                     {STATUS_FILTER_OPTIONS.map(opt => (
-                                        <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
+                                        <MenuItem key={opt.value} value={opt.value} sx={{ fontSize: "0.8125rem" }}>{opt.label}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
@@ -320,7 +321,7 @@ const ResidentsPage = () => {
                         </Stack>
                     }
                 />
-                <Box sx={{ height: 520 }}>
+                <Box sx={{ height: 560 }}>
                     <DataGrid
                         rows={filteredRows}
                         columns={columns}
@@ -332,6 +333,7 @@ const ResidentsPage = () => {
                     />
                 </Box>
             </Box>
+
 
             {/* ── Row actions menu ──────────────────────────────────────────── */}
             <Menu

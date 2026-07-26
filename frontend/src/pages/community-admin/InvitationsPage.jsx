@@ -24,6 +24,10 @@ import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import BlockIcon from "@mui/icons-material/Block";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import MailOutlinedIcon from "@mui/icons-material/MailOutlined";
+import HourglassBottomIcon from "@mui/icons-material/HourglassBottom";
+import PeopleIcon from "@mui/icons-material/People";
+import RefreshIcon from "@mui/icons-material/Refresh";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -244,44 +248,59 @@ const InvitationsPage = () => {
 
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="Invitation Management" 
-                subtitle="Invite residents to join your community."
-            />
+            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} sx={{ mb: 3 }}>
+                <PageHeader 
+                    title="Invitation Management" 
+                    subtitle="Invite residents to join your community."
+                />
+                <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<RefreshIcon />}
+                    onClick={fetchInvitations}
+                    sx={{ textTransform: "none", borderRadius: 2, flexShrink: 0, height: 36 }}
+                >
+                    Refresh
+                </Button>
+            </Stack>
 
             <Grid container spacing={3} sx={{ mb: 4 }}>
                 <Grid item xs={12} sm={4}>
                     <StatCard 
                         title="Total Invitations" 
                         value={stats.total} 
-                        icon="MailIcon"
+                        icon={<MailOutlinedIcon />}
                     />
                 </Grid>
                 <Grid item xs={12} sm={4}>
                     <StatCard 
                         title="Active Pending" 
                         value={stats.active} 
-                        icon="DomainVerificationIcon"
+                        icon={<HourglassBottomIcon />}
+                        color="warning.main"
                     />
                 </Grid>
                 <Grid item xs={12} sm={4}>
                     <StatCard 
                         title="Accepted" 
                         value={stats.accepted} 
-                        icon="PeopleIcon"
+                        icon={<PeopleIcon />}
+                        color="success.main"
                     />
                 </Grid>
             </Grid>
 
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
+            <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, border: '1px solid', borderColor: 'divider', mb: 3, overflow: 'hidden' }}>
                 <TableToolbar 
                     title="Invitation History" 
                     action={
                         <Button 
                             variant="contained" 
+                            size="small"
                             color="primary" 
                             startIcon={<AddIcon />}
                             onClick={() => setCreateDialogOpen(true)}
+                            sx={{ textTransform: "none", borderRadius: 2, fontWeight: "bold", height: 36 }}
                         >
                             Create Invitation
                         </Button>
@@ -346,10 +365,10 @@ const InvitationsPage = () => {
                     </Typography>
                 </DialogContent>
                 <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setRevokeConfirmOpen(false)} color="inherit">
+                    <Button onClick={() => setRevokeConfirmOpen(false)} size="small" color="inherit" sx={{ textTransform: "none", fontWeight: "bold" }}>
                         Cancel
                     </Button>
-                    <Button onClick={handleRevokeConfirm} color="error" variant="contained">
+                    <Button onClick={handleRevokeConfirm} size="small" color="error" variant="contained" sx={{ textTransform: "none", fontWeight: "bold" }}>
                         Revoke
                     </Button>
                 </DialogActions>
@@ -392,14 +411,18 @@ const InvitationsPage = () => {
                         <Button 
                             onClick={() => setCreateDialogOpen(false)} 
                             disabled={isSubmitting}
+                            size="small"
                             color="inherit"
+                            sx={{ textTransform: "none", fontWeight: "bold" }}
                         >
                             Cancel
                         </Button>
                         <Button 
                             type="submit" 
+                            size="small"
                             variant="contained" 
                             disabled={isSubmitting || !createFormData.residentName.trim() || (!createFormData.email.trim() && !createFormData.mobileNumber.trim())}
+                            sx={{ textTransform: "none", fontWeight: "bold" }}
                         >
                             {isSubmitting ? <CircularProgress size={24} /> : "Send Invitation"}
                         </Button>

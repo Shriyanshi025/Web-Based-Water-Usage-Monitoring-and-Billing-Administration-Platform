@@ -46,6 +46,11 @@ public class WaterUsageServiceImpl implements WaterUsageService {
     private final com.water.monitoring_and_billing_platform.repository.ActivityLogRepository activityLogRepository;
     private final BillingCycleRepository billingCycleRepository;
 
+    private final com.water.monitoring_and_billing_platform.repository.AlertRepository alertRepository;
+    private final com.water.monitoring_and_billing_platform.repository.MeterResetLogRepository meterResetLogRepository;
+    private final com.water.monitoring_and_billing_platform.service.EmailNotificationService emailNotificationService;
+    private final com.water.monitoring_and_billing_platform.repository.BillRepository billRepository;
+
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
                 .orElseThrow(UserNotFoundException::new);
@@ -74,6 +79,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
         double previousReading = prevOpt.isPresent() ? prevOpt.get().getCurrentReading() : meter.getInitialReading();
 
         if (request.getCurrentReading() < previousReading) {
+            triggerInvalidReadingAlert(meter, previousReading, request.getCurrentReading(), request.getReadingDate());
             throw new InvalidMeterReadingException();
         }
 
@@ -293,6 +299,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
         double previousReading = prevOpt.isPresent() && !prevOpt.get().getId().equals(readingId) ? prevOpt.get().getCurrentReading() : meter.getInitialReading();
 
         if (request.getCurrentReading() < previousReading) {
+            triggerInvalidReadingAlert(meter, previousReading, request.getCurrentReading(), request.getReadingDate());
             throw new InvalidMeterReadingException();
         }
 
@@ -300,6 +307,7 @@ public class WaterUsageServiceImpl implements WaterUsageService {
         java.util.Optional<WaterUsage> nextOpt = waterUsageRepository.findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(meter.getId(), request.getReadingDate());
         if (nextOpt.isPresent() && !nextOpt.get().getId().equals(readingId)) {
             if (nextOpt.get().getCurrentReading() < request.getCurrentReading()) {
+                triggerInvalidReadingAlert(meter, request.getCurrentReading(), nextOpt.get().getCurrentReading(), request.getReadingDate());
                 throw new InvalidMeterReadingException();
             }
         }
@@ -309,8 +317,61 @@ public class WaterUsageServiceImpl implements WaterUsageService {
         waterUsageRepository.save(usage);
 
         recalculateMeterReadings(meter);
+        triggerManualTamperingCheck(meter);
 
         return mapToResponse(usage);
+    }
+
+    private void triggerInvalidReadingAlert(WaterMeter meter, double previousReading, double currentReading, LocalDate readingDate) {
+        try {
+            ResidentProfile resident = meter.getResidentProfile();
+            String randomDigits = String.format("%06d", new java.util.Random().nextInt(1000000));
+            com.water.monitoring_and_billing_platform.entity.Alert alert = com.water.monitoring_and_billing_platform.entity.Alert.builder()
+                    .alertNumber("ALT-INV-" + randomDigits)
+                    .alertType(com.water.monitoring_and_billing_platform.enums.AlertType.INVALID_READING)
+                    .severity(com.water.monitoring_and_billing_platform.enums.AlertSeverity.CRITICAL)
+                    .title("Invalid Meter Reading Attempted")
+                    .message("Current reading (" + currentReading + " L) is less than previous meter reading (" + previousReading + " L) on date " + readingDate + ".")
+                    .resident(resident)
+                    .community(resident != null ? resident.getCommunity() : null)
+                    .waterMeter(meter)
+                    .status(com.water.monitoring_and_billing_platform.enums.AlertStatus.ACTIVE)
+                    .createdDate(java.time.LocalDateTime.now())
+                    .build();
+            alertRepository.save(alert);
+
+            if (resident != null && resident.getUser() != null && resident.getUser().getEmail() != null) {
+                emailNotificationService.sendAlertEmail(resident.getUser().getEmail(), alert.getTitle(), alert.getMessage());
+            }
+        } catch (Exception e) {
+            // Ignore failure saving alert
+        }
+    }
+
+    private void triggerManualTamperingCheck(WaterMeter meter) {
+        try {
+            ResidentProfile resident = meter.getResidentProfile();
+            String randomDigits = String.format("%06d", new java.util.Random().nextInt(1000000));
+            com.water.monitoring_and_billing_platform.entity.Alert alert = com.water.monitoring_and_billing_platform.entity.Alert.builder()
+                    .alertNumber("ALT-TMP-" + randomDigits)
+                    .alertType(com.water.monitoring_and_billing_platform.enums.AlertType.MANUAL_TAMPERING)
+                    .severity(com.water.monitoring_and_billing_platform.enums.AlertSeverity.CRITICAL)
+                    .title("Potential Manual Tampering Detected")
+                    .message("Manual reading correction/override submitted for meter " + meter.getMeterNumber() + ".")
+                    .resident(resident)
+                    .community(resident != null ? resident.getCommunity() : null)
+                    .waterMeter(meter)
+                    .status(com.water.monitoring_and_billing_platform.enums.AlertStatus.ACTIVE)
+                    .createdDate(java.time.LocalDateTime.now())
+                    .build();
+            alertRepository.save(alert);
+
+            if (resident != null && resident.getUser() != null && resident.getUser().getEmail() != null) {
+                emailNotificationService.sendAlertEmail(resident.getUser().getEmail(), alert.getTitle(), alert.getMessage());
+            }
+        } catch (Exception e) {
+            // Ignore failure saving alert
+        }
     }
 
     @Override
@@ -373,4 +434,161 @@ public class WaterUsageServiceImpl implements WaterUsageService {
                 .readingDate(usage.getReadingDate())
                 .build();
     }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public boolean isResetAllowed(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        Long communityId = adminProfile.getCommunity().getId();
+
+        BillingCycle activeCycle = billingCycleRepository.findAll().stream()
+                .filter(c -> c.isActive())
+                .findFirst()
+                .orElse(null);
+
+        if (activeCycle == null) {
+            return true;
+        }
+
+        List<ResidentProfile> residents = residentProfileRepository.findByCommunityId(communityId);
+        if (residents.isEmpty()) return true;
+
+        for (ResidentProfile resident : residents) {
+            WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId()).orElse(null);
+            if (meter != null) {
+                boolean hasBill = billRepository.existsByResidentProfileIdAndBillingCycleId(resident.getId(), activeCycle.getId());
+                if (!hasBill) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse resetMeterReading(String adminEmail, com.water.monitoring_and_billing_platform.dto.MeterResetRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        User adminUser = userRepository.findByEmail(adminEmail).orElseThrow(UserNotFoundException::new);
+        Long communityId = adminProfile.getCommunity().getId();
+
+        if (!isResetAllowed(adminEmail)) {
+            throw new IllegalStateException("Software Reading Reset rejected: Active billing cycle bills are not fully generated.");
+        }
+
+        ResidentProfile resident = residentProfileRepository.findById(request.getResidentProfileId())
+                .orElseThrow(() -> new IllegalArgumentException("Resident profile not found"));
+
+        if (!communityId.equals(resident.getCommunity().getId())) {
+            throw new IllegalArgumentException("Resident does not belong to your community.");
+        }
+
+        WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId())
+                .orElseThrow(WaterMeterNotFoundException::new);
+
+        BillingCycle activeCycle = billingCycleRepository.findAll().stream()
+                .filter(c -> c.isActive())
+                .findFirst()
+                .orElse(null);
+
+        Double prevReading = meter.getCurrentReading() != null ? meter.getCurrentReading() : 0.0;
+
+        meter.setInitialReading(0.0);
+        meter.setCurrentReading(0.0);
+        waterMeterRepository.save(meter);
+
+        com.water.monitoring_and_billing_platform.entity.MeterResetLog resetLog = com.water.monitoring_and_billing_platform.entity.MeterResetLog.builder()
+                .waterMeter(meter)
+                .residentProfile(resident)
+                .community(adminProfile.getCommunity())
+                .billingCycle(activeCycle)
+                .resetBy(adminUser)
+                .previousReading(prevReading)
+                .newReading(0.0)
+                .resetDate(java.time.LocalDateTime.now())
+                .reason(request.getReason() != null && !request.getReason().isBlank() ? request.getReason() : "Individual Software Baseline Reset after Bill Generation")
+                .resetType("INDIVIDUAL")
+                .build();
+
+        resetLog = meterResetLogRepository.save(resetLog);
+
+        return mapToResetLogResponse(resetLog);
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional
+    public List<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse> bulkResetMeterReadings(String adminEmail, com.water.monitoring_and_billing_platform.dto.BulkMeterResetRequest request) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        User adminUser = userRepository.findByEmail(adminEmail).orElseThrow(UserNotFoundException::new);
+        Long communityId = adminProfile.getCommunity().getId();
+
+        if (!isResetAllowed(adminEmail)) {
+            throw new IllegalStateException("Bulk Software Reading Reset rejected: Active billing cycle bills are not fully generated.");
+        }
+
+        List<ResidentProfile> residents = residentProfileRepository.findByCommunityId(communityId);
+        BillingCycle activeCycle = billingCycleRepository.findAll().stream()
+                .filter(c -> c.isActive())
+                .findFirst()
+                .orElse(null);
+
+        List<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse> responses = new ArrayList<>();
+
+        for (ResidentProfile resident : residents) {
+            WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId()).orElse(null);
+            if (meter != null && (meter.getCurrentReading() > 0 || meter.getInitialReading() > 0)) {
+                Double prevReading = meter.getCurrentReading() != null ? meter.getCurrentReading() : 0.0;
+
+                meter.setInitialReading(0.0);
+                meter.setCurrentReading(0.0);
+                waterMeterRepository.save(meter);
+
+                com.water.monitoring_and_billing_platform.entity.MeterResetLog resetLog = com.water.monitoring_and_billing_platform.entity.MeterResetLog.builder()
+                        .waterMeter(meter)
+                        .residentProfile(resident)
+                        .community(adminProfile.getCommunity())
+                        .billingCycle(activeCycle)
+                        .resetBy(adminUser)
+                        .previousReading(prevReading)
+                        .newReading(0.0)
+                        .resetDate(java.time.LocalDateTime.now())
+                        .reason(request.getReason() != null && !request.getReason().isBlank() ? request.getReason() : "Bulk Software Baseline Reset after Bill Generation")
+                        .resetType("BULK")
+                        .build();
+
+                resetLog = meterResetLogRepository.save(resetLog);
+                responses.add(mapToResetLogResponse(resetLog));
+            }
+        }
+
+        return responses;
+    }
+
+    @Override
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    public List<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse> getResetLogs(String adminEmail) {
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        return meterResetLogRepository.findByCommunityIdOrderByResetDateDesc(adminProfile.getCommunity().getId()).stream()
+                .map(this::mapToResetLogResponse)
+                .toList();
+    }
+
+    private com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse mapToResetLogResponse(com.water.monitoring_and_billing_platform.entity.MeterResetLog log) {
+        return com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse.builder()
+                .id(log.getId())
+                .meterId(log.getWaterMeter().getId())
+                .meterNumber(log.getWaterMeter().getMeterNumber())
+                .residentId(log.getResidentProfile().getId())
+                .residentName(log.getResidentProfile().getUser().getFullName())
+                .unitNumber(log.getResidentProfile().getUnit() != null ? log.getResidentProfile().getUnit().getUnitNumber() : "N/A")
+                .previousReading(log.getPreviousReading())
+                .newReading(log.getNewReading())
+                .resetDate(log.getResetDate())
+                .resetBy(log.getResetBy().getFullName())
+                .billingCycleName(log.getBillingCycle() != null ? log.getBillingCycle().getName() : "N/A")
+                .reason(log.getReason())
+                .resetType(log.getResetType())
+                .build();
+    }
 }
+

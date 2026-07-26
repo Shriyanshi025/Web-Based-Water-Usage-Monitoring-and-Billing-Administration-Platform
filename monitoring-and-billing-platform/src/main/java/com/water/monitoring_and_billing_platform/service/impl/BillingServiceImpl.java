@@ -19,6 +19,7 @@ import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
+@lombok.extern.slf4j.Slf4j
 public class BillingServiceImpl implements BillingService {
 
     private final BillRepository billRepository;
@@ -34,6 +35,9 @@ public class BillingServiceImpl implements BillingService {
     private final BulkWaterPurchaseRepository bulkWaterPurchaseRepository;
     private final com.water.monitoring_and_billing_platform.service.InvoiceService invoiceService;
     private final com.water.monitoring_and_billing_platform.service.AlertService alertService;
+    private final com.water.monitoring_and_billing_platform.service.EmailNotificationService emailNotificationService;
+    private final com.water.monitoring_and_billing_platform.service.BillCalculationService billCalculationService;
+    private final com.water.monitoring_and_billing_platform.service.ConsumptionCostDistributionService consumptionCostDistributionService;
 
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
@@ -73,7 +77,15 @@ public class BillingServiceImpl implements BillingService {
         }
 
         TariffPlan plan = tariffPlanRepository.findById(request.getTariffPlanId())
-                .orElseThrow(() -> new RuntimeException("Tariff plan not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Tariff plan not found"));
+
+        if (!plan.getCommunity().getId().equals(adminProfile.getCommunity().getId())) {
+            throw new IllegalArgumentException("Selected tariff plan does not belong to your community.");
+        }
+
+        if (!plan.isActive()) {
+            throw new IllegalArgumentException("The selected tariff plan is inactive. Only active tariff plans can be selected for billing.");
+        }
 
         List<ResidentProfile> residents = residentProfileRepository.findAll().stream()
                 .filter(resident -> resident.isActive() && Objects.equals(resident.getCommunity().getId(), adminProfile.getCommunity().getId()))
@@ -86,94 +98,168 @@ public class BillingServiceImpl implements BillingService {
             throw new IllegalArgumentException("Bills have already been generated for this cycle. Delete existing bills first to regenerate.");
         }
 
-        List<Bill> created = new ArrayList<>();
-        LocalDate today = LocalDate.now();
-        int month = cycle.getPeriodStart().getMonthValue();
-        int year = cycle.getPeriodStart().getYear();
-
-        for (ResidentProfile resident : residents) {
-            if (billRepository.existsByResidentProfileIdAndBillingCycleId(resident.getId(), request.getBillingCycleId())) {
-                continue;
-            }
-            Double unitsConsumed = 0.0;
-            Double previousReading = 0.0;
-            Double currentReading = 0.0;
-
-            var meterOpt = waterMeterRepository.findByResidentProfileId(resident.getId());
-            if (meterOpt.isPresent()) {
-                WaterMeter meter = meterOpt.get();
-                List<WaterUsage> usages = waterUsageRepository.findByWaterMeterIdAndReadingDateBetween(
-                        meter.getId(),
-                        cycle.getPeriodStart(),
-                        cycle.getPeriodEnd()
-                );
-
-                unitsConsumed = usages.stream()
-                        .mapToDouble(WaterUsage::getUnitsConsumed)
-                        .sum();
-
-                if (!usages.isEmpty()) {
-                    List<WaterUsage> sortedUsages = usages.stream()
-                            .sorted(java.util.Comparator.comparing(WaterUsage::getReadingDate).thenComparing(WaterUsage::getId))
-                            .toList();
-                    previousReading = sortedUsages.get(0).getPreviousReading();
-                    currentReading = sortedUsages.get(sortedUsages.size() - 1).getCurrentReading();
-                } else {
-                    previousReading = meter.getCurrentReading();
-                    currentReading = meter.getCurrentReading();
-                }
-            }
-
-            BigDecimal variableCharge = calculateVariableCharge(unitsConsumed, plan);
-            BigDecimal fixed = plan.getFixedCharge() != null ? plan.getFixedCharge() : BigDecimal.ZERO;
-            
-            SharedCostDistribution dist = calculateSharedCostForResident(resident, cycle.getId());
-            BigDecimal totalAmount = fixed.add(variableCharge).add(dist.sharedCost);
-
-            String billNum = billNumberGenerator.generateBillNumber(adminProfile.getCommunity(), today);
-
-            Bill bill = Bill.builder()
-                    .billNumber(billNum)
-                    .residentProfile(resident)
-                    .waterMeter(meterOpt.orElse(null))
-                    .billingCycle(cycle)
-                    .tariffPlan(plan)
-                    .billingMonth(month)
-                    .billingYear(year)
-                    .previousReading(previousReading)
-                    .currentReading(currentReading)
-                    .unitsConsumed(unitsConsumed)
-                    .ratePerUnit(plan.getRatePerUnit())
-                    .fixedCharge(fixed)
-                    .additionalCharge(BigDecimal.ZERO)
-                    .sharedWaterCost(dist.sharedCost)
-                    .distributionStrategy(dist.strategy)
-                    .subtotal(variableCharge)
-                    .tax(BigDecimal.ZERO)
-                    .amount(totalAmount)
-                    .totalAmount(totalAmount)
-                    .billDate(today)
-                    .generatedDate(today)
-                    .dueDate(today.plusDays(15))
-                    .status(com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID)
-                    .billStatus("UNPAID")
-                    .paymentStatus("UNPAID")
-                    .paid(false)
-                    .build();
-
-            Bill savedBill = billRepository.save(bill);
-            invoiceService.generateInvoice(savedBill);
+        // 1. Bulk Water Purchase Missing Check & Alert
+        List<BulkWaterPurchase> purchases = bulkWaterPurchaseRepository.findByBillingCycleIdAndCommunityId(
+                request.getBillingCycleId(),
+                adminProfile.getCommunity().getId()
+        );
+        if (purchases.isEmpty()) {
             alertService.createInAppNotification(
-                    resident.getUser(),
-                    resident,
-                    resident.getCommunity(),
-                    "New Bill Generated",
-                    "A new bill of Rs. " + savedBill.getTotalAmount() + " has been generated for cycle: " + cycle.getName(),
+                    adminProfile.getUser(),
+                    null,
+                    adminProfile.getCommunity(),
+                    "Bulk Water Purchase Missing",
+                    "No bulk water purchase records were found for the cycle: " + cycle.getName() + ". Proportional cost distribution will calculate as ₹0.00.",
+                    com.water.monitoring_and_billing_platform.enums.AlertType.BULK_WATER_PURCHASE_MISSING,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.HIGH,
+                    null
+            );
+        }
+
+        List<Bill> created = new ArrayList<>();
+        try {
+            LocalDate today = LocalDate.now();
+            int month = cycle.getPeriodStart().getMonthValue();
+            int year = cycle.getPeriodStart().getYear();
+
+            for (ResidentProfile resident : residents) {
+                if (billRepository.existsByResidentProfileIdAndBillingCycleId(resident.getId(), request.getBillingCycleId())) {
+                    continue;
+                }
+                Double unitsConsumed = 0.0;
+                Double previousReading = 0.0;
+                Double currentReading = 0.0;
+
+                var meterOpt = waterMeterRepository.findByResidentProfileId(resident.getId());
+                if (meterOpt.isPresent()) {
+                    WaterMeter meter = meterOpt.get();
+                    List<WaterUsage> usages = waterUsageRepository.findByWaterMeterIdAndReadingDateBetween(
+                            meter.getId(),
+                            cycle.getPeriodStart(),
+                            cycle.getPeriodEnd()
+                    );
+
+                    unitsConsumed = usages.stream()
+                            .mapToDouble(WaterUsage::getUnitsConsumed)
+                            .sum();
+
+                    if (!usages.isEmpty()) {
+                        List<WaterUsage> sortedUsages = usages.stream()
+                                .sorted(java.util.Comparator.comparing(WaterUsage::getReadingDate).thenComparing(WaterUsage::getId))
+                                .toList();
+                        previousReading = sortedUsages.get(0).getPreviousReading();
+                        currentReading = sortedUsages.get(sortedUsages.size() - 1).getCurrentReading();
+                    } else {
+                        previousReading = meter.getCurrentReading();
+                        currentReading = meter.getCurrentReading();
+                    }
+                }
+
+                // Call billing engine for base usage cost
+                BigDecimal variableCharge = calculateVariableCharge(unitsConsumed, plan);
+                BigDecimal fixed = plan.getFixedCharge() != null ? plan.getFixedCharge() : BigDecimal.ZERO;
+                BigDecimal maintenance = plan.getMaintenanceCharge() != null ? plan.getMaintenanceCharge() : BigDecimal.ZERO;
+                BigDecimal service = plan.getServiceCharge() != null ? plan.getServiceCharge() : BigDecimal.ZERO;
+                BigDecimal additionalCharge = maintenance.add(service);
+                BigDecimal effectiveTaxRate = plan.getTaxRate() != null ? plan.getTaxRate() : new BigDecimal("0.05");
+
+                // Reusable Consumption Cost Distribution calculation for shared bulk water cost
+                SharedCostDistribution sharedCostDist = calculateSharedCostForResident(resident, cycle.getId());
+
+                BigDecimal slabSubtotal = fixed.add(variableCharge).add(additionalCharge);
+                BigDecimal tax = slabSubtotal.multiply(effectiveTaxRate).setScale(2, java.math.RoundingMode.HALF_UP);
+                BigDecimal totalAmount = slabSubtotal.add(tax).add(sharedCostDist.sharedCost);
+
+                String slabBreakdown = billCalculationService.calculateSlabBreakdownJson(unitsConsumed, plan);
+
+                String billNum = billNumberGenerator.generateBillNumber(adminProfile.getCommunity(), today);
+
+                Bill bill = Bill.builder()
+                        .billNumber(billNum)
+                        .residentProfile(resident)
+                        .waterMeter(meterOpt.orElse(null))
+                        .billingCycle(cycle)
+                        .tariffPlan(plan)
+                        .tariffPlanName(plan.getName())
+                        .tariffPlanDescription(plan.getDescription())
+                        .taxRate(effectiveTaxRate)
+                        .billingMonth(month)
+                        .billingYear(year)
+                        .previousReading(previousReading)
+                        .currentReading(currentReading)
+                        .unitsConsumed(unitsConsumed)
+                        .ratePerUnit(plan.getRatePerUnit())
+                        .fixedCharge(fixed)
+                        .additionalCharge(additionalCharge)
+                        .sharedWaterCost(sharedCostDist.sharedCost)
+                        .distributionStrategy(sharedCostDist.strategy)
+                        .subtotal(slabSubtotal)
+                        .tax(tax)
+                        .amount(totalAmount)
+                        .totalAmount(totalAmount)
+                        .slabBreakdown(slabBreakdown)
+                        .billDate(today)
+                        .generatedDate(today)
+                        .dueDate(today.plusDays(15))
+                        .status(com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID)
+                        .billStatus("UNPAID")
+                        .paymentStatus("UNPAID")
+                        .paid(false)
+                        .build();
+
+                Bill savedBill = billRepository.save(bill);
+                invoiceService.generateInvoice(savedBill);
+                alertService.createInAppNotification(
+                        resident.getUser(),
+                        resident,
+                        resident.getCommunity(),
+                        "New Bill Generated",
+                        "A new bill of Rs. " + savedBill.getTotalAmount() + " has been generated for cycle: " + cycle.getName(),
+                        com.water.monitoring_and_billing_platform.enums.AlertType.BILL_GENERATED,
+                        com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
+                        savedBill.getId()
+                );
+                try {
+                    emailNotificationService.sendBillGeneratedEmail(
+                            resident.getUser().getEmail(),
+                            resident.getUser().getFullName(),
+                            savedBill.getBillNumber(),
+                            cycle.getName(),
+                            savedBill.getUnitsConsumed(),
+                            savedBill.getTotalAmount(),
+                            savedBill.getDueDate()
+                    );
+                } catch (Exception ex) {
+                    log.error("Failed to send bill generated email: {}", ex.getMessage());
+                }
+                created.add(savedBill);
+            }
+
+            // 2. Bill Generation Completed Notification (Community Admin)
+            alertService.createInAppNotification(
+                    adminProfile.getUser(),
+                    null,
+                    adminProfile.getCommunity(),
+                    "Bill Generation Completed",
+                    "Bills have been generated successfully for " + created.size() + " households for cycle: " + cycle.getName(),
                     com.water.monitoring_and_billing_platform.enums.AlertType.BILL_GENERATED,
                     com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
-                    savedBill.getId()
+                    null
             );
-            created.add(savedBill);
+
+        } catch (Exception e) {
+            // 3. Billing Failure Alert (Community Admin)
+            alertService.createInAppNotification(
+                    adminProfile.getUser(),
+                    null,
+                    adminProfile.getCommunity(),
+                    "Billing Generation Failure",
+                    "An error occurred during billing cycle " + cycle.getName() + " calculation: " + e.getMessage(),
+                    com.water.monitoring_and_billing_platform.enums.AlertType.BILLING_FAILURE,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.HIGH,
+                    null
+            );
+            throw e;
         }
 
         activityLogRepository.save(com.water.monitoring_and_billing_platform.entity.ActivityLog.builder()
@@ -190,28 +276,7 @@ public class BillingServiceImpl implements BillingService {
     }
 
     private BigDecimal calculateVariableCharge(double totalUnits, TariffPlan plan) {
-        if (plan.getSlabs() == null || plan.getSlabs().isEmpty()) {
-            BigDecimal rate = plan.getRatePerUnit() != null ? plan.getRatePerUnit() : BigDecimal.ZERO;
-            return rate.multiply(BigDecimal.valueOf(totalUnits));
-        }
-
-        BigDecimal variableCharge = BigDecimal.ZERO;
-        List<com.water.monitoring_and_billing_platform.entity.TariffSlab> slabs = plan.getSlabs().stream()
-                .sorted(java.util.Comparator.comparing(com.water.monitoring_and_billing_platform.entity.TariffSlab::getMinUnits))
-                .toList();
-
-        for (com.water.monitoring_and_billing_platform.entity.TariffSlab slab : slabs) {
-            if (totalUnits <= slab.getMinUnits()) {
-                break;
-            }
-            double slabMin = slab.getMinUnits();
-            double slabMax = slab.getMaxUnits() != null ? slab.getMaxUnits() : Double.MAX_VALUE;
-            double unitsInSlab = Math.min(totalUnits - slabMin, slabMax - slabMin);
-            if (unitsInSlab > 0) {
-                variableCharge = variableCharge.add(slab.getRatePerUnit().multiply(BigDecimal.valueOf(unitsInSlab)));
-            }
-        }
-        return variableCharge;
+        return billCalculationService.calculateBillAmount(totalUnits, plan);
     }
 
     @Override
@@ -235,8 +300,8 @@ public class BillingServiceImpl implements BillingService {
 
     @Override
     public List<TariffPlanResponse> getTariffPlans(String adminEmail) {
-        getAdminProfile(adminEmail);
-        return tariffPlanRepository.findByActiveTrue().stream().map(this::mapToResponse).toList();
+        CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
+        return tariffPlanRepository.findByCommunityIdAndActiveTrue(adminProfile.getCommunity().getId()).stream().map(this::mapToResponse).toList();
     }
 
     @Override
@@ -244,28 +309,52 @@ public class BillingServiceImpl implements BillingService {
     public BillResponse generateBillForReading(WaterUsage usage) {
         BillingCycle cycle = billingCycleRepository.findFirstByActiveTrueOrderByPeriodStartDesc()
                 .orElseThrow(() -> new RuntimeException("No active billing cycle"));
-        TariffPlan plan = tariffPlanRepository.findByActiveTrue().stream().findFirst()
-                .orElseThrow(() -> new RuntimeException("No active tariff plan"));
 
         ResidentProfile resident = usage.getWaterMeter().getResidentProfile();
+        Community community = resident.getCommunity();
+
+        TariffPlan plan = tariffPlanRepository.findFirstByCommunityIdAndActiveTrue(community.getId())
+                .orElseThrow(() -> new IllegalStateException("No active tariff plan found for community: " + community.getCommunityName() + ". Please create and activate a tariff plan before generating bills."));
+
         SharedCostDistribution dist = calculateSharedCostForResident(resident, cycle.getId());
 
-        BigDecimal amount = plan.getFixedCharge().add(plan.getRatePerUnit().multiply(BigDecimal.valueOf(usage.getUnitsConsumed()))).add(dist.sharedCost);
+        BigDecimal variableCharge = calculateVariableCharge(usage.getUnitsConsumed(), plan);
+        BigDecimal fixed = plan.getFixedCharge() != null ? plan.getFixedCharge() : BigDecimal.ZERO;
+        BigDecimal subtotal = fixed.add(variableCharge);
+        BigDecimal taxRate = plan.getTaxRate() != null ? plan.getTaxRate() : new BigDecimal("0.05");
+        BigDecimal tax = subtotal.multiply(taxRate).setScale(2, java.math.RoundingMode.HALF_UP);
+        BigDecimal totalAmount = subtotal.add(tax).add(dist.sharedCost).setScale(2, java.math.RoundingMode.HALF_UP);
+
+        String slabBreakdown = billCalculationService.calculateSlabBreakdownJson(usage.getUnitsConsumed(), plan);
+        String billNum = billNumberGenerator.generateBillNumber(community, LocalDate.now());
 
         Bill bill = Bill.builder()
+                .billNumber(billNum)
                 .residentProfile(resident)
                 .waterMeter(usage.getWaterMeter())
                 .billingCycle(cycle)
                 .tariffPlan(plan)
+                .tariffPlanName(plan.getName())
+                .tariffPlanDescription(plan.getDescription())
+                .taxRate(taxRate)
                 .unitsConsumed(usage.getUnitsConsumed())
                 .ratePerUnit(plan.getRatePerUnit())
-                .fixedCharge(plan.getFixedCharge())
+                .fixedCharge(fixed)
+                .additionalCharge(BigDecimal.ZERO)
                 .sharedWaterCost(dist.sharedCost)
                 .distributionStrategy(dist.strategy)
-                .amount(amount)
-                .totalAmount(amount)
+                .subtotal(subtotal)
+                .tax(tax)
+                .amount(totalAmount)
+                .totalAmount(totalAmount)
+                .slabBreakdown(slabBreakdown)
                 .billDate(LocalDate.now())
+                .generatedDate(LocalDate.now())
+                .dueDate(LocalDate.now().plusDays(15))
                 .status(com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID)
+                .billStatus("UNPAID")
+                .paymentStatus("UNPAID")
+                .paid(false)
                 .build();
 
         Bill savedBill = billRepository.save(bill);
@@ -287,8 +376,7 @@ public class BillingServiceImpl implements BillingService {
     public List<BillResponse> getMyBills(String userEmail) {
         User user = userRepository.findByEmail(userEmail).orElseThrow(() -> new RuntimeException("User not found"));
         ResidentProfile profile = residentProfileRepository.findByUserId(user.getId()).orElseThrow(() -> new RuntimeException("Profile not found"));
-        return billRepository.findAll().stream()
-                .filter(b -> Objects.equals(b.getResidentProfile().getId(), profile.getId()))
+        return billRepository.findByResidentProfileId(profile.getId()).stream()
                 .map(this::mapToResponse)
                 .toList();
     }
@@ -361,6 +449,7 @@ public class BillingServiceImpl implements BillingService {
                 .additionalCharge(bill.getAdditionalCharge())
                 .subtotal(bill.getSubtotal())
                 .tax(bill.getTax())
+                .taxRate(bill.getTariffPlan() != null ? bill.getTariffPlan().getTaxRate() : null)
                 .amount(bill.getAmount())
                 .totalAmount(bill.getTotalAmount())
                 .sharedWaterCost(bill.getSharedWaterCost())
@@ -371,6 +460,7 @@ public class BillingServiceImpl implements BillingService {
                 .status(bill.getStatus() != null ? bill.getStatus().name() : null)
                 .billStatus(bill.getBillStatus())
                 .paymentStatus(bill.getPaymentStatus())
+                .slabBreakdown(bill.getSlabBreakdown())
                 .remarks(bill.getRemarks())
                 .build();
     }
@@ -387,12 +477,29 @@ public class BillingServiceImpl implements BillingService {
     }
 
     private TariffPlanResponse mapToResponse(TariffPlan plan) {
+        List<com.water.monitoring_and_billing_platform.dto.TariffSlabResponse> slabs = null;
+        if (plan.getSlabs() != null) {
+            slabs = plan.getSlabs().stream()
+                    .sorted(java.util.Comparator.comparing(TariffSlab::getMinUnits))
+                    .map(s -> com.water.monitoring_and_billing_platform.dto.TariffSlabResponse.builder()
+                            .id(s.getId())
+                            .minUnits(s.getMinUnits())
+                            .maxUnits(s.getMaxUnits())
+                            .ratePerUnit(s.getRatePerUnit())
+                            .build())
+                    .toList();
+        }
+
         return TariffPlanResponse.builder()
                 .id(plan.getId())
                 .name(plan.getName())
                 .ratePerUnit(plan.getRatePerUnit())
                 .fixedCharge(plan.getFixedCharge())
+                .taxRate(plan.getTaxRate())
+                .maintenanceCharge(plan.getMaintenanceCharge())
+                .serviceCharge(plan.getServiceCharge())
                 .active(plan.isActive())
+                .slabs(slabs)
                 .build();
     }
 
@@ -411,6 +518,26 @@ public class BillingServiceImpl implements BillingService {
 
         if (resident == null || billingCycleId == null) {
             return dist;
+        }
+
+        try {
+            com.water.monitoring_and_billing_platform.dto.ConsumptionCostDistributionResponse consDist =
+                    consumptionCostDistributionService.calculateDistribution(
+                            resident.getCommunity().getId(),
+                            billingCycleId
+                    );
+
+            if (consDist.getTotalCommunityConsumption() > 0.0) {
+                dist.strategy = "CONSUMPTION";
+                dist.sharedCost = consDist.getDistributions().stream()
+                        .filter(d -> d.getResidentProfileId().equals(resident.getId()))
+                        .map(com.water.monitoring_and_billing_platform.dto.HouseholdCostDistributionResponse::getDistributedCost)
+                        .findFirst()
+                        .orElse(BigDecimal.ZERO);
+                return dist;
+            }
+        } catch (Exception e) {
+            // Ignore and fallback to legacy strategies
         }
 
         List<BulkWaterPurchase> purchases = bulkWaterPurchaseRepository.findByBillingCycleIdAndCommunityId(

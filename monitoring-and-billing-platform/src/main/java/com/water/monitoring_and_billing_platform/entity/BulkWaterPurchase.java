@@ -29,6 +29,15 @@ public class BulkWaterPurchase {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalCost;
 
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal unitCost;
+
+    @Column(length = 1000)
+    private String notes;
+
+    @Column(length = 255)
+    private String createdBy;
+
     @Column(nullable = false)
     private LocalDate purchaseDate;
 

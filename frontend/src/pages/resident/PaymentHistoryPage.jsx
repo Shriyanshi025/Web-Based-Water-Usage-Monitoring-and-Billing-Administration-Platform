@@ -2,22 +2,49 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
-import TableToolbar from "../../components/common/TableToolbar";
 import DataGrid from "../../components/common/DataGrid";
 import SearchBar from "../../components/common/SearchBar";
-import { Box, Button, Chip, Stack } from "@mui/material";
-import DownloadIcon from "@mui/icons-material/Download";
+import {
+    Box,
+    Button,
+    Chip,
+    Stack,
+    Typography,
+    Tooltip,
+} from "@mui/material";
+import FileDownloadIcon from "@mui/icons-material/FileDownload";
+import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import { getMyPayments } from "../../services/PaymentService";
 import api from "../../services/api";
 import { formatCurrency } from "../../helpers/numberHelper";
 import { useNotification } from "../../context/NotificationContext";
 
+// ── Relative timestamp helper ─────────────────────────────────────────────────
+function formatDate(dateStr) {
+    if (!dateStr) return "—";
+    return new Date(dateStr).toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+const PAYMENT_STATUS_COLOR = {
+    SUCCESS: "success",
+    FAILED:  "error",
+    PENDING: "warning",
+    REFUNDED:"info",
+};
+
 function PaymentHistoryPage() {
     const { showNotification } = useNotification();
-    const [payments, setPayments] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [search, setSearch] = useState("");
+    const [payments, setPayments]       = useState([]);
+    const [loading, setLoading]         = useState(true);
+    const [error, setError]             = useState(null);
+    const [search, setSearch]           = useState("");
+    const [downloadingId, setDownloadingId] = useState(null);
 
     const fetchPayments = useCallback(async () => {
         setLoading(true);
@@ -32,165 +59,236 @@ function PaymentHistoryPage() {
         }
     }, []);
 
-    useEffect(() => {
-        fetchPayments();
-    }, [fetchPayments]);
+    useEffect(() => { fetchPayments(); }, [fetchPayments]);
 
     const handleDownloadPdf = async (billId, invoiceNumber) => {
+        if (downloadingId) return;
+        setDownloadingId(billId);
         try {
-            const response = await api.get(`/bills/${billId}/pdf`, { responseType: 'blob' });
+            const response = await api.get(`/bills/${billId}/pdf`, { responseType: "blob" });
 
-            if (response.data.type === 'application/json') {
+            if (response.data.type === "application/json") {
                 const text = await response.data.text();
                 const errorObj = JSON.parse(text);
-                showNotification(errorObj.message || "Failed to download PDF.", "error");
+                showNotification(errorObj.message || "Unable to download invoice PDF.", "error");
                 return;
             }
 
-            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
-            const link = document.createElement('a');
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+            const link = document.createElement("a");
             link.href = url;
 
-            const disposition = response.headers['content-disposition'];
-            let filename = invoiceNumber ? `Invoice-${invoiceNumber}.pdf` : `Invoice-INV-${billId}.pdf`;
-            if (disposition && disposition.indexOf('attachment') !== -1) {
+            const disposition = response.headers["content-disposition"];
+            let filename = invoiceNumber
+                ? `HydroSync-Invoice-${invoiceNumber}.pdf`
+                : `HydroSync-Invoice-${billId}.pdf`;
+            if (disposition && disposition.indexOf("attachment") !== -1) {
                 const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
                 const matches = filenameRegex.exec(disposition);
-                if (matches != null && matches[1]) { 
-                    filename = matches[1].replace(/['"]/g, '');
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, "");
                 }
             }
-            link.setAttribute('download', filename);
-
+            link.setAttribute("download", filename);
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(url);
+
+            showNotification(`Invoice downloaded: ${filename}`, "success");
         } catch (err) {
             console.error("PDF download failed", err);
-            showNotification("Failed to download invoice PDF. Please try again.", "error");
+            showNotification("Unable to download invoice. Please try again.", "error");
+        } finally {
+            setDownloadingId(null);
         }
     };
 
-    // Front-end filter logic
     const filteredPayments = useMemo(() => {
-        return payments.filter(p => {
-            const term = search.toLowerCase();
-            return (
-                p.paymentNumber?.toLowerCase().includes(term) ||
-                p.razorpayPaymentId?.toLowerCase().includes(term) ||
-                p.bill?.billNumber?.toLowerCase().includes(term)
-            );
-        });
+        const term = search.toLowerCase();
+        return payments.filter((p) =>
+            p.paymentNumber?.toLowerCase().includes(term) ||
+            p.razorpayPaymentId?.toLowerCase().includes(term) ||
+            p.bill?.billNumber?.toLowerCase().includes(term) ||
+            p.invoiceNumber?.toLowerCase().includes(term)
+        );
     }, [payments, search]);
 
     const columns = useMemo(() => [
-        { field: "id", headerName: "Payment ID", width: 100 },
-        { field: "paymentNumber", headerName: "Payment #", width: 140 },
+        {
+            field: "paymentNumber",
+            headerName: "Payment #",
+            width: 150,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.8rem", color: "text.secondary" }}>
+                    {params.value || "—"}
+                </Typography>
+            ),
+        },
         {
             field: "transactionDate",
-            headerName: "Payment Date",
-            width: 170,
-            renderCell: (params) => params.value ? new Date(params.value).toLocaleString() : "-"
+            headerName: "Date",
+            width: 160,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ fontSize: "0.8125rem" }}>
+                    {formatDate(params.value)}
+                </Typography>
+            ),
         },
         {
             field: "billNumber",
-            headerName: "Bill Number",
-            width: 140,
-            renderCell: (params) => params.row?.billNumber || "N/A"
+            headerName: "Bill #",
+            width: 130,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                    {params.row?.billNumber || "—"}
+                </Typography>
+            ),
         },
         {
             field: "invoiceNumber",
-            headerName: "Invoice Number",
-            width: 170,
-            renderCell: (params) => params.row?.invoiceNumber || "N/A"
+            headerName: "Invoice #",
+            width: 150,
+            renderCell: (params) => (
+                <Typography variant="body2" sx={{ fontFamily: "monospace", fontSize: "0.8rem" }}>
+                    {params.row?.invoiceNumber || "—"}
+                </Typography>
+            ),
         },
         {
             field: "billingMonth",
-            headerName: "Billing Month",
-            width: 130,
-            renderCell: (params) => params.row?.billingMonth || "N/A"
+            headerName: "Period",
+            width: 120,
+            renderCell: (params) => params.row?.billingMonth || "—",
         },
         {
             field: "amount",
             headerName: "Amount",
-            width: 130,
-            renderCell: (params) => formatCurrency(params.value)
+            width: 120,
+            renderCell: (params) => (
+                <Typography variant="body2" fontWeight={600} color="primary.main">
+                    {formatCurrency(params.value)}
+                </Typography>
+            ),
         },
         {
             field: "paymentMethod",
-            headerName: "Payment Method",
-            width: 130,
-            renderCell: (params) => params.value || "UPI"
+            headerName: "Method",
+            width: 110,
+            renderCell: (params) => (
+                <Chip
+                    label={params.value || "UPI"}
+                    size="small"
+                    variant="outlined"
+                    color="default"
+                    sx={{ fontSize: "0.7rem", textTransform: "uppercase" }}
+                />
+            ),
         },
         {
             field: "razorpayPaymentId",
-            headerName: "Demo Transaction ID",
-            width: 180,
-            renderCell: (params) => params.value || "-"
+            headerName: "Transaction ID",
+            width: 170,
+            renderCell: (params) => (
+                <Tooltip title={params.value || ""} arrow enterDelay={400}>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                        }}
+                    >
+                        {params.value || "—"}
+                    </Typography>
+                </Tooltip>
+            ),
         },
         {
             field: "paymentStatus",
             headerName: "Status",
-            width: 120,
+            width: 110,
             renderCell: (params) => {
-                const status = params.value || params.row?.paymentStatus || "SUCCESS";
+                const status = params.value || "SUCCESS";
                 return (
-                    <Chip 
-                        label={status} 
-                        color={status === "SUCCESS" ? "success" : status === "FAILED" ? "error" : "warning"} 
-                        size="small" 
-                        variant="outlined" 
+                    <Chip
+                        label={status}
+                        color={PAYMENT_STATUS_COLOR[status] || "default"}
+                        size="small"
+                        variant="filled"
                     />
                 );
-            }
+            },
         },
         {
             field: "actions",
-            headerName: "Action",
-            width: 160,
+            headerName: "Invoice",
+            width: 140,
             sortable: false,
-            renderCell: (params) => (
-                <Button
-                    variant="outlined"
-                    size="small"
-                    color="primary"
-                    startIcon={<DownloadIcon />}
-                    onClick={() => handleDownloadPdf(params.row.billId, params.row.billNumber)}
-                    disabled={!params.row.billId}
-                >
-                    Invoice
-                </Button>
-            )
-        }
-    ], [showNotification]);
+            renderCell: (params) => {
+                const isDownloading = downloadingId === params.row.billId;
+                return (
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        color="primary"
+                        startIcon={isDownloading ? null : <FileDownloadIcon sx={{ fontSize: "0.9rem" }} />}
+                        onClick={() => handleDownloadPdf(params.row.billId, params.row.invoiceNumber)}
+                        disabled={!params.row.billId || !!downloadingId}
+                        sx={{ fontSize: "0.75rem", px: 1.25 }}
+                    >
+                        {isDownloading ? "…" : "PDF"}
+                    </Button>
+                );
+            },
+        },
+    ], [downloadingId]);
 
     return (
         <DashboardLayout>
             <PageHeader
-                title="Payment History Ledger"
-                subtitle="View past statements, transactions history, and download payment receipts."
+                title="Payment History"
+                subtitle="View past transactions, invoices, and download payment receipts."
+                action={
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <ReceiptLongIcon sx={{ color: "text.disabled", fontSize: "1.1rem" }} />
+                        <Typography variant="caption" color="text.secondary" fontWeight={600}>
+                            {filteredPayments.length} record{filteredPayments.length !== 1 ? "s" : ""}
+                        </Typography>
+                    </Stack>
+                }
             />
 
             <WidgetContainer>
-                <TableToolbar
-                    title="Transaction History"
-                    action={
-                        <SearchBar
-                            value={search}
-                            onChange={setSearch}
-                            onClear={() => setSearch("")}
-                            placeholder="Search transactions..."
-                            sx={{ width: 240 }}
-                        />
-                    }
-                />
-                <Box sx={{ mt: 3, height: 500 }}>
+                {/* ── Toolbar ── */}
+                <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={1.5}
+                    alignItems={{ xs: "stretch", sm: "center" }}
+                    sx={{ mb: 3 }}
+                >
+                    <SearchBar
+                        value={search}
+                        onChange={setSearch}
+                        onClear={() => setSearch("")}
+                        placeholder="Search by payment #, invoice #, transaction ID…"
+                        sx={{ width: { xs: "100%", sm: 320 } }}
+                    />
+                </Stack>
+
+                {/* ── Grid ── */}
+                <Box sx={{ height: 520 }}>
                     <DataGrid
                         rows={filteredPayments}
                         columns={columns}
                         loading={loading}
                         error={error}
                         onRetry={fetchPayments}
+                        emptyTitle="No Payments Found"
+                        emptyMessage="Your payment history will appear here once you make a payment."
                     />
                 </Box>
             </WidgetContainer>

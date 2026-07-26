@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Alert,
     Box,
@@ -9,13 +10,14 @@ import {
     DialogContent,
     DialogTitle,
     FormControl,
+    Grid,
     InputLabel,
     MenuItem,
     Select,
     Stack,
     Typography,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { useTheme, alpha } from "@mui/material/styles";
 
 import AddIcon from "@mui/icons-material/Add";
 import ReceiptIcon from "@mui/icons-material/Receipt";
@@ -23,6 +25,10 @@ import PaidIcon from "@mui/icons-material/Paid";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -32,26 +38,115 @@ import SearchBar from "../../components/common/SearchBar";
 import StatusBadge from "../../components/common/StatusBadge";
 import ActionButton from "../../components/common/ActionButton";
 import ErrorState from "../../components/common/ErrorState";
+import StatCard from "../../components/widgets/StatCard";
+import AdminStatCard from "../../components/common/AdminStatCard";
 
 import CommunityOpsService from "../../services/CommunityOpsService";
 import { useNotification } from "../../context/NotificationContext";
 import { formatCurrency } from "../../helpers/numberHelper";
 
-function BillsPage() {
-    const theme = useTheme();
-    const [rows, setRows]               = useState([]);
-    const [cycles, setCycles]           = useState([]);
-    const [plans, setPlans]             = useState([]);
-    const [loading, setLoading]         = useState(true);
-    const [error, setError]             = useState(null);
-    const [searchTerm, setSearchTerm]   = useState("");
-    const [statusFilter, setStatusFilter] = useState("ALL");
-    const [dialogOpen, setDialogOpen]   = useState(false);
-    const [submitting, setSubmitting]   = useState(false);
-    const [form, setForm]               = useState({ billingCycleId: "", tariffPlanId: "" });
-    const { showNotification } = useNotification();
+import api from "../../services/api";
+import BillBreakdownSection from "../../components/billing/BillBreakdownSection";
 
-    // ── Data fetching ─────────────────────────────────────────────────────────
+const MONTH_NAMES = [
+    { value: "01", label: "January" },
+    { value: "02", label: "February" },
+    { value: "03", label: "March" },
+    { value: "04", label: "April" },
+    { value: "05", label: "May" },
+    { value: "06", label: "June" },
+    { value: "07", label: "July" },
+    { value: "08", label: "August" },
+    { value: "09", label: "September" },
+    { value: "10", label: "October" },
+    { value: "11", label: "November" },
+    { value: "12", label: "December" },
+];
+
+function BillsPage() {
+    const navigate = useNavigate();
+    const theme = useTheme();
+
+    // ── State variables ────────────────────────────────────────────────────────
+    const [rows, setRows]                 = useState([]);
+    const [cycles, setCycles]             = useState([]);
+    const [plans, setPlans]               = useState([]);
+    const [loading, setLoading]           = useState(true);
+    const [error, setError]               = useState(null);
+
+    // Filter states
+    const [quickChip, setQuickChip]       = useState("LATEST"); // "LATEST", "PREVIOUS", "ALL"
+    const [cycleFilter, setCycleFilter]   = useState("ALL");
+    const [monthFilter, setMonthFilter]   = useState("ALL");
+    const [yearFilter, setYearFilter]     = useState("ALL");
+    const [statusFilter, setStatusFilter] = useState("ALL");
+    const [paymentStatusFilter, setPaymentStatusFilter] = useState("ALL");
+    const [searchTerm, setSearchTerm]     = useState("");
+
+    // Dialog states
+    const [dialogOpen, setDialogOpen]     = useState(false);
+    const [submitting, setSubmitting]     = useState(false);
+    const [form, setForm]                 = useState({ billingCycleId: "", tariffPlanId: "" });
+    const { showNotification }            = useNotification();
+
+    const [selectedBill, setSelectedBill] = useState(null);
+    const [detailsOpen, setDetailsOpen]   = useState(false);
+    const [downloadingId, setDownloadingId] = useState(null);
+
+    const handleOpenDetails = (bill) => {
+        setSelectedBill(bill);
+        setDetailsOpen(true);
+    };
+
+    const handleCloseDetails = () => {
+        setDetailsOpen(false);
+        setSelectedBill(null);
+    };
+
+    // ── PDF Download Handler ──────────────────────────────────────────────────
+    const handleDownloadPdf = async (billId) => {
+        if (downloadingId) return;
+        setDownloadingId(billId);
+        try {
+            const bill = rows.find(b => b.id === billId);
+            const response = await api.get(`/bills/${billId}/pdf`, { responseType: 'blob' });
+
+            if (response.data.type === 'application/json') {
+                const text = await response.data.text();
+                const errorObj = JSON.parse(text);
+                showNotification(errorObj.message || "Unable to download bill PDF.", "error");
+                return;
+            }
+
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+            const link = document.createElement('a');
+            link.href = url;
+
+            const disposition = response.headers['content-disposition'];
+            let filename = bill?.billNumber ? `HydroSync-Bill-${bill.billNumber}.pdf` : `HydroSync-Bill-${billId}.pdf`;
+            if (disposition && disposition.indexOf('attachment') !== -1) {
+                const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                const matches = filenameRegex.exec(disposition);
+                if (matches != null && matches[1]) {
+                    filename = matches[1].replace(/['"]/g, '');
+                }
+            }
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            showNotification(`Bill downloaded as ${filename}.`, "success");
+        } catch (err) {
+            console.error("PDF download failed", err);
+            showNotification("Unable to download bill PDF.", "error");
+        } finally {
+            setDownloadingId(null);
+        }
+    };
+
+    // ── Data Fetching ─────────────────────────────────────────────────────────
     const fetchBills = useCallback(async () => {
         setLoading(true);
         setError(null);
@@ -67,39 +162,195 @@ function BillsPage() {
 
     const fetchBillingMeta = useCallback(async () => {
         try {
-            const [cycleResponse, planResponse] = await Promise.all([
-                CommunityOpsService.getActiveBillingCycle(),
-                CommunityOpsService.getTariffPlans(),
+            const [allCyclesRes, activeCycleRes, planResponse] = await Promise.all([
+                CommunityOpsService.getAllBillingCycles(),
+                CommunityOpsService.getActiveBillingCycle().catch(() => null),
+                CommunityOpsService.getAdminTariffPlans(),
             ]);
-            setCycles(cycleResponse?.data ? [cycleResponse.data] : []);
+
+            const loadedCycles = allCyclesRes?.data || [];
+            // Sort cycles latest first
+            loadedCycles.sort((a, b) => {
+                const startA = a.periodStart || "";
+                const startB = b.periodStart || "";
+                return startB.localeCompare(startA);
+            });
+
+            setCycles(loadedCycles);
             setPlans(planResponse?.data || []);
-        } catch {
+        } catch (err) {
+            console.error("Failed loading metadata", err);
             setCycles([]); setPlans([]);
         }
     }, []);
 
-    useEffect(() => { fetchBills(); fetchBillingMeta(); }, [fetchBills, fetchBillingMeta]);
+    useEffect(() => {
+        fetchBills();
+        fetchBillingMeta();
+    }, [fetchBills, fetchBillingMeta]);
 
-    // ── Summary stats ─────────────────────────────────────────────────────────
-    const paidCount   = useMemo(() => rows.filter(r => r.status === "PAID").length, [rows]);
-    const unpaidCount = useMemo(() => rows.filter(r => r.status === "UNPAID").length, [rows]);
-    const overdueCount = useMemo(() => rows.filter(r => r.status === "OVERDUE").length, [rows]);
-    const totalRevenue = useMemo(() => rows.filter(r => r.status === "PAID").reduce((sum, r) => sum + (Number(r.amount) || 0), 0), [rows]);
+    // ── Derived Metadata ──────────────────────────────────────────────────────
+    const latestCycle = useMemo(() => {
+        return cycles[0] || null;
+    }, [cycles]);
 
-    // ── Filtering ─────────────────────────────────────────────────────────────
+    const activeCycle = useMemo(() => {
+        return cycles.find(c => c.active) || latestCycle;
+    }, [cycles, latestCycle]);
+
+    const availableYears = useMemo(() => {
+        const yearsSet = new Set();
+        rows.forEach(r => {
+            if (r.billingYear) yearsSet.add(String(r.billingYear));
+            if (r.billDate) yearsSet.add(r.billDate.slice(0, 4));
+        });
+        cycles.forEach(c => {
+            if (c.periodStart) yearsSet.add(c.periodStart.slice(0, 4));
+        });
+        return Array.from(yearsSet).sort().reverse();
+    }, [rows, cycles]);
+
+    // Set default cycle filter to latest cycle if quickChip is LATEST
+    useEffect(() => {
+        if (quickChip === "LATEST" && latestCycle) {
+            setCycleFilter(String(latestCycle.id));
+        }
+    }, [quickChip, latestCycle]);
+
+    // Quick chip action handlers
+    const handleQuickChip = (mode) => {
+        setQuickChip(mode);
+        if (mode === "LATEST") {
+            if (latestCycle) setCycleFilter(String(latestCycle.id));
+        } else if (mode === "PREVIOUS" || mode === "ALL") {
+            setCycleFilter("ALL");
+        }
+    };
+
+    // Reset filters
+    const handleResetFilters = () => {
+        setQuickChip("LATEST");
+        if (latestCycle) setCycleFilter(String(latestCycle.id));
+        else setCycleFilter("ALL");
+        setMonthFilter("ALL");
+        setYearFilter("ALL");
+        setStatusFilter("ALL");
+        setPaymentStatusFilter("ALL");
+        setSearchTerm("");
+    };
+
+    // ── Filtering and Latest-First Sorting ────────────────────────────────────
     const filteredRows = useMemo(() => {
         const term = searchTerm.toLowerCase();
-        return rows.filter(row => {
-            const matchesSearch = !term ||
-                (row.residentName      || "").toLowerCase().includes(term) ||
-                (row.unitNumber        || "").toLowerCase().includes(term) ||
-                (row.billingCycleName  || "").toLowerCase().includes(term);
-            const matchesStatus = statusFilter === "ALL" || (row.status || "").toUpperCase() === statusFilter;
-            return matchesSearch && matchesStatus;
-        });
-    }, [rows, searchTerm, statusFilter]);
 
-    // ── Generate bills ────────────────────────────────────────────────────────
+        const result = rows.filter(row => {
+            // Quick Chip filtering
+            if (quickChip === "LATEST" && latestCycle) {
+                const isLatest = String(row.billingCycleId) === String(latestCycle.id) ||
+                    (row.billingCycleName && latestCycle.name && row.billingCycleName === latestCycle.name);
+                if (!isLatest) return false;
+            } else if (quickChip === "PREVIOUS" && latestCycle) {
+                const isLatest = String(row.billingCycleId) === String(latestCycle.id) ||
+                    (row.billingCycleName && latestCycle.name && row.billingCycleName === latestCycle.name);
+                if (isLatest) return false;
+            }
+
+            // Dropdown cycle filter
+            if (cycleFilter !== "ALL") {
+                const matchesCycle = String(row.billingCycleId) === String(cycleFilter) ||
+                    String(row.billingCycleName) === String(cycleFilter);
+                if (!matchesCycle) return false;
+            }
+
+            // Month filter
+            if (monthFilter !== "ALL") {
+                let rowMonth = "";
+                if (row.billingMonth != null) {
+                    rowMonth = String(row.billingMonth).padStart(2, "0");
+                } else if (row.billDate) {
+                    rowMonth = row.billDate.slice(5, 7);
+                }
+                if (rowMonth !== monthFilter) return false;
+            }
+
+            // Year filter
+            if (yearFilter !== "ALL") {
+                let rowYear = "";
+                if (row.billingYear != null) {
+                    rowYear = String(row.billingYear);
+                } else if (row.billDate) {
+                    rowYear = row.billDate.slice(0, 4);
+                }
+                if (rowYear !== yearFilter) return false;
+            }
+
+            // Bill status filter
+            if (statusFilter !== "ALL") {
+                if ((row.status || "").toUpperCase() !== statusFilter) return false;
+            }
+
+            // Payment status filter
+            if (paymentStatusFilter !== "ALL") {
+                const status = (row.paymentStatus || row.status || "").toUpperCase();
+                if (status !== paymentStatusFilter) return false;
+            }
+
+            // Text search filter
+            if (term) {
+                const matchName = (row.residentName || "").toLowerCase().includes(term);
+                const matchUnit = (row.unitNumber || "").toLowerCase().includes(term);
+                const matchCycle = (row.billingCycleName || "").toLowerCase().includes(term);
+                const matchBillNo = (row.billNumber || "").toLowerCase().includes(term);
+                if (!matchName && !matchUnit && !matchCycle && !matchBillNo) return false;
+            }
+
+            return true;
+        });
+
+        // SORTING: Latest billing cycle first, inside cycle newest generated bills first
+        result.sort((a, b) => {
+            const cycleIdA = Number(a.billingCycleId) || 0;
+            const cycleIdB = Number(b.billingCycleId) || 0;
+            if (cycleIdB !== cycleIdA) {
+                return cycleIdB - cycleIdA;
+            }
+            // Secondary sort: newest bill ID / date DESC
+            return (b.id || 0) - (a.id || 0);
+        });
+
+        return result;
+    }, [rows, quickChip, latestCycle, cycleFilter, monthFilter, yearFilter, statusFilter, paymentStatusFilter, searchTerm]);
+
+    // ── Summary Cards Calculations for current filtered view ───────────────────
+    const summaryMetrics = useMemo(() => {
+        const totalBills = filteredRows.length;
+        const totalAmount = filteredRows.reduce((sum, r) => sum + (Number(r.amount) || Number(r.totalAmount) || 0), 0);
+
+        const paidList = filteredRows.filter(r => r.status === "PAID");
+        const paidCount = paidList.length;
+        const paidAmount = paidList.reduce((sum, r) => sum + (Number(r.amount) || Number(r.totalAmount) || 0), 0);
+
+        const unpaidList = filteredRows.filter(r => r.status === "UNPAID");
+        const unpaidCount = unpaidList.length;
+        const unpaidAmount = unpaidList.reduce((sum, r) => sum + (Number(r.amount) || Number(r.totalAmount) || 0), 0);
+
+        const overdueList = filteredRows.filter(r => r.status === "OVERDUE");
+        const overdueCount = overdueList.length;
+        const overdueAmount = overdueList.reduce((sum, r) => sum + (Number(r.amount) || Number(r.totalAmount) || 0), 0);
+
+        return {
+            totalBills,
+            totalAmount,
+            paidCount,
+            paidAmount,
+            unpaidCount,
+            unpaidAmount,
+            overdueCount,
+            overdueAmount,
+        };
+    }, [filteredRows]);
+
+    // ── Generate Bills batch handler ──────────────────────────────────────────
     const handleGenerate = async (event) => {
         event.preventDefault();
         setSubmitting(true);
@@ -119,41 +370,48 @@ function BillsPage() {
         }
     };
 
-    // ── Columns ───────────────────────────────────────────────────────────────
+    // ── DataGrid Columns ──────────────────────────────────────────────────────
     const columns = useMemo(() => [
         {
-            field: "residentName", headerName: "Resident", flex: 1, minWidth: 180,
+            field: "residentName", headerName: "Resident", flex: 1, minWidth: 200,
             renderCell: (params) => (
-                <Box>
-                    <Typography variant="body2" fontWeight={600}>{params.row.residentName || "—"}</Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: "1px", overflow: "hidden", width: "100%" }}>
+                    <Typography variant="body2" fontWeight={600} noWrap>{params.row.residentName || "—"}</Typography>
                     {params.row.unitNumber && (
-                        <Typography variant="caption" color="text.secondary">Unit {params.row.unitNumber}</Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>Unit {params.row.unitNumber}</Typography>
                     )}
                 </Box>
             )
         },
         {
-            field: "billingCycleName", headerName: "Billing Cycle", width: 180,
+            field: "billingCycleName", headerName: "Billing Cycle", width: 170,
             renderCell: (params) => (
-                <Typography variant="body2" color="text.secondary">{params.row.billingCycleName || "—"}</Typography>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Typography variant="body2" color="text.primary" fontWeight={500}>
+                        {params.row.billingCycleName || "—"}
+                    </Typography>
+                    {latestCycle && (String(params.row.billingCycleId) === String(latestCycle.id) || params.row.billingCycleName === latestCycle.name) && (
+                        <Chip label="Latest" size="small" color="primary" variant="outlined" sx={{ height: 18, fontSize: "0.65rem", fontWeight: 700 }} />
+                    )}
+                </Stack>
             )
         },
         {
-            field: "tariffPlanName", headerName: "Tariff Plan", width: 160,
+            field: "tariffPlanName", headerName: "Tariff Policy", width: 160,
             renderCell: (params) => (
                 <Typography variant="body2" color="text.secondary">{params.row.tariffPlanName || "—"}</Typography>
             )
         },
         {
-            field: "unitsConsumed", headerName: "Units", width: 90,
+            field: "unitsConsumed", headerName: "Units (kL)", width: 110,
             renderCell: (params) => (
-                <Typography variant="body2" fontWeight={500} color="info.main">
+                <Typography variant="body2" fontWeight={600} color="info.main">
                     {params.row.unitsConsumed != null ? params.row.unitsConsumed : "—"}
                 </Typography>
             )
         },
         {
-            field: "amount", headerName: "Amount", width: 130,
+            field: "amount", headerName: "Amount", width: 140,
             renderCell: (params) => (
                 <Typography variant="body2" fontWeight={700} color={params.row.status === "PAID" ? "success.main" : params.row.status === "OVERDUE" ? "error.main" : "text.primary"}>
                     {params.row.amount != null ? formatCurrency(params.row.amount) : "—"}
@@ -164,14 +422,74 @@ function BillsPage() {
             field: "status", headerName: "Status", width: 120,
             renderCell: (params) => <StatusBadge status={params.row.status || "UNPAID"} />
         },
-    ], []);
+        {
+            field: "actions", headerName: "Actions", width: 310, sortable: false,
+            renderCell: (params) => {
+                const isDownloading = downloadingId === params.row.id;
+                const btnStyle = {
+                    width: "90px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    textTransform: "none",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    padding: "4px 8px"
+                };
 
-    // ── Render ────────────────────────────────────────────────────────────────
+                return (
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            color="info"
+                            onClick={() => handleOpenDetails(params.row)}
+                            sx={btnStyle}
+                        >
+                            Breakdown
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            color="primary"
+                            onClick={() => navigate(`/invoices/bill/${params.row.id}`)}
+                            sx={btnStyle}
+                        >
+                            Invoice
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            color="inherit"
+                            onClick={() => handleDownloadPdf(params.row.id)}
+                            disabled={isDownloading}
+                            sx={{ ...btnStyle, color: "text.secondary" }}
+                        >
+                            {isDownloading ? "…" : "PDF"}
+                        </Button>
+                    </Stack>
+                );
+            }
+        }
+    ], [navigate, downloadingId, latestCycle]);
+
+    // Active filters count indicator
+    const activeFiltersCount = useMemo(() => {
+        let count = 0;
+        if (quickChip !== "LATEST") count++;
+        if (cycleFilter !== "ALL" && (quickChip !== "LATEST" || (latestCycle && String(cycleFilter) !== String(latestCycle.id)))) count++;
+        if (monthFilter !== "ALL") count++;
+        if (yearFilter !== "ALL") count++;
+        if (statusFilter !== "ALL") count++;
+        if (paymentStatusFilter !== "ALL") count++;
+        if (searchTerm) count++;
+        return count;
+    }, [quickChip, cycleFilter, latestCycle, monthFilter, yearFilter, statusFilter, paymentStatusFilter, searchTerm]);
+
     return (
         <DashboardLayout>
             <PageHeader
-                title="Billing"
-                subtitle="Review resident bills, inspect the active cycle, and generate billing batches."
+                title="Bills & Billing Policy"
+                subtitle="Review resident bills sorted latest cycle first. Use historical filters to explore past billing periods."
                 action={
                     <Stack direction="row" spacing={1.5}>
                         <ActionButton variant="outlined" startIcon={<RefreshIcon />} onClick={fetchBills} disabled={loading} sx={{ fontSize: "0.8125rem" }}>
@@ -184,99 +502,165 @@ function BillsPage() {
                 }
             />
 
-            {/* ── Active cycle callout ──────────────────────────────────────── */}
-            {cycles[0] && (
-                <Box sx={{ mb: 3, px: 2, py: 1.5, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <HourglassEmptyIcon sx={{ fontSize: "1rem", color: "info.main" }} />
-                    <Typography variant="body2" color="text.secondary">Active billing cycle:</Typography>
-                    <Typography variant="body2" fontWeight={700}>{cycles[0].name}</Typography>
-                </Box>
-            )}
-
-            {/* ── Summary strip ─────────────────────────────────────────────── */}
+            {/* ── Summary KPI Cards Row ──────────────────────────────────────── */}
             {!loading && !error && (
-                <Stack direction="row" spacing={2} sx={{ mb: 3 }} flexWrap="wrap">
-                    <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
-                        <ReceiptIcon sx={{ fontSize: "1rem", color: "text.secondary" }} />
-                        <Typography variant="body2" fontWeight={500} color="text.secondary">Total:</Typography>
-                        <Typography variant="body2" fontWeight={700}>{rows.length}</Typography>
-                    </Box>
-                    <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", display: "flex", alignItems: "center", gap: 1 }}>
-                        <PaidIcon sx={{ fontSize: "1rem", color: "success.main" }} />
-                        <Typography variant="body2" fontWeight={500} color="text.secondary">Paid:</Typography>
-                        <Typography variant="body2" fontWeight={700} color="success.main">{paidCount}</Typography>
-                    </Box>
-                    {unpaidCount > 0 && (
-                        <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "warning.light", display: "flex", alignItems: "center", gap: 1 }}>
-                            <HourglassEmptyIcon sx={{ fontSize: "1rem", color: "warning.main" }} />
-                            <Typography variant="body2" fontWeight={500} color="text.secondary">Unpaid:</Typography>
-                            <Typography variant="body2" fontWeight={700} color="warning.main">{unpaidCount}</Typography>
-                        </Box>
-                    )}
-                    {overdueCount > 0 && (
-                        <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "error.light", display: "flex", alignItems: "center", gap: 1 }}>
-                            <WarningAmberIcon sx={{ fontSize: "1rem", color: "error.main" }} />
-                            <Typography variant="body2" fontWeight={500} color="text.secondary">Overdue:</Typography>
-                            <Typography variant="body2" fontWeight={700} color="error.main">{overdueCount}</Typography>
-                        </Box>
-                    )}
-                    {paidCount > 0 && (
-                        <Box sx={{ px: 2, py: 1, bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "success.light", display: "flex", alignItems: "center", gap: 1 }}>
-                            <PaidIcon sx={{ fontSize: "1rem", color: "success.main" }} />
-                            <Typography variant="body2" fontWeight={500} color="text.secondary">Revenue:</Typography>
-                            <Typography variant="body2" fontWeight={700} color="success.main">{formatCurrency(totalRevenue)}</Typography>
-                        </Box>
-                    )}
-                </Stack>
+                <Grid container spacing={2.5} sx={{ mb: 3 }}>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                        <AdminStatCard
+                            title="Current Billing Cycle"
+                            value={activeCycle ? activeCycle.name : "None"}
+                            icon={<HourglassEmptyIcon />}
+                            color="primary"
+                            subtitle={activeCycle ? `${activeCycle.periodStart} to ${activeCycle.periodEnd}` : "No active cycle"}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                        <AdminStatCard
+                            title="Bills Generated"
+                            value={summaryMetrics.totalBills}
+                            icon={<ReceiptIcon />}
+                            color="info"
+                            subtitle={`Total: ${formatCurrency(summaryMetrics.totalAmount)}`}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                        <AdminStatCard
+                            title="Paid Bills"
+                            value={summaryMetrics.paidCount}
+                            icon={<PaidIcon />}
+                            color="success"
+                            subtitle={`Revenue: ${formatCurrency(summaryMetrics.paidAmount)}`}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                        <AdminStatCard
+                            title="Pending Bills"
+                            value={summaryMetrics.unpaidCount}
+                            icon={<HourglassEmptyIcon />}
+                            color="warning"
+                            subtitle={`Amount: ${formatCurrency(summaryMetrics.unpaidAmount)}`}
+                        />
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={2.4}>
+                        <AdminStatCard
+                            title="Overdue Bills"
+                            value={summaryMetrics.overdueCount}
+                            icon={<WarningAmberIcon />}
+                            color="error"
+                            subtitle={`Amount: ${formatCurrency(summaryMetrics.overdueAmount)}`}
+                        />
+                    </Grid>
+                </Grid>
             )}
 
-            {/* ── Full-page error ───────────────────────────────────────────── */}
+            {/* ── Error state display ────────────────────────────────────────── */}
             {error && !rows.length && (
                 <Box sx={{ mb: 3 }}>
                     <ErrorState title="Failed to load bills" message={error} onRetry={fetchBills} />
                 </Box>
             )}
 
-            {/* ── Main table panel ──────────────────────────────────────────── */}
-            <Box sx={{ bgcolor: "background.paper", borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
+            {/* ── Main Bills Data Panel ──────────────────────────────────────── */}
+            <Box sx={{ bgcolor: "background.paper", borderRadius: "12px", border: "1px solid", borderColor: "divider", overflow: "hidden", boxShadow: "0 1px 4px rgba(12, 25, 41, 0.05)" }}>
+
+                {/* ── Advanced Filter Toolbar ──────────────────────────────────── */}
                 <TableToolbar
-                    title="Bills"
+                    title="Resident Bills List"
                     action={
                         <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
                             <SearchBar
                                 value={searchTerm}
                                 onChange={setSearchTerm}
                                 onClear={() => setSearchTerm("")}
-                                placeholder="Search by resident, unit, or cycle…"
-                                sx={{ width: { xs: "100%", sm: 260 } }}
+                                placeholder="Search resident, unit, bill #…"
+                                sx={{ width: { xs: "100%", sm: 220 } }}
                             />
-                            <FormControl size="small" sx={{ minWidth: 140 }}>
-                                <InputLabel id="bill-status-filter-label">Status</InputLabel>
+
+                            {/* Cycle Dropdown Filter */}
+                            <FormControl size="small" sx={{ minWidth: 150 }}>
+                                <InputLabel id="cycle-filter-label">Cycle</InputLabel>
                                 <Select
-                                    labelId="bill-status-filter-label"
+                                    labelId="cycle-filter-label"
+                                    label="Cycle"
+                                    value={cycleFilter}
+                                    onChange={(e) => {
+                                        setCycleFilter(e.target.value);
+                                        if (latestCycle && e.target.value === String(latestCycle.id)) {
+                                            setQuickChip("LATEST");
+                                        } else if (e.target.value === "ALL") {
+                                            setQuickChip("ALL");
+                                        } else {
+                                            setQuickChip("PREVIOUS");
+                                        }
+                                    }}
+                                    sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
+                                >
+                                    <MenuItem value="ALL">All Cycles</MenuItem>
+                                    {cycles.map(c => (
+                                        <MenuItem key={c.id} value={String(c.id)}>
+                                            {c.name} {latestCycle && c.id === latestCycle.id ? "(Latest)" : ""}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            {/* Month Filter */}
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel id="month-filter-label">Month</InputLabel>
+                                <Select
+                                    labelId="month-filter-label"
+                                    label="Month"
+                                    value={monthFilter}
+                                    onChange={(e) => setMonthFilter(e.target.value)}
+                                    sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
+                                >
+                                    <MenuItem value="ALL">All Months</MenuItem>
+                                    {MONTH_NAMES.map(m => (
+                                        <MenuItem key={m.value} value={m.value}>{m.label}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            {/* Year Filter */}
+                            <FormControl size="small" sx={{ minWidth: 100 }}>
+                                <InputLabel id="year-filter-label">Year</InputLabel>
+                                <Select
+                                    labelId="year-filter-label"
+                                    label="Year"
+                                    value={yearFilter}
+                                    onChange={(e) => setYearFilter(e.target.value)}
+                                    sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
+                                >
+                                    <MenuItem value="ALL">All Years</MenuItem>
+                                    {availableYears.map(y => (
+                                        <MenuItem key={y} value={y}>{y}</MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+
+                            {/* Bill Status Filter */}
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
+                                <InputLabel id="bill-status-label">Status</InputLabel>
+                                <Select
+                                    labelId="bill-status-label"
                                     label="Status"
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
                                     sx={{ borderRadius: "8px", fontSize: "0.8125rem" }}
                                 >
-                                    {["ALL", "PAID", "UNPAID", "OVERDUE", "WAIVED"].map(s => (
-                                        <MenuItem key={s} value={s}>{s === "ALL" ? "All Statuses" : s.charAt(0) + s.slice(1).toLowerCase()}</MenuItem>
-                                    ))}
+                                    <MenuItem value="ALL">All Statuses</MenuItem>
+                                    <MenuItem value="UNPAID">Unpaid</MenuItem>
+                                    <MenuItem value="PAID">Paid</MenuItem>
+                                    <MenuItem value="OVERDUE">Overdue</MenuItem>
+                                    <MenuItem value="WAIVED">Waived</MenuItem>
                                 </Select>
                             </FormControl>
-                            {(searchTerm || statusFilter !== "ALL") && (
-                                <Chip
-                                    label={`${filteredRows.length} of ${rows.length}`}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ fontSize: "0.75rem", height: 26 }}
-                                    onDelete={() => { setSearchTerm(""); setStatusFilter("ALL"); }}
-                                />
-                            )}
                         </Stack>
                     }
                 />
-                <Box sx={{ height: 520 }}>
+
+                {/* ── Table View ─────────────────────────────────────────────── */}
+                <Box sx={{ height: 540 }}>
                     <DataGrid
                         rows={filteredRows}
                         columns={columns}
@@ -288,13 +672,13 @@ function BillsPage() {
                 </Box>
             </Box>
 
-            {/* ── Generate Bills dialog ─────────────────────────────────────── */}
+            {/* ── Generate Bills batch dialog ───────────────────────────────── */}
             <Dialog open={dialogOpen} onClose={() => !submitting && setDialogOpen(false)} maxWidth="sm" fullWidth
                 PaperProps={{ sx: { borderRadius: 3 } }}>
                 <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
-                    Generate Bills
+                    Generate Bills Batch
                     <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 400, mt: 0.25 }}>
-                        Select billing cycle and tariff plan to generate bills for all active residents.
+                        Select active billing cycle and tariff policy to generate bills for all households.
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
@@ -308,30 +692,82 @@ function BillsPage() {
                                     onChange={(e) => setForm(p => ({ ...p, billingCycleId: e.target.value }))}
                                 >
                                     {cycles.length === 0 ? (
-                                        <MenuItem disabled value=""><em>No active cycle configured</em></MenuItem>
+                                        <MenuItem disabled value=""><em>No billing cycles configured</em></MenuItem>
                                     ) : (
                                         cycles.map(cycle => (
-                                            <MenuItem key={cycle.id} value={cycle.id}>{cycle.name}</MenuItem>
+                                            <MenuItem key={cycle.id} value={cycle.id}>
+                                                {cycle.name} {cycle.active ? "(Active)" : ""}
+                                            </MenuItem>
                                         ))
                                     )}
                                 </Select>
                             </FormControl>
                             <FormControl fullWidth size="small" required>
-                                <InputLabel>Tariff Plan</InputLabel>
+                                <InputLabel>Tariff Policy Plan</InputLabel>
                                 <Select
                                     value={form.tariffPlanId}
-                                    label="Tariff Plan"
+                                    label="Tariff Policy Plan"
                                     onChange={(e) => setForm(p => ({ ...p, tariffPlanId: e.target.value }))}
                                 >
                                     {plans.length === 0 ? (
                                         <MenuItem disabled value=""><em>No tariff plans available</em></MenuItem>
                                     ) : (
                                         plans.map(plan => (
-                                            <MenuItem key={plan.id} value={plan.id}>{plan.name}</MenuItem>
+                                            <MenuItem key={plan.id} value={plan.id} disabled={!plan.active}>
+                                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: "100%" }}>
+                                                    <span>{plan.name}</span>
+                                                    {!plan.active && (
+                                                        <Chip label="Inactive" size="small" color="default" variant="outlined" sx={{ height: 20, fontSize: "0.65rem", ml: 1 }} />
+                                                    )}
+                                                </Stack>
+                                            </MenuItem>
                                         ))
                                     )}
                                 </Select>
                             </FormControl>
+
+                            {/* ── LIVE BILLING SUMMARY ── */}
+                            {form.tariffPlanId && (() => {
+                                const selectedPlan = plans.find(p => String(p.id) === String(form.tariffPlanId));
+                                if (!selectedPlan) return null;
+                                return (
+                                    <Box sx={{ border: "1px solid", borderColor: "primary.main", borderRadius: 2, p: 2, bgcolor: "background.paper" }}>
+                                        <Typography variant="subtitle2" fontWeight={800} color="primary.main" sx={{ mb: 1 }}>
+                                            LIVE BILLING POLICY SUMMARY: {selectedPlan.name}
+                                        </Typography>
+                                        {selectedPlan.description && (
+                                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1.5 }}>
+                                                {selectedPlan.description}
+                                            </Typography>
+                                        )}
+                                        <Stack direction="row" spacing={2} sx={{ mb: 1.5 }}>
+                                            <Box sx={{ flex: 1, bgcolor: "action.hover", p: 1, borderRadius: 1 }}>
+                                                <Typography variant="caption" color="text.secondary" display="block">Fixed Base Charge</Typography>
+                                                <Typography variant="body2" fontWeight={700}>{formatCurrency(selectedPlan.fixedCharge)}</Typography>
+                                            </Box>
+                                            <Box sx={{ flex: 1, bgcolor: "action.hover", p: 1, borderRadius: 1 }}>
+                                                <Typography variant="caption" color="text.secondary" display="block">GST Tax Rate</Typography>
+                                                <Typography variant="body2" fontWeight={700}>{(Number(selectedPlan.taxRate || 0.05) * 100).toFixed(1)}%</Typography>
+                                            </Box>
+                                        </Stack>
+
+                                        <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+                                            Tiered Slabs Configured:
+                                        </Typography>
+                                        <Box sx={{ maxHeight: 120, overflowY: "auto", mb: 1.5 }}>
+                                            {(selectedPlan.slabs || []).map((s, idx) => (
+                                                <Typography key={idx} variant="caption" display="block" color="text.primary">
+                                                    • {s.minUnits}–{s.maxUnits ?? "∞"} kL: <strong>₹{s.ratePerUnit} per kL</strong>
+                                                </Typography>
+                                            ))}
+                                        </Box>
+
+                                        <Alert severity="info" sx={{ py: 0.25, px: 1, fontSize: "0.75rem", borderRadius: 1 }}>
+                                            Formula: <strong>(Tiered Consumption + Fixed Charge ₹{selectedPlan.fixedCharge} + Shared Allocation) × (1 + {(Number(selectedPlan.taxRate || 0.05) * 100).toFixed(1)}%)</strong>
+                                        </Alert>
+                                    </Box>
+                                );
+                            })()}
                         </Stack>
                     </Box>
                 </DialogContent>
@@ -348,6 +784,57 @@ function BillsPage() {
                     >
                         {submitting ? "Generating…" : "Generate Bills"}
                     </ActionButton>
+                </DialogActions>
+            </Dialog>
+
+            {/* ── Bill Calculation Breakdown Dialog ── */}
+            <Dialog
+                open={detailsOpen}
+                onClose={handleCloseDetails}
+                maxWidth="sm"
+                fullWidth
+                PaperProps={{ sx: { borderRadius: 3 } }}
+            >
+                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Box>
+                            <Typography variant="h6" fontWeight="bold">
+                                Resident Bill Breakdown
+                            </Typography>
+                            {selectedBill && (
+                                <Typography variant="caption" color="text.secondary">
+                                    Resident: {selectedBill.residentName} (Unit {selectedBill.unitNumber}) | Bill #{selectedBill.billNumber || selectedBill.id}
+                                </Typography>
+                            )}
+                        </Box>
+                        {selectedBill && (
+                            <Chip
+                                label={selectedBill.status || "UNPAID"}
+                                color={selectedBill.status === "PAID" ? "success" : selectedBill.status === "OVERDUE" ? "error" : "warning"}
+                                size="small"
+                                sx={{ fontWeight: "bold" }}
+                            />
+                        )}
+                    </Stack>
+                </DialogTitle>
+                <DialogContent sx={{ p: 3 }}>
+                    {selectedBill && (
+                        <BillBreakdownSection bill={selectedBill} defaultExpanded={true} />
+                    )}
+                </DialogContent>
+                <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", px: 3, py: 2 }}>
+                    {selectedBill && (
+                        <Button
+                            onClick={() => handleDownloadPdf(selectedBill.id)}
+                            variant="outlined"
+                            color="primary"
+                        >
+                            Download PDF
+                        </Button>
+                    )}
+                    <Button onClick={handleCloseDetails} variant="contained" color="secondary">
+                        Close
+                    </Button>
                 </DialogActions>
             </Dialog>
         </DashboardLayout>

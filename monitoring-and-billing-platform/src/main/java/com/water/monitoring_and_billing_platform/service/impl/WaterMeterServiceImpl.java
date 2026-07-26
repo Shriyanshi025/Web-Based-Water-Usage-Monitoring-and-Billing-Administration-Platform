@@ -129,6 +129,7 @@ public class WaterMeterServiceImpl implements WaterMeterService {
                 .id(meter.getId())
                 .meterNumber(meter.getMeterNumber())
                 .officialUserId(meter.getResidentProfile().getOfficialUserId())
+                .residentProfileId(meter.getResidentProfile().getId())
                 .residentName(meter.getResidentProfile().getUser().getFullName())
                 .initialReading(meter.getInitialReading())
                 .currentReading(meter.getCurrentReading())

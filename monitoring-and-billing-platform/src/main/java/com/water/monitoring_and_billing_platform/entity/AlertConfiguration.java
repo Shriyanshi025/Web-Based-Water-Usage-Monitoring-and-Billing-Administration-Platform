@@ -23,6 +23,9 @@ public class AlertConfiguration {
     @Column(nullable = false)
     private Double highUsagePercentage; // e.g. 150.0
 
+    @Column(nullable = true)
+    private Double highConsumptionThreshold; // e.g. 30.0 kL
+
     @Column(nullable = false)
     private Double leakDetectionThreshold; // e.g. 0.05 (daily volume or minimum consumption to check)
 

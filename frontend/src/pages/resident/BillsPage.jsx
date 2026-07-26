@@ -19,16 +19,21 @@ import {
     Stack,
     TextField
 } from "@mui/material";
-import { getResidentProfile, getBillsByResidentId } from "../../services/ResidentOpsService";
+import { getResidentProfile, getMyBills, getBillsByResidentId } from "../../services/ResidentOpsService";
 import { formatCurrency } from "../../helpers/numberHelper";
 import { useNotification } from "../../context/NotificationContext";
 
 import api from "../../services/api";
 import { getMyPayments, getRazorpayKey, createPaymentOrder, verifyPaymentSignature } from "../../services/PaymentService";
-import MockRazorpayCheckout from "../../components/payment/MockRazorpayCheckout";
 import PaymentSummaryDialog from "../../components/payment/PaymentSummaryDialog";
 import PaymentSuccessDialog from "../../components/payment/PaymentSuccessDialog";
 import PaymentFailureDialog from "../../components/payment/PaymentFailureDialog";
+import BillBreakdownSection from "../../components/billing/BillBreakdownSection";
+import AdminStatCard from "../../components/common/AdminStatCard";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import PaymentIcon from "@mui/icons-material/Payment";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PendingActionsIcon from "@mui/icons-material/PendingActions";
 
 const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -66,67 +71,25 @@ function BillsPage() {
     const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
     const [summaryBill, setSummaryBill] = useState(null);
 
-    // Mock Razorpay Checkout State
-    const [mockCheckoutOpen, setMockCheckoutOpen] = useState(false);
-    const [activeRazorpayOrderId, setActiveRazorpayOrderId] = useState("");
+    // Download state — tracks which bill is downloading
+    const [downloadingId, setDownloadingId] = useState(null);
 
     const handleOpenPaymentSummary = (bill) => {
         setSummaryBill(bill);
         setSummaryDialogOpen(true);
     };
 
-    const handleMockPaymentSuccess = async (payId, paymentMethod) => {
-        setMockCheckoutOpen(false);
-        setLoading(true);
-        try {
-            const sig = "sig_simulated_" + Math.random().toString(36).substring(2, 10);
-            const orderId = activeRazorpayOrderId;
-            
-            const verifyRes = await verifyPaymentSignature({
-                razorpayOrderId: orderId,
-                razorpayPaymentId: payId,
-                razorpaySignature: sig
-            });
-            if (verifyRes.success) {
-                showNotification("Payment Successful! Your payment has been completed successfully.", "success");
-                setSuccessPaymentDetails({
-                    billNumber: summaryBill?.billNumber || `BILL-${summaryBill?.id}`,
-                    amount: summaryBill?.totalAmount !== undefined && summaryBill?.totalAmount !== null ? summaryBill.totalAmount : (summaryBill?.amount || 0),
-                    transactionId: payId,
-                    paymentDate: new Date().toLocaleString(),
-                    paymentMethod: paymentMethod || "MOCK",
-                    billId: summaryBill?.id
-                });
-                setPaymentSuccessOpen(true);
-                handleCloseDetails();
-                fetchBillsData();
-                fetchPaymentsData();
-            } else {
-                showNotification("Payment Verification Failed. Please contact support if money was deducted.", "error");
-            }
-        } catch (err) {
-            showNotification("Payment Verification Failed. Please contact support if money was deducted.", "error");
-        } finally {
-            setLoading(false);
-            setPayingBillId(null);
-        }
-    };
-
-    const handleMockPaymentCancel = () => {
-        setMockCheckoutOpen(false);
-        showNotification("Payment Cancelled. No amount was deducted.", "warning");
-        setPayingBillId(null);
-    };
-
-    const handleMockPaymentFail = () => {
-        setMockCheckoutOpen(false);
-        setFailedBill(summaryBill);
-        setPaymentErrorOpen(true);
-        setPayingBillId(null);
-    };
-
     const handlePayBill = async (bill) => {
         if (payingBillId) return;
+
+        // Validation: Verify resident profile has a valid mobile number before payment initiation
+        const rawPhone = profile?.phoneNumber ? String(profile.phoneNumber).trim() : "";
+        const cleanPhone = rawPhone.replace(/\D/g, "");
+        if (!cleanPhone || cleanPhone.length < 10) {
+            showNotification("Please update your mobile number in your profile before making a payment.", "error");
+            return;
+        }
+
         setPayingBillId(bill.id);
         
         const originalAlert = window.alert;
@@ -150,82 +113,126 @@ function BillsPage() {
             const orderRes = await createPaymentOrder(bill.id);
             const orderData = orderRes.data;
 
-            if (key.includes("placeholder") || orderData.razorpayOrderId.includes("simulated")) {
-                setActiveRazorpayOrderId(orderData.razorpayOrderId);
-                setMockCheckoutOpen(true);
+            if (!orderData || !orderData.razorpayOrderId) {
+                showNotification(orderRes.message || "Failed to create Razorpay order. Please try again.", "error");
+                setPayingBillId(null);
                 return;
             }
 
+            // Build prefill dynamically without any hardcoded fake values
+            const prefill = {
+                name: profile?.fullName?.trim() || "Resident"
+            };
+
+            if (profile?.email && String(profile.email).trim()) {
+                prefill.email = String(profile.email).trim();
+            }
+
+            if (cleanPhone.length >= 10) {
+                prefill.contact = cleanPhone.slice(-10);
+            }
+
+            let isPaymentCompleted = false;
+
             const options = {
                 key: key,
-                amount: orderData.amount * 100, // paise
+                amount: Math.round((orderData.amount || bill.totalAmount) * 100), // paise
                 currency: orderData.currency || "INR",
-                name: "HydroSync",
+                name: "HydroSync Water Platform",
                 description: `Water Bill Payment - ${bill.billNumber || bill.id}`,
                 order_id: orderData.razorpayOrderId,
                 handler: async function (response) {
+                    console.log("HANDLER CALLBACK EXECUTED", response);
+                    console.log("SUCCESS HANDLER STARTED", response);
                     restoreAlert();
                     try {
                         setLoading(true);
+                        console.log("Calling /api/payments/verify");
                         const verifyRes = await verifyPaymentSignature({
                             razorpayOrderId: response.razorpay_order_id,
                             razorpayPaymentId: response.razorpay_payment_id,
                             razorpaySignature: response.razorpay_signature
                         });
-                        if (verifyRes.success) {
+                        console.log("verifyRes =", verifyRes);
+                        console.log("verifyRes.data =", verifyRes.data);
+                        if (verifyRes.success || verifyRes.data?.success) {
+                            isPaymentCompleted = true;
+                            console.log("1 - Notification shown");
                             showNotification("Payment Successful! Your payment has been completed successfully.", "success");
+                            
+                            console.log("2 - Success details set");
                             setSuccessPaymentDetails({
                                 billNumber: bill.billNumber || `BILL-${bill.id}`,
                                 amount: bill.totalAmount !== undefined && bill.totalAmount !== null ? bill.totalAmount : (bill.amount || 0),
                                 transactionId: response.razorpay_payment_id,
-                                paymentDate: new Date().toLocaleString(),
+                                paymentDate: new Date().toLocaleString("en-IN"),
                                 paymentMethod: "Razorpay",
-                                billId: bill.id
+                                billId: bill.id,
+                                householdId: profile?.flatNumber || profile?.householdId || "—",
+                                residentName: profile?.fullName || "Resident",
+                                billingCycle: bill.billingMonth && bill.billingYear
+                                    ? `${new Date(bill.billingYear, bill.billingMonth - 1).toLocaleString("default", { month: "short" })} ${bill.billingYear}`
+                                    : (bill.billingCycleName || "Current Cycle")
                             });
+
+                            console.log("3 - Success dialog opened");
                             setPaymentSuccessOpen(true);
+
+                            console.log("4 - Details dialog closed");
                             handleCloseDetails();
+
+                            console.log("5 - fetchBillsData called");
                             fetchBillsData();
+
+                            console.log("6 - fetchPaymentsData called");
                             fetchPaymentsData();
+
+                            console.log("7 - Success handler completed");
                         } else {
                             showNotification("Payment Verification Failed. Please contact support if money was deducted.", "error");
+                            setFailedBill(bill);
+                            setPaymentErrorOpen(true);
                         }
                     } catch (err) {
-                        showNotification("Payment Verification Failed. Please contact support if money was deducted.", "error");
+                        console.error("Handler Exception", err);
+                        showNotification(err?.response?.data?.message || "Payment Verification Failed.", "error");
+                        setFailedBill(bill);
+                        setPaymentErrorOpen(true);
                     } finally {
                         setLoading(false);
                         setPayingBillId(null);
                     }
                 },
-                prefill: {
-                    name: profile?.fullName || "",
-                    email: profile?.email || "",
-                    contact: profile?.phoneNumber || ""
-                },
+                prefill: prefill,
                 theme: {
-                    color: "#1976d2"
+                    color: "#0EA5E9"
                 },
                 modal: {
                     ondismiss: function () {
+                        console.log("MODAL.ONDISMISS CALLBACK EXECUTED");
                         restoreAlert();
-                        showNotification("Payment Cancelled. No amount was deducted.", "warning");
-                        setPayingBillId(null);
+                        if (!isPaymentCompleted) {
+                            showNotification("Payment Cancelled. No amount was deducted.", "warning");
+                            setPayingBillId(null);
+                        }
                     }
                 }
             };
 
-            // Intercept internal window.alerts from third-party scripts
-            window.alert = function (message) {
-                console.warn("Intercepted Razorpay alert:", message);
-                restoreAlert();
-                setPayingBillId(null);
-                setFailedBill(bill);
-                setPaymentErrorOpen(true);
-            };
-
             const rzp = new window.Razorpay(options);
             rzp.on("payment.failed", function (response) {
+                console.log("PAYMENT.FAILED CALLBACK EXECUTED", response);
+                if (isPaymentCompleted) {
+                    console.log("Ignoring payment.failed because payment was already completed successfully.");
+                    return;
+                }
                 restoreAlert();
-                console.error("Payment failed", response);
+                console.log("payment.failed", JSON.stringify(response, null, 2));
+                console.log("response.error:", response?.error);
+                console.log("response.error.code:", response?.error?.code);
+                console.log("response.error.description:", response?.error?.description);
+                console.log("response.error.reason:", response?.error?.reason);
+                console.log("response.error.metadata:", response?.error?.metadata);
                 setPayingBillId(null);
                 setFailedBill(bill);
                 setPaymentErrorOpen(true);
@@ -241,6 +248,8 @@ function BillsPage() {
     };
 
     const handleDownloadPdf = async (billId) => {
+        if (downloadingId) return; // prevent double-click
+        setDownloadingId(billId);
         try {
             const bill = bills.find(b => b.id === billId) || selectedBill;
             const response = await api.get(`/bills/${billId}/pdf`, { responseType: 'blob' });
@@ -248,31 +257,35 @@ function BillsPage() {
             if (response.data.type === 'application/json') {
                 const text = await response.data.text();
                 const errorObj = JSON.parse(text);
-                showNotification(errorObj.message || "Failed to download PDF.", "error");
+                showNotification(errorObj.message || "Unable to download the bill PDF. Please try again.", "error");
                 return;
             }
 
             const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
             const link = document.createElement('a');
             link.href = url;
-            
+
             const disposition = response.headers['content-disposition'];
-            let filename = bill?.billNumber ? `Bill-${bill.billNumber}.pdf` : `Bill-BILL-${billId}.pdf`;
+            let filename = bill?.billNumber ? `HydroSync-Bill-${bill.billNumber}.pdf` : `HydroSync-Bill-${billId}.pdf`;
             if (disposition && disposition.indexOf('attachment') !== -1) {
                 const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
                 const matches = filenameRegex.exec(disposition);
-                if (matches != null && matches[1]) { 
+                if (matches != null && matches[1]) {
                     filename = matches[1].replace(/['"]/g, '');
                 }
             }
             link.setAttribute('download', filename);
-            
             document.body.appendChild(link);
             link.click();
             link.remove();
+            window.URL.revokeObjectURL(url);
+
+            showNotification(`Bill downloaded successfully as ${filename}.`, "success");
         } catch (err) {
             console.error("PDF download failed", err);
-            showNotification("Failed to download bill PDF. Please try again.", "error");
+            showNotification("Unable to download the bill PDF. Please try again.", "error");
+        } finally {
+            setDownloadingId(null);
         }
     };
 
@@ -293,13 +306,9 @@ function BillsPage() {
             const prof = profRes.data;
             setProfile(prof);
             
-            if (prof && prof.id) {
-                const data = await getBillsByResidentId(prof.id);
-                setBills(data || []);
-                fetchPaymentsData();
-            } else {
-                setBills([]);
-            }
+            const data = await getMyBills();
+            setBills(data || []);
+            fetchPaymentsData();
         } catch (err) {
             setError(err?.response?.data?.message || err.message || "Failed to fetch bills");
         } finally {
@@ -390,75 +399,91 @@ function BillsPage() {
                 );
             }
         },
-        { 
-            field: "billStatus", 
-            headerName: "Bill Status", 
-            width: 140,
-            renderCell: (params) => {
-                const status = params.row.billStatus || "GENERATED";
-                return (
-                    <Chip 
-                        label={status} 
-                        color={status === "GENERATED" ? "primary" : "default"} 
-                        size="small"
-                    />
-                );
-            }
-        },
         {
             field: "actions",
-            headerName: "Action",
+            headerName: "Actions",
             width: 320,
             sortable: false,
             renderCell: (params) => {
                 const status = (params.row.paymentStatus || params.row.status || "UNPAID").toUpperCase();
                 const isPaid = status === "PAID";
                 const canPay = status === "UNPAID" || status === "PENDING";
-                
+                const isDownloading = downloadingId === params.row.id;
+
+                const btnStyle = {
+                    width: "90px",
+                    height: "32px",
+                    borderRadius: "4px",
+                    textTransform: "none",
+                    fontSize: "0.75rem",
+                    fontWeight: 500,
+                    padding: "4px 8px"
+                };
+
                 return (
-                    <Stack direction="row" spacing={1}>
-                        <Button 
-                            variant="contained" 
-                            size="small"
-                            color="info"
-                            onClick={() => handleOpenDetails(params.row)}
-                        >
-                            View Details
-                        </Button>
-                        <Button 
-                            variant="outlined" 
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Button
+                            variant="outlined"
                             size="small"
                             color="primary"
-                            onClick={() => handleDownloadPdf(params.row.id)}
+                            onClick={() => navigate(`/invoices/bill/${params.row.id}`)}
+                            sx={btnStyle}
                         >
-                            Download PDF
+                            Invoice
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            color="inherit"
+                            onClick={() => handleDownloadPdf(params.row.id)}
+                            disabled={isDownloading}
+                            sx={{ ...btnStyle, color: "text.secondary" }}
+                        >
+                            {isDownloading ? "…" : "PDF"}
                         </Button>
                         {canPay && (
-                            <Button 
-                                variant="contained" 
+                            <Button
+                                variant="contained"
                                 size="small"
                                 color="success"
                                 onClick={() => handleOpenPaymentSummary(params.row)}
                                 disabled={payingBillId === params.row.id}
+                                sx={btnStyle}
                             >
-                                {payingBillId === params.row.id ? "Processing..." : "Pay Now"}
+                                {payingBillId === params.row.id ? "…" : "Pay Now"}
                             </Button>
                         )}
                         {isPaid && (
-                            <Button 
-                                variant="contained" 
-                                size="small"
-                                color="success"
-                                disabled
+                            <Box
+                                sx={{
+                                    width: "90px",
+                                    height: "32px",
+                                    borderRadius: "4px",
+                                    border: "1px solid",
+                                    borderColor: "success.light",
+                                    color: "success.dark",
+                                    backgroundColor: "success.50",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 600,
+                                    letterSpacing: "0.02em",
+                                    pointerEvents: "none",
+                                    cursor: "default",
+                                    userSelect: "none",
+                                    opacity: 0.8,
+                                    flexShrink: 0,
+                                }}
                             >
-                                Paid
-                            </Button>
+                                ✓ Paid
+                            </Box>
                         )}
                     </Stack>
                 );
             }
         }
-    ], [bills, payingBillId]);
+    ], [bills, payingBillId, downloadingId]);
 
     const paymentColumns = useMemo(() => [
         { field: "id", headerName: "Payment ID", width: 100 },
@@ -494,6 +519,14 @@ function BillsPage() {
         }
     ], []);
 
+    const unpaidBillsCount = useMemo(() => bills.filter(b => (b.paymentStatus || b.status) !== "PAID").length, [bills]);
+    const paidBillsCount = useMemo(() => bills.filter(b => (b.paymentStatus || b.status) === "PAID").length, [bills]);
+    const totalOutstandingAmount = useMemo(() => {
+        return bills
+            .filter(b => (b.paymentStatus || b.status) !== "PAID")
+            .reduce((sum, b) => sum + (b.totalAmount != null ? b.totalAmount : b.amount || 0), 0);
+    }, [bills]);
+
     const memoizedToolbar = useMemo(() => (
         <TableToolbar 
             searchPlaceholder="Search bills..."
@@ -510,6 +543,42 @@ function BillsPage() {
                 subtitle="View and track your water usage bills and statements" 
             />
             
+            {/* KPI Summary Strip */}
+            <Grid container spacing={2.5} sx={{ mb: 3 }}>
+                <Grid item xs={12} sm={6} md={3}>
+                    <AdminStatCard
+                        title="Total Statements"
+                        value={bills.length}
+                        icon={<ReceiptIcon />}
+                        iconColor="primary.main"
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                    <AdminStatCard
+                        title="Unpaid Statements"
+                        value={unpaidBillsCount}
+                        icon={<PendingActionsIcon />}
+                        iconColor="warning.main"
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                    <AdminStatCard
+                        title="Paid Statements"
+                        value={paidBillsCount}
+                        icon={<CheckCircleIcon />}
+                        iconColor="success.main"
+                    />
+                </Grid>
+                <Grid item xs={12} sm={6} md={3}>
+                    <AdminStatCard
+                        title="Total Outstanding"
+                        value={formatCurrency(totalOutstandingAmount)}
+                        icon={<PaymentIcon />}
+                        iconColor="error.main"
+                    />
+                </Grid>
+            </Grid>
+
             <WidgetContainer>
                 {memoizedToolbar}
                 <Box sx={{ mt: 3, height: 500 }}>
@@ -601,41 +670,8 @@ function BillsPage() {
 
                             <Divider />
 
-                            {/* Pricing Summary */}
-                            <Typography variant="subtitle2" fontWeight="bold" color="primary">
-                                Charges Breakdown
-                            </Typography>
-                            <Stack spacing={1}>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2" color="text.secondary">Rate Per Unit:</Typography>
-                                    <Typography variant="body2">{formatCurrency(selectedBill.ratePerUnit || 0)}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2" color="text.secondary">Fixed Base Charge:</Typography>
-                                    <Typography variant="body2">{formatCurrency(selectedBill.fixedCharge || 0)}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2" color="text.secondary">Additional Charges:</Typography>
-                                    <Typography variant="body2">{formatCurrency(selectedBill.additionalCharge || 0)}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2" color="text.secondary">Subtotal:</Typography>
-                                    <Typography variant="body2">{formatCurrency(selectedBill.subtotal || selectedBill.amount || 0)}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="body2" color="text.secondary">Tax (5%):</Typography>
-                                    <Typography variant="body2">{formatCurrency(selectedBill.tax || 0)}</Typography>
-                                </Box>
-                                
-                                <Divider sx={{ my: 1 }} />
-                                
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography variant="subtitle1" fontWeight="bold">Total Amount Due:</Typography>
-                                    <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
-                                        {formatCurrency(selectedBill.totalAmount !== undefined && selectedBill.totalAmount !== null ? selectedBill.totalAmount : (selectedBill.amount || 0))}
-                                    </Typography>
-                                </Box>
-                            </Stack>
+                            {/* Detailed Bill Breakdown */}
+                            <BillBreakdownSection bill={selectedBill} defaultExpanded={true} />
 
                             {selectedBill.remarks && (
                                 <>
@@ -670,18 +706,18 @@ function BillsPage() {
                                     color="success"
                                     disabled={payingBillId === selectedBill.id}
                                 >
-                                    {payingBillId === selectedBill.id ? "Processing..." : "Pay Now"}
+                                    {payingBillId === selectedBill.id ? "Processing…" : "Pay Now"}
                                 </Button>
                             );
                         } else if (billStatus === "PAID") {
                             return (
-                                <Button 
-                                    variant="contained" 
+                                <Chip
+                                    label="✓ Paid"
                                     color="success"
-                                    disabled
-                                >
-                                    Paid
-                                </Button>
+                                    variant="outlined"
+                                    size="medium"
+                                    sx={{ fontWeight: 600, pointerEvents: "none", px: 1 }}
+                                />
                             );
                         }
                         return null;
@@ -704,15 +740,6 @@ function BillsPage() {
                         handlePayBill(summaryBill);
                     }
                 }}
-            />
-
-            <MockRazorpayCheckout 
-                open={mockCheckoutOpen}
-                onClose={handleMockPaymentCancel}
-                bill={summaryBill}
-                profile={profile}
-                onSuccess={(payId, method) => handleMockPaymentSuccess(payId, method)}
-                onFailure={handleMockPaymentFail}
             />
 
             <PaymentSuccessDialog

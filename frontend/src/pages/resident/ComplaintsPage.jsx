@@ -218,7 +218,7 @@ function ComplaintsPage() {
                         />
                         <Box sx={{ display: "flex", justifyContent: "flex-start", gap: 2 }}>
                             <Button type="submit" color="primary" variant="contained" disabled={submitting} startIcon={<AddIcon />}>
-                                {submitting ? "Submitting..." : "Submit Complaint"}
+                                {submitting ? "Submitting…" : "Submit Complaint"}
                             </Button>
                         </Box>
                     </Box>

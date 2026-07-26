@@ -3,7 +3,7 @@ import { STORAGE_KEYS } from "../constants/storageKeys";
 import { storageHelper } from "../helpers/storageHelper";
 
 const api = axios.create({
-    baseURL: import.meta.env.VITE_API_BASE_URL,
+    baseURL: import.meta.env.VITE_API_BASE_URL || "/api",
     headers: {
         "Content-Type": "application/json"
     }

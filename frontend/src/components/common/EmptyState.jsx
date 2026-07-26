@@ -1,21 +1,17 @@
 import React from "react";
 import { Box, Typography, Button } from "@mui/material";
-import InboxIcon from "@mui/icons-material/Inbox";
+import SearchOffIcon from "@mui/icons-material/SearchOff";
+import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
 
 /**
- * Reusable EmptyState component — shown when a list or data view has no records.
- *
- * @param {Object}           props
- * @param {string}           [props.title="No Data Found"]
- * @param {string}           [props.message]
- * @param {React.ReactNode}  [props.icon]   - Custom icon; defaults to InboxIcon
- * @param {React.ReactNode}  [props.action] - Optional CTA (usually a Button)
+ * Reusable EmptyState component.
  */
 const EmptyState = ({
     title = "No Data Found",
     message = "There is currently no data to display.",
     icon,
     action,
+    compact = false,
 }) => {
     return (
         <Box
@@ -24,37 +20,33 @@ const EmptyState = ({
                 flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
-                py: 7,
-                px: 4,
+                py: compact ? 4 : 6,
+                px: 3,
                 textAlign: "center",
-                bgcolor: "background.paper",
-                borderRadius: 2,
-                border: "1px dashed",
-                borderColor: "divider",
                 width: "100%",
             }}
         >
             {/* Icon */}
             <Box
                 sx={{
-                    mb: 2,
+                    mb: 1.75,
                     color: "text.disabled",
-                    "& .MuiSvgIcon-root": { fontSize: "3rem" },
-                    "& > svg": { fontSize: "3rem" },
+                    "& .MuiSvgIcon-root": { fontSize: compact ? "2.25rem" : "2.75rem" },
+                    "& > svg": { fontSize: compact ? "2.25rem" : "2.75rem" },
+                    opacity: 0.6,
                 }}
             >
-                {icon || <InboxIcon />}
+                {icon || <InboxOutlinedIcon />}
             </Box>
 
             {/* Title */}
             <Typography
-                variant="h6"
                 sx={{
                     fontWeight: 600,
-                    color: "text.primary",
-                    fontSize: "0.9375rem",
+                    color: "text.secondary",
+                    fontSize: compact ? "0.875rem" : "0.9375rem",
                     lineHeight: 1.4,
-                    mb: 0.75,
+                    mb: 0.5,
                 }}
             >
                 {title}
@@ -64,11 +56,11 @@ const EmptyState = ({
             <Typography
                 variant="body2"
                 sx={{
-                    color: "text.secondary",
-                    maxWidth: 360,
+                    color: "text.disabled",
+                    maxWidth: 320,
                     lineHeight: 1.6,
                     fontSize: "0.8125rem",
-                    ...(action && { mb: 3 }),
+                    ...(action && { mb: 2.5 }),
                 }}
             >
                 {message}

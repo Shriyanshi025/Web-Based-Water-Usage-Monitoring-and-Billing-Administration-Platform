@@ -102,4 +102,43 @@ public class WaterUsageController {
                 waterUsageService.getReadingsByBillingCycle(userDetails.getUsername(), billingCycleId)
         );
     }
+
+    @GetMapping("/reset-status")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<java.util.Map<String, Boolean>> getResetStatus(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        boolean allowed = waterUsageService.isResetAllowed(userDetails.getUsername());
+        return ResponseEntity.ok(java.util.Map.of("resetAllowed", allowed));
+    }
+
+    @PostMapping("/reset-meter")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse> resetMeterReading(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @Valid @RequestBody com.water.monitoring_and_billing_platform.dto.MeterResetRequest request) {
+        return ResponseEntity.ok(
+                waterUsageService.resetMeterReading(userDetails.getUsername(), request)
+        );
+    }
+
+    @PostMapping("/reset-all-meters")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse>> bulkResetMeterReadings(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails,
+            @RequestBody(required = false) com.water.monitoring_and_billing_platform.dto.BulkMeterResetRequest request) {
+        if (request == null) request = new com.water.monitoring_and_billing_platform.dto.BulkMeterResetRequest();
+        return ResponseEntity.ok(
+                waterUsageService.bulkResetMeterReadings(userDetails.getUsername(), request)
+        );
+    }
+
+    @GetMapping("/reset-logs")
+    @PreAuthorize("hasRole('COMMUNITY_ADMIN')")
+    public ResponseEntity<List<com.water.monitoring_and_billing_platform.dto.MeterResetLogResponse>> getResetLogs(
+            @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        return ResponseEntity.ok(
+                waterUsageService.getResetLogs(userDetails.getUsername())
+        );
+    }
 }
+

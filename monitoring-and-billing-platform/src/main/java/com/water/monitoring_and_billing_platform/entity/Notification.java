@@ -24,6 +24,8 @@ public class Notification {
     @Column(nullable = false)
     private String channel; // "EMAIL"
 
+    private String emailType;
+
     @Column(nullable = false)
     private String subject;
 

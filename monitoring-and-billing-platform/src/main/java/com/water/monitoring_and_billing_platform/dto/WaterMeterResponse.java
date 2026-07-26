@@ -17,6 +17,8 @@ public class WaterMeterResponse {
 
     private String officialUserId;
 
+    private Long residentProfileId;
+
     private String residentName;
 
     private Double initialReading;

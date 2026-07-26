@@ -19,4 +19,5 @@ public class UserMeResponse {
     private String approvalStatus;
     private boolean active;
     private LocalDateTime lastLogin;
+    private Long communityId;
 }

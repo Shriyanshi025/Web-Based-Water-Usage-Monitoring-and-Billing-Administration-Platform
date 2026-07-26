@@ -22,17 +22,16 @@ public class CommunityAdminController {
 
     @PostMapping
     @PreAuthorize("hasRole('MAIN_ADMIN')")
-    public ResponseEntity<ApiResponse<CommunityAdminResponse>> create(
-            @Valid @RequestBody CommunityAdminRequest request) {
+    public ResponseEntity<ApiResponse<CommunityAdminProfileResponse>> create(
+            @Valid @RequestBody CommunityAdminRegistrationRequest request) {
 
         return ResponseEntity.ok(
-                ApiResponse.<CommunityAdminResponse>builder()
+                ApiResponse.<CommunityAdminProfileResponse>builder()
                         .success(true)
                         .message("Community Admin created successfully.")
                         .data(service.createAdmin(request))
                         .build()
         );
-
     }
 
     @GetMapping("/{id}")

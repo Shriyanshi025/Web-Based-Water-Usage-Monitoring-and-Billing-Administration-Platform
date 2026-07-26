@@ -10,5 +10,6 @@ public interface InvoiceService {
     Page<InvoiceResponse> listInvoices(String email, Pageable pageable);
     InvoiceResponse getInvoiceById(String email, Long id);
     InvoiceResponse getInvoiceByInvoiceNumber(String email, String invoiceNumber);
+    InvoiceResponse getInvoiceByBillId(String email, Long billId);
     byte[] generateInvoicePdf(String email, Long id);
 }

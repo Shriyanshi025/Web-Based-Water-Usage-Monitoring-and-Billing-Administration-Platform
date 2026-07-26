@@ -10,10 +10,10 @@ import org.springframework.context.annotation.Profile;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.water.monitoring_and_billing_platform.enums.MeterStatus;
 
 @Component
-@Profile("dev")
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
 
@@ -26,9 +26,43 @@ public class DatabaseSeeder implements CommandLineRunner {
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final BlockRepository blockRepository;
     private final UnitRepository unitRepository;
+    private final TariffPlanRepository tariffPlanRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) throws Exception {
+        // Seed missing slabs for any existing tariff plans
+        List<TariffPlan> existingPlans = tariffPlanRepository.findAll();
+        for (TariffPlan plan : existingPlans) {
+            if (plan.getSlabs() == null || plan.getSlabs().isEmpty()) {
+                System.out.println("Seeding missing tariff slabs for plan: " + plan.getName() + " (ID: " + plan.getId() + ")");
+                List<TariffSlab> slabs = new java.util.ArrayList<>();
+                slabs.add(TariffSlab.builder().tariffPlan(plan).minUnits(0.0).maxUnits(10.0).ratePerUnit(java.math.BigDecimal.valueOf(5.00)).build());
+                slabs.add(TariffSlab.builder().tariffPlan(plan).minUnits(10.0).maxUnits(20.0).ratePerUnit(java.math.BigDecimal.valueOf(8.00)).build());
+                slabs.add(TariffSlab.builder().tariffPlan(plan).minUnits(20.0).maxUnits(null).ratePerUnit(java.math.BigDecimal.valueOf(12.00)).build());
+                plan.setSlabs(slabs);
+                tariffPlanRepository.save(plan);
+            }
+        }
+
+        int updatedResidentCount = 0;
+        List<User> allUsers = userRepository.findAll();
+        for (User u : allUsers) {
+            if (u.getRole() == com.water.monitoring_and_billing_platform.enums.Role.USER) {
+                u.setPassword(passwordEncoder.encode("user12345"));
+                userRepository.save(u);
+                updatedResidentCount++;
+            } else if (u.getRole() == com.water.monitoring_and_billing_platform.enums.Role.COMMUNITY_ADMIN) {
+                u.setPassword(passwordEncoder.encode("admin12345"));
+                userRepository.save(u);
+            } else if ("admin@gmail.com".equalsIgnoreCase(u.getEmail())) {
+                u.setPassword(passwordEncoder.encode("admin12345"));
+                userRepository.save(u);
+                System.out.println("Admin Password Updated for admin@gmail.com to admin12345.");
+            }
+        }
+        System.out.println("Resident Passwords Updated: " + updatedResidentCount + " users updated to user12345.");
+
         if (activityLogRepository.count() == 0) {
             System.out.println("Seeding Activity Logs...");
             
@@ -180,7 +214,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Pending Resident
                 User pendingResidentUser = User.builder()
                         .email("pending.resident@test.com")
-                        .password("password")
+                        .password(passwordEncoder.encode("user12345"))
                         .fullName("Pending Resident")
                         .role(com.water.monitoring_and_billing_platform.enums.Role.USER)
                         .approvalStatus(com.water.monitoring_and_billing_platform.enums.ApprovalStatus.PENDING)

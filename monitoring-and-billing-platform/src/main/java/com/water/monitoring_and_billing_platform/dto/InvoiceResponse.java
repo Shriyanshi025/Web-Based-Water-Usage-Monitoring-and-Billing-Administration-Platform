@@ -31,4 +31,5 @@ public class InvoiceResponse {
     private String paymentStatus;
     private LocalDate generatedDate;
     private LocalDate dueDate;
+    private String slabBreakdown;
 }

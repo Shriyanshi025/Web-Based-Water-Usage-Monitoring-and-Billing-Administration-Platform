@@ -25,6 +25,13 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
             AlertStatus status
     );
 
+    boolean existsByCommunityIdAndBillingCycleIdAndAlertTypeAndStatus(
+            Long communityId,
+            Long billingCycleId,
+            AlertType alertType,
+            AlertStatus status
+    );
+
     boolean existsByResidentIdAndAlertTypeAndStatus(
             Long residentId,
             AlertType alertType,
@@ -58,4 +65,6 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
     List<Alert> findByRecipientIdOrResidentIdOrderByCreatedDateDesc(Long recipientId, Long residentId);
 
     List<Alert> findByRecipientIdOrCommunityIdOrderByCreatedDateDesc(Long recipientId, Long communityId);
+
+    void deleteByCommunityId(Long communityId);
 }

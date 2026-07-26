@@ -174,7 +174,10 @@ function ComplaintsPage() {
             width: 150,
             sortable: false,
             renderCell: (params) => (
-                <Button variant="contained" size="small" color="primary" onClick={() => handleOpenEdit(params.row)}>
+                <Button variant="outlined" size="small" color="primary"
+                    onClick={() => handleOpenEdit(params.row)}
+                    sx={{ fontSize: "0.75rem", height: 28, minWidth: 72, boxShadow: "none" }}
+                >
                     Manage
                 </Button>
             )
@@ -188,11 +191,12 @@ function ComplaintsPage() {
                 subtitle="Review, search, filter, assign, and update community complaints."
             />
 
-            <WidgetContainer>
+            <WidgetContainer bodyPadding={0}>
                 <TableToolbar
                     title="All Complaints"
+                    count={complaints.length}
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap">
                             <SearchBar
                                 value={search}
                                 onChange={setSearch}
@@ -200,46 +204,49 @@ function ComplaintsPage() {
                                 placeholder="Search complaints..."
                                 sx={{ width: 220 }}
                             />
-                            <FormControl size="small" sx={{ minWidth: 130 }}>
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
                                 <InputLabel>Status</InputLabel>
                                 <Select
                                     value={statusFilter}
                                     label="Status"
                                     onChange={(e) => setStatusFilter(e.target.value)}
+                                    sx={{ fontSize: "0.8125rem" }}
                                 >
                                     {STATUSES.map(s => (
-                                        <MenuItem key={s} value={s}>{s}</MenuItem>
+                                        <MenuItem key={s} value={s} sx={{ fontSize: "0.8125rem" }}>{s}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
-                            <FormControl size="small" sx={{ minWidth: 130 }}>
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
                                 <InputLabel>Priority</InputLabel>
                                 <Select
                                     value={priorityFilter}
                                     label="Priority"
                                     onChange={(e) => setPriorityFilter(e.target.value)}
+                                    sx={{ fontSize: "0.8125rem" }}
                                 >
                                     {PRIORITIES.map(p => (
-                                        <MenuItem key={p} value={p}>{p}</MenuItem>
+                                        <MenuItem key={p} value={p} sx={{ fontSize: "0.8125rem" }}>{p}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
-                            <FormControl size="small" sx={{ minWidth: 130 }}>
+                            <FormControl size="small" sx={{ minWidth: 120 }}>
                                 <InputLabel>Category</InputLabel>
                                 <Select
                                     value={categoryFilter}
                                     label="Category"
                                     onChange={(e) => setCategoryFilter(e.target.value)}
+                                    sx={{ fontSize: "0.8125rem" }}
                                 >
                                     {CATEGORIES.map(c => (
-                                        <MenuItem key={c} value={c}>{c}</MenuItem>
+                                        <MenuItem key={c} value={c} sx={{ fontSize: "0.8125rem" }}>{c}</MenuItem>
                                     ))}
                                 </Select>
                             </FormControl>
                         </Stack>
                     }
                 />
-                <Box sx={{ mt: 3, height: 500 }}>
+                <Box sx={{ height: 560 }}>
                     <DataGrid
                         rows={complaints}
                         columns={columns}
@@ -331,7 +338,7 @@ function ComplaintsPage() {
                 <DialogActions sx={{ p: 2 }}>
                     <Button onClick={handleCloseEdit} color="secondary" variant="outlined">Cancel</Button>
                     <Button type="submit" form="manage-complaint-form" color="primary" variant="contained" disabled={submitting}>
-                        {submitting ? "Updating..." : "Update Complaint"}
+                        {submitting ? "Updating…" : "Update Complaint"}
                     </Button>
                 </DialogActions>
             </Dialog>

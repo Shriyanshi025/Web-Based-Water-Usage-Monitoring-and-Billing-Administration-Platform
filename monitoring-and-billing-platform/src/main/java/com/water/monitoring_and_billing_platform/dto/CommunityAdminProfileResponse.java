@@ -18,6 +18,7 @@ public class CommunityAdminProfileResponse {
     private String email;
     private String phoneNumber;
     private String officeAddress;
+    private Long communityId;
     private String communityName;
     private boolean verified;
     private boolean active;

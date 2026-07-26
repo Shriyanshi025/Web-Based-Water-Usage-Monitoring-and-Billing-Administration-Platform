@@ -45,13 +45,32 @@ public class AlertController {
                 .build());
     }
 
+    @GetMapping("/community/me")
+    @PreAuthorize("hasAnyRole('COMMUNITY_ADMIN', 'MAIN_ADMIN')")
+    public ResponseEntity<ApiResponse<List<AlertResponse>>> getMyCommunityAlerts(
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        List<AlertResponse> alerts = alertService.getCommunityAlerts(userDetails.getUsername(), null);
+        return ResponseEntity.ok(ApiResponse.<List<AlertResponse>>builder()
+                .success(true)
+                .message("Community alerts retrieved successfully")
+                .data(alerts)
+                .build());
+    }
+
     @GetMapping("/community/{communityId}")
     @PreAuthorize("hasAnyRole('COMMUNITY_ADMIN', 'MAIN_ADMIN')")
     public ResponseEntity<ApiResponse<List<AlertResponse>>> getCommunityAlerts(
             @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long communityId
+            @PathVariable String communityId
     ) {
-        List<AlertResponse> alerts = alertService.getCommunityAlerts(userDetails.getUsername(), communityId);
+        Long id = null;
+        if (communityId != null && !"me".equalsIgnoreCase(communityId)) {
+            try {
+                id = Long.parseLong(communityId);
+            } catch (NumberFormatException ignored) {}
+        }
+        List<AlertResponse> alerts = alertService.getCommunityAlerts(userDetails.getUsername(), id);
         return ResponseEntity.ok(ApiResponse.<List<AlertResponse>>builder()
                 .success(true)
                 .message("Community alerts retrieved successfully")
@@ -74,6 +93,7 @@ public class AlertController {
     }
 
     @PostMapping("/{id}/read")
+    @PutMapping("/{id}/read")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AlertResponse>> markAsRead(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -87,7 +107,23 @@ public class AlertController {
                 .build());
     }
 
+    @PostMapping("/{id}/acknowledge")
+    @PutMapping("/{id}/acknowledge")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<AlertResponse>> acknowledgeAlert(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        AlertResponse alert = alertService.acknowledgeAlert(userDetails.getUsername(), id);
+        return ResponseEntity.ok(ApiResponse.<AlertResponse>builder()
+                .success(true)
+                .message("Alert acknowledged successfully")
+                .data(alert)
+                .build());
+    }
+
     @PostMapping("/{id}/resolve")
+    @PutMapping("/{id}/resolve")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<AlertResponse>> resolveAlert(
             @AuthenticationPrincipal UserDetails userDetails,
@@ -98,6 +134,45 @@ public class AlertController {
                 .success(true)
                 .message("Alert marked as resolved")
                 .data(alert)
+                .build());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> deleteAlert(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long id
+    ) {
+        alertService.deleteAlert(userDetails.getUsername(), id);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Alert deleted successfully")
+                .build());
+    }
+
+    @PostMapping("/bulk-read")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> bulkMarkAsRead(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody List<Long> ids
+    ) {
+        alertService.bulkMarkAsRead(userDetails.getUsername(), ids);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Selected alerts marked as read")
+                .build());
+    }
+
+    @PostMapping("/bulk-delete")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<ApiResponse<Void>> bulkDelete(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody List<Long> ids
+    ) {
+        alertService.bulkDelete(userDetails.getUsername(), ids);
+        return ResponseEntity.ok(ApiResponse.<Void>builder()
+                .success(true)
+                .message("Selected alerts deleted successfully")
                 .build());
     }
 

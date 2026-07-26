@@ -37,7 +37,8 @@ public class BillGenerationService {
         }
 
         double unitsConsumed = billCalculationService.calculateUnitsConsumed(currentReading, previousReading);
-        BigDecimal billAmount = billCalculationService.calculateBillAmount(unitsConsumed, plan.getRatePerUnit());
+        BigDecimal billAmount = billCalculationService.calculateBillAmount(unitsConsumed, plan);
+        String slabBreakdown = billCalculationService.calculateSlabBreakdownJson(unitsConsumed, plan);
         
         BigDecimal fixed = plan.getFixedCharge() != null ? plan.getFixedCharge() : BigDecimal.ZERO;
         BigDecimal additional = additionalCharge != null ? additionalCharge : BigDecimal.ZERO;
@@ -58,6 +59,9 @@ public class BillGenerationService {
                 .waterMeter(meter)
                 .billingCycle(cycle)
                 .tariffPlan(plan)
+                .tariffPlanName(plan.getName())
+                .tariffPlanDescription(plan.getDescription())
+                .taxRate(plan.getTaxRate() != null ? plan.getTaxRate() : taxRate)
                 .billingMonth(month)
                 .billingYear(year)
                 .previousReading(previousReading)
@@ -70,6 +74,8 @@ public class BillGenerationService {
                 .tax(tax)
                 .amount(totalAmount)
                 .totalAmount(totalAmount)
+                .sharedWaterCost(BigDecimal.ZERO) // Initialized to zero, updated during service flow
+                .slabBreakdown(slabBreakdown)
                 .billDate(today)
                 .generatedDate(today)
                 .dueDate(today.plusDays(15))

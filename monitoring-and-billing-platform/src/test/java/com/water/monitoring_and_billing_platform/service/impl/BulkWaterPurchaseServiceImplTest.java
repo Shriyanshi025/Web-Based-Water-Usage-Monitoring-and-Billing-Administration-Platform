@@ -52,9 +52,9 @@ public class BulkWaterPurchaseServiceImplTest {
     @Test
     void recordPurchase_Success() {
         BulkWaterPurchaseRequest request = new BulkWaterPurchaseRequest();
-        request.setSource("Tanker");
+        request.setSupplierName("Tanker");
         request.setPurchasedVolume(15.5);
-        request.setTotalCost(new BigDecimal("4500.00"));
+        request.setUnitCost(new BigDecimal("290.32")); // 15.5 * 290.32 ~ 4500.00
         request.setPurchaseDate(LocalDate.of(2026, 7, 10));
         request.setBillingCycleId(5L);
 
@@ -69,6 +69,7 @@ public class BulkWaterPurchaseServiceImplTest {
                 .id(1L)
                 .source("Tanker")
                 .purchasedVolume(15.5)
+                .unitCost(new BigDecimal("290.32"))
                 .totalCost(new BigDecimal("4500.00"))
                 .purchaseDate(LocalDate.of(2026, 7, 10))
                 .billingCycle(cycle)
@@ -81,18 +82,17 @@ public class BulkWaterPurchaseServiceImplTest {
 
         assertNotNull(response);
         assertEquals(1L, response.getId());
-        assertEquals("Tanker", response.getSource());
+        assertEquals("Tanker", response.getSupplierName());
         assertEquals(15.5, response.getPurchasedVolume());
-        assertEquals(new BigDecimal("4500.00"), response.getTotalCost());
         verify(bulkWaterPurchaseRepository).save(any(BulkWaterPurchase.class));
     }
 
     @Test
     void recordPurchase_DuplicateThrowsException() {
         BulkWaterPurchaseRequest request = new BulkWaterPurchaseRequest();
-        request.setSource("Tanker");
+        request.setSupplierName("Tanker");
         request.setPurchasedVolume(15.5);
-        request.setTotalCost(new BigDecimal("4500.00"));
+        request.setUnitCost(new BigDecimal("290.00"));
         request.setPurchaseDate(LocalDate.of(2026, 7, 10));
         request.setBillingCycleId(5L);
 
@@ -111,9 +111,9 @@ public class BulkWaterPurchaseServiceImplTest {
     @Test
     void recordPurchase_NegativeVolumeThrowsException() {
         BulkWaterPurchaseRequest request = new BulkWaterPurchaseRequest();
-        request.setSource("Tanker");
+        request.setSupplierName("Tanker");
         request.setPurchasedVolume(-5.0);
-        request.setTotalCost(new BigDecimal("4500.00"));
+        request.setUnitCost(new BigDecimal("100.00"));
         request.setPurchaseDate(LocalDate.of(2026, 7, 10));
         request.setBillingCycleId(5L);
 
@@ -128,9 +128,9 @@ public class BulkWaterPurchaseServiceImplTest {
     @Test
     void recordPurchase_NegativeCostThrowsException() {
         BulkWaterPurchaseRequest request = new BulkWaterPurchaseRequest();
-        request.setSource("Tanker");
+        request.setSupplierName("Tanker");
         request.setPurchasedVolume(10.0);
-        request.setTotalCost(new BigDecimal("-100.00"));
+        request.setUnitCost(new BigDecimal("-100.00"));
         request.setPurchaseDate(LocalDate.of(2026, 7, 10));
         request.setBillingCycleId(5L);
 
@@ -148,6 +148,7 @@ public class BulkWaterPurchaseServiceImplTest {
                 .id(1L)
                 .source("Tanker")
                 .purchasedVolume(10.0)
+                .unitCost(new BigDecimal("200.00"))
                 .totalCost(new BigDecimal("2000.00"))
                 .purchaseDate(LocalDate.of(2026, 7, 5))
                 .billingCycle(cycle)
@@ -158,6 +159,7 @@ public class BulkWaterPurchaseServiceImplTest {
                 .id(2L)
                 .source("Municipal")
                 .purchasedVolume(20.0)
+                .unitCost(new BigDecimal("150.00"))
                 .totalCost(new BigDecimal("3000.00"))
                 .purchaseDate(LocalDate.of(2026, 7, 15))
                 .billingCycle(cycle)

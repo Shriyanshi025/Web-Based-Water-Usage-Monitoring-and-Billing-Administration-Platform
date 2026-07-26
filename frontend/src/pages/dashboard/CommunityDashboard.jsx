@@ -15,10 +15,10 @@ import DataGrid from "../../components/common/DataGrid";
 
 // Widget components
 import StatCard from "../../components/widgets/StatCard";
+import AdminStatCard from "../../components/common/AdminStatCard";
 import ChartCard from "../../components/widgets/ChartCard";
 import TimelineWidget from "../../components/widgets/TimelineWidget";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
-import QuickActionCard from "../../components/widgets/QuickActionCard";
 
 // Icons — KPIs
 import PeopleIcon from "@mui/icons-material/People";
@@ -27,19 +27,21 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import ReceiptIcon from "@mui/icons-material/Receipt";
+import ApartmentIcon from "@mui/icons-material/Apartment";
 
 // Icons — UI
 import RefreshIcon from "@mui/icons-material/Refresh";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
+import SensorsIcon from "@mui/icons-material/Sensors";
 
 // Config and Services
-import { QUICK_ACTIONS_CONFIG, DATAGRID_COLUMNS } from "../../constants/dashboardConfig";
+import { DATAGRID_COLUMNS } from "../../constants/dashboardConfig";
 import { getCommunityAdminDashboard } from "../../services/DashboardService";
 import { formatCurrency, formatWaterUsage } from "../../helpers/numberHelper";
 import { useAuth } from "../../context/AuthContext";
 
-// ─── Status Summary Bar ───────────────────────────────────────────────────────
+// ─── Status Summary Banner (Redesigned for Premium Professional Alignment) ───
 const StatusSummaryBar = ({ dashboard, loading }) => {
     const theme = useTheme();
 
@@ -54,106 +56,164 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
     return (
         <Box
             sx={{
+                mb: 3.5,
+                p: { xs: 1.75, sm: 2 },
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: alpha(theme.palette.primary.main, 0.12),
+                boxShadow: "0 2px 12px rgba(12, 25, 41, 0.04)",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "space-between",
                 flexWrap: "wrap",
-                gap: 1.5,
-                mb: 3,
-                px: 2,
-                py: 1.25,
-                bgcolor: "background.paper",
-                borderRadius: 2,
-                border: "1px solid",
-                borderColor: "divider",
-                boxShadow: "0 1px 3px rgba(12,25,41,0.06)",
+                gap: 2
             }}
         >
-            {/* System status indicator */}
-            <Stack direction="row" alignItems="center" spacing={0.75}>
-                <Box
-                    sx={{
-                        width: 7,
-                        height: 7,
-                        borderRadius: "50%",
-                        bgcolor: loading ? "warning.main" : "success.main",
-                        boxShadow: loading
-                            ? `0 0 0 3px ${alpha(theme.palette.warning.main, 0.18)}`
-                            : `0 0 0 3px ${alpha(theme.palette.success.main, 0.18)}`,
-                    }}
-                />
-                <Typography
-                    sx={{ fontSize: "0.75rem", fontWeight: 600, color: loading ? "warning.main" : "success.main" }}
-                >
-                    {loading ? "Loading" : "System Operational"}
-                </Typography>
-            </Stack>
-
-            <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />
-
-            {/* Meter utilization */}
-            {!loading && dashboard && (
-                <Stack direction="row" alignItems="center" spacing={0.75}>
-                    <SpeedIcon sx={{ fontSize: "0.875rem", color: "text.secondary" }} />
-                    <Typography sx={{ fontSize: "0.75rem", color: "text.secondary", fontWeight: 500 }}>
-                        Meter Utilization:{" "}
-                        <Typography component="span" sx={{ fontWeight: 700, color: "text.primary", fontSize: "0.75rem" }}>
-                            {meterUtilization}%
-                        </Typography>
-                    </Typography>
-                </Stack>
-            )}
-
-            {!loading && dashboard && <Divider orientation="vertical" flexItem sx={{ mx: 0.5 }} />}
-
-            {/* Pending approvals alert */}
-            {!loading && dashboard && (
-                <Stack direction="row" alignItems="center" spacing={0.75}>
-                    <PendingActionsIcon
-                        sx={{ fontSize: "0.875rem", color: pendingUrgent ? "warning.main" : "text.secondary" }}
-                    />
-                    <Typography
+            {/* Left Metrics Cluster */}
+            <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 3 }} flexWrap="wrap" sx={{ gap: 1.5 }}>
+                {/* 1. System Operational Live Pulse */}
+                <Stack direction="row" alignItems="center" spacing={1.25}>
+                    <Box
                         sx={{
-                            fontSize: "0.75rem",
-                            color: pendingUrgent ? "warning.main" : "text.secondary",
-                            fontWeight: 500,
+                            width: 32,
+                            height: 32,
+                            borderRadius: 2,
+                            bgcolor: loading
+                                ? alpha(theme.palette.warning.main, 0.1)
+                                : alpha(theme.palette.success.main, 0.1),
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            color: loading ? "warning.main" : "success.main"
                         }}
                     >
-                        {pendingCount > 0 ? (
-                            <>
-                                <Typography
-                                    component="span"
-                                    sx={{
-                                        fontWeight: 700,
-                                        color: pendingUrgent ? "warning.main" : "text.primary",
-                                        fontSize: "0.75rem",
-                                    }}
-                                >
-                                    {pendingCount}
-                                </Typography>{" "}
-                                pending approval{pendingCount !== 1 ? "s" : ""}
-                            </>
-                        ) : (
-                            "All approvals cleared"
-                        )}
-                    </Typography>
+                        <SensorsIcon sx={{ fontSize: "1.1rem" }} />
+                    </Box>
+
+                    <Stack direction="row" alignItems="center" spacing={0.75}>
+                        <Box
+                            sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: "50%",
+                                bgcolor: loading ? "warning.main" : "success.main",
+                                boxShadow: loading
+                                    ? `0 0 0 3px ${alpha(theme.palette.warning.main, 0.2)}`
+                                    : `0 0 0 3px ${alpha(theme.palette.success.main, 0.2)}`,
+                            }}
+                        />
+                        <Typography
+                            sx={{
+                                fontSize: "0.8125rem",
+                                fontWeight: 700,
+                                color: loading ? "warning.main" : "success.main",
+                                letterSpacing: "-0.1px"
+                            }}
+                        >
+                            {loading ? "Syncing..." : "System Operational"}
+                        </Typography>
+                    </Stack>
                 </Stack>
-            )}
 
-            {/* Push community name to right */}
-            <Box sx={{ flexGrow: 1 }} />
+                <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: "center", display: { xs: "none", sm: "block" } }} />
 
+                {/* 2. Smart Meter Utilization Metric */}
+                {!loading && dashboard && (
+                    <Stack direction="row" alignItems="center" spacing={1.25}>
+                        <Box
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 2,
+                                bgcolor: alpha(theme.palette.info.main, 0.1),
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: "info.main"
+                            }}
+                        >
+                            <SpeedIcon sx={{ fontSize: "1.1rem" }} />
+                        </Box>
+
+                        <Typography sx={{ fontSize: "0.8125rem", color: "text.secondary", fontWeight: 500 }}>
+                            Meter Utilization:{" "}
+                            <Typography component="span" sx={{ fontWeight: 800, color: "text.primary", fontSize: "0.85rem" }}>
+                                {meterUtilization}%
+                            </Typography>
+                        </Typography>
+                    </Stack>
+                )}
+
+                {!loading && dashboard && (
+                    <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: "center", display: { xs: "none", md: "block" } }} />
+                )}
+
+                {/* 3. Pending Approvals Status */}
+                {!loading && dashboard && (
+                    <Stack direction="row" alignItems="center" spacing={1.25}>
+                        <Box
+                            sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 2,
+                                bgcolor: pendingUrgent
+                                    ? alpha(theme.palette.warning.main, 0.12)
+                                    : alpha(theme.palette.primary.main, 0.08),
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                color: pendingUrgent ? "warning.main" : "primary.main"
+                            }}
+                        >
+                            <PendingActionsIcon sx={{ fontSize: "1.1rem" }} />
+                        </Box>
+
+                        <Typography
+                            sx={{
+                                fontSize: "0.8125rem",
+                                color: pendingUrgent ? "warning.main" : "text.secondary",
+                                fontWeight: 500,
+                            }}
+                        >
+                            {pendingCount > 0 ? (
+                                <>
+                                    <Typography
+                                        component="span"
+                                        sx={{
+                                            fontWeight: 800,
+                                            color: pendingUrgent ? "warning.main" : "text.primary",
+                                            fontSize: "0.85rem",
+                                        }}
+                                    >
+                                        {pendingCount}
+                                    </Typography>{" "}
+                                    pending approval{pendingCount !== 1 ? "s" : ""}
+                                </>
+                            ) : (
+                                "All approvals cleared"
+                            )}
+                        </Typography>
+                    </Stack>
+                )}
+            </Stack>
+
+            {/* Right Side: Community Name Badge */}
             {!loading && dashboard?.communityName && (
                 <Chip
+                    icon={<ApartmentIcon sx={{ fontSize: "15px !important", color: `${theme.palette.primary.main} !important` }} />}
                     label={dashboard.communityName}
-                    size="small"
+                    size="medium"
                     sx={{
-                        height: 22,
-                        fontSize: "0.6875rem",
-                        fontWeight: 600,
+                        height: 32,
+                        fontSize: "0.8125rem",
+                        fontWeight: 700,
                         bgcolor: alpha(theme.palette.primary.main, 0.08),
                         color: "primary.main",
                         border: "1px solid",
-                        borderColor: alpha(theme.palette.primary.main, 0.18),
+                        borderColor: alpha(theme.palette.primary.main, 0.2),
+                        borderRadius: "8px",
+                        px: 0.5,
                         "& .MuiChip-label": { px: 1 },
                     }}
                 />
@@ -161,9 +221,6 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
         </Box>
     );
 };
-
-// ─── KPI Card row skeleton ─────────────────────────────────────────────────────
-const KPI_SKELETON_COUNT = 6;
 
 // ─── Main Dashboard Component ─────────────────────────────────────────────────
 function CommunityDashboard() {
@@ -210,24 +267,6 @@ function CommunityDashboard() {
 
     const pendingCount = dashboard?.pendingResidents || 0;
 
-    // ── Quick Actions ─────────────────────────────────────────────────────────
-    const quickActions = useMemo(
-        () =>
-            QUICK_ACTIONS_CONFIG.COMMUNITY_ADMIN.filter((a) => !a.hidden).map((action) => (
-                <QuickActionCard
-                    key={action.id}
-                    title={action.title}
-                    description={action.description}
-                    icon={action.icon}
-                    color={action.color}
-                    comingSoon={action.comingSoon}
-                    disabled={action.disabled}
-                    onClick={() => navigate(action.path)}
-                />
-            )),
-        [navigate]
-    );
-
     // ── Pending approvals rows ─────────────────────────────────────────────────
     const pendingRows = useMemo(
         () =>
@@ -261,7 +300,7 @@ function CommunityDashboard() {
         <DashboardLayout>
             <Box sx={{ pb: 4 }}>
 
-                {/* ── 1. Page Header ─────────────────────────────────────────── */}
+                {/* ── 1. Page Header with Standardized Action Buttons ────────── */}
                 <PageHeader
                     title={`Welcome back, ${user?.firstName || "Administrator"}`}
                     subtitle={todayLabel}
@@ -269,16 +308,18 @@ function CommunityDashboard() {
                         <Stack direction="row" spacing={1.5} alignItems="center">
                             {pendingCount > 0 && (
                                 <Button
-                                    size="small"
+                                    size="medium"
                                     variant="outlined"
                                     color="warning"
-                                    startIcon={<HowToRegIcon />}
+                                    startIcon={<HowToRegIcon sx={{ fontSize: "1.1rem" }} />}
                                     onClick={() => navigate("/community-admin/approvals")}
                                     sx={{
+                                        height: 38,
+                                        px: 2,
                                         borderRadius: "8px",
                                         textTransform: "none",
                                         fontWeight: 600,
-                                        fontSize: "0.8125rem",
+                                        fontSize: "0.85rem",
                                     }}
                                 >
                                     {pendingCount} Pending Approval{pendingCount !== 1 ? "s" : ""}
@@ -287,10 +328,10 @@ function CommunityDashboard() {
                             <ActionButton
                                 variant="outlined"
                                 color="primary"
-                                startIcon={<RefreshIcon />}
+                                startIcon={<RefreshIcon sx={{ fontSize: "1.1rem" }} />}
                                 onClick={loadDashboard}
                                 disabled={loading}
-                                sx={{ fontSize: "0.8125rem" }}
+                                sx={{ height: 38, px: 2, fontSize: "0.85rem" }}
                             >
                                 Refresh
                             </ActionButton>
@@ -298,82 +339,74 @@ function CommunityDashboard() {
                     }
                 />
 
-                {/* ── 2. Status Summary Bar ──────────────────────────────────── */}
+                {/* ── 2. Redesigned Status Summary Banner ──────────────────────── */}
                 <StatusSummaryBar dashboard={dashboard} loading={loading} />
 
-                {/* ── 3. Primary KPIs ────────────────────────────────────────── */}
+                {/* ── 3. Primary KPIs (Standardized Equal Height Grid Cards) ─── */}
                 <Box sx={{ mb: 4 }}>
                     <SectionHeader title="Community Overview" />
-                    <Grid container spacing={2.5}>
+                    <Grid container spacing={2.5} alignItems="stretch">
                         {/* Row 1: Resident Health */}
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Total Residents"
                                 value={loading ? 0 : (dashboard?.totalResidents || 0)}
                                 icon={<PeopleIcon />}
-                                color="info.main"
-                                loading={loading}
+                                color="info"
                                 onClick={() => navigate("/community-admin/residents")}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Pending Approvals"
                                 value={loading ? 0 : pendingCount}
                                 icon={<PendingActionsIcon />}
-                                color="warning.main"
-                                loading={loading}
+                                color="warning"
                                 onClick={() => navigate("/community-admin/approvals")}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Revenue Collected"
-                                value={loading ? 0 : (dashboard?.totalRevenue || 0)}
-                                formatValue={(v) => formatCurrency(v)}
+                                value={loading ? "₹0" : formatCurrency(dashboard?.totalRevenue || 0)}
                                 icon={<ReceiptIcon />}
-                                color="success.main"
-                                loading={loading}
+                                color="success"
                                 onClick={() => navigate("/community-admin/bills")}
                             />
                         </Grid>
 
                         {/* Row 2: Infrastructure + Usage */}
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Total Water Meters"
                                 value={loading ? 0 : (dashboard?.totalWaterMeters || 0)}
                                 icon={<SpeedIcon />}
-                                color="primary.main"
-                                loading={loading}
+                                color="primary"
                                 onClick={() => navigate("/community-admin/meters")}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Active Meters"
                                 value={loading ? 0 : (dashboard?.activeWaterMeters || 0)}
                                 icon={<CheckCircleIcon />}
-                                color="success.main"
-                                loading={loading}
+                                color="success"
                                 onClick={() => navigate("/community-admin/meters")}
                             />
                         </Grid>
                         <Grid item xs={12} sm={6} lg={4}>
-                            <StatCard
+                            <AdminStatCard
                                 title="Total Water Consumption"
-                                value={loading ? 0 : (dashboard?.totalWaterConsumption || 0)}
-                                formatValue={(v) => formatWaterUsage(v)}
+                                value={loading ? "0 kL" : formatWaterUsage(dashboard?.totalWaterConsumption || 0)}
                                 icon={<WaterDropIcon />}
-                                color="info.main"
-                                loading={loading}
+                                color="info"
                                 onClick={() => navigate("/community-admin/usage")}
                             />
                         </Grid>
                     </Grid>
                 </Box>
 
-                {/* ── 4. Water Usage Overview + Recent Activity ──────────────── */}
+                {/* ── 4. Water Usage Overview + Charts (Equal Ratios) ─────────── */}
                 <Box sx={{ mb: 4 }}>
                     <SectionHeader
                         title="Water Usage Overview"
@@ -382,15 +415,22 @@ function CommunityDashboard() {
                                 size="small"
                                 variant="text"
                                 color="primary"
-                                endIcon={<OpenInNewIcon sx={{ fontSize: "0.875rem" }} />}
-                                onClick={() => navigate("/admin/water-usage")}
-                                sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem" }}
+                                endIcon={<OpenInNewIcon sx={{ fontSize: "0.9rem" }} />}
+                                onClick={() => navigate("/community-admin/usage")}
+                                sx={{
+                                    height: 34,
+                                    px: 1.75,
+                                    borderRadius: "8px",
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    fontSize: "0.8125rem"
+                                }}
                             >
                                 Full Report
                             </Button>
                         }
                     />
-                    <Grid container spacing={2.5}>
+                    <Grid container spacing={2.5} alignItems="stretch">
                         {/* Monthly Water Usage — bar chart — wider */}
                         <Grid item xs={12} lg={8}>
                             <ChartCard
@@ -399,7 +439,7 @@ function CommunityDashboard() {
                                 type="bar"
                                 color={theme.palette.primary.main}
                                 unit="L"
-                                height={260}
+                                height={280}
                                 loading={loading}
                                 empty={!loading && !(dashboard?.monthlyWaterUsage?.length > 0)}
                                 onRefresh={loadDashboard}
@@ -422,7 +462,7 @@ function CommunityDashboard() {
                 </Box>
 
                 {/* ── 5. Operational Panels: Approvals + Activity ────────────── */}
-                <Box sx={{ mb: 4 }}>
+                <Box>
                     <SectionHeader
                         title="Community Operations"
                         action={
@@ -430,15 +470,22 @@ function CommunityDashboard() {
                                 size="small"
                                 variant="text"
                                 color="primary"
-                                endIcon={<OpenInNewIcon sx={{ fontSize: "0.875rem" }} />}
-                                onClick={() => navigate("/admin/approvals")}
-                                sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.75rem" }}
+                                endIcon={<OpenInNewIcon sx={{ fontSize: "0.9rem" }} />}
+                                onClick={() => navigate("/community-admin/approvals")}
+                                sx={{
+                                    height: 34,
+                                    px: 1.75,
+                                    borderRadius: "8px",
+                                    textTransform: "none",
+                                    fontWeight: 600,
+                                    fontSize: "0.8125rem"
+                                }}
                             >
                                 All Approvals
                             </Button>
                         }
                     />
-                    <Grid container spacing={2.5} alignItems="flex-start">
+                    <Grid container spacing={2.5} alignItems="stretch">
                         {/* Pending Approvals Table — wider */}
                         <Grid item xs={12} lg={7}>
                             <WidgetContainer
@@ -453,15 +500,17 @@ function CommunityDashboard() {
                                             size="small"
                                             color="warning"
                                             sx={{
-                                                height: 20,
-                                                fontSize: "0.6875rem",
+                                                height: 22,
+                                                fontSize: "0.75rem",
                                                 fontWeight: 700,
-                                                "& .MuiChip-label": { px: 0.75 },
+                                                borderRadius: "6px",
+                                                "& .MuiChip-label": { px: 1 },
                                             }}
                                         />
                                     ) : null
                                 }
-                                sx={{ minHeight: 280 }}
+                                sx={{ minHeight: 320, height: "100%" }}
+                                bodyPadding={0}
                             >
                                 <DataGrid
                                     rows={pendingRows}
@@ -481,18 +530,6 @@ function CommunityDashboard() {
                                 maxHeight={320}
                             />
                         </Grid>
-                    </Grid>
-                </Box>
-
-                {/* ── 6. Quick Actions ───────────────────────────────────────── */}
-                <Box>
-                    <SectionHeader title="Quick Actions" />
-                    <Grid container spacing={2.5}>
-                        {quickActions.map((card, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={3} key={`action-${index}`}>
-                                {card}
-                            </Grid>
-                        ))}
                     </Grid>
                 </Box>
 

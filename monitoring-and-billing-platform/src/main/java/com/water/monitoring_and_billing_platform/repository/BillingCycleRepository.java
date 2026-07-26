@@ -14,4 +14,7 @@ public interface BillingCycleRepository extends JpaRepository<BillingCycle, Long
     List<BillingCycle> findByActiveTrue();
     boolean existsByPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(LocalDate end, LocalDate start);
     boolean existsByIdNotAndPeriodStartLessThanEqualAndPeriodEndGreaterThanEqual(Long id, LocalDate end, LocalDate start);
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE BillingCycle b SET b.active = :active, b.status = :status WHERE b.id = :id")
+    void updateStatusAndActive(@org.springframework.data.repository.query.Param("id") Long id, @org.springframework.data.repository.query.Param("active") boolean active, @org.springframework.data.repository.query.Param("status") com.water.monitoring_and_billing_platform.enums.BillingCycleStatus status);
 }

@@ -11,16 +11,18 @@ import java.time.LocalDate;
 @Data
 public class BulkWaterPurchaseRequest {
 
-    @NotBlank(message = "Source is required.")
-    private String source;
+    @NotBlank(message = "Supplier name is required.")
+    private String supplierName;
 
     @NotNull(message = "Purchased volume is required.")
     @Positive(message = "Purchased volume must be positive.")
     private Double purchasedVolume;
 
-    @NotNull(message = "Total cost is required.")
-    @Positive(message = "Total cost must be positive.")
-    private BigDecimal totalCost;
+    @NotNull(message = "Unit cost is required.")
+    @Positive(message = "Unit cost must be positive.")
+    private BigDecimal unitCost;
+
+    private String notes;
 
     @NotNull(message = "Purchase date is required.")
     private LocalDate purchaseDate;

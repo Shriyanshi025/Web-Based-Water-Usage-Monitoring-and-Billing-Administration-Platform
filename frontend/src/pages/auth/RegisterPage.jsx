@@ -191,7 +191,7 @@ export default function RegisterPage() {
                     <Box sx={{ flex: 1 }} />
                     {activeStep === STEPS.length - 1 ? (
                         <Button variant="contained" onClick={onSubmit} disabled={isSubmitting}>
-                            {isSubmitting ? "Submitting..." : "Complete Registration"}
+                            {isSubmitting ? "Submitting…" : "Complete Registration"}
                         </Button>
                     ) : (
                         <Button variant="contained" onClick={handleNext}>

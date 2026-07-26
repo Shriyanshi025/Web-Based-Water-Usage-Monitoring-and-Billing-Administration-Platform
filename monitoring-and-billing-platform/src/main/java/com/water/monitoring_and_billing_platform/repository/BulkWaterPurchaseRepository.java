@@ -20,4 +20,14 @@ public interface BulkWaterPurchaseRepository extends JpaRepository<BulkWaterPurc
             String source,
             LocalDate purchaseDate
     );
+    List<BulkWaterPurchase> findByCommunityId(Long communityId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(b) > 0 FROM BulkWaterPurchase b WHERE b.community.id = :communityId AND b.billingCycle.id = :billingCycleId AND LOWER(b.source) = LOWER(:source) AND b.purchaseDate = :purchaseDate AND b.id != :id")
+    boolean existsDuplicateForUpdate(
+            @org.springframework.data.repository.query.Param("communityId") Long communityId,
+            @org.springframework.data.repository.query.Param("billingCycleId") Long billingCycleId,
+            @org.springframework.data.repository.query.Param("source") String source,
+            @org.springframework.data.repository.query.Param("purchaseDate") LocalDate purchaseDate,
+            @org.springframework.data.repository.query.Param("id") Long id
+    );
 }

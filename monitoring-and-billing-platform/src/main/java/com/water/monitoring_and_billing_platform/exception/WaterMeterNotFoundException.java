@@ -6,4 +6,7 @@ public class WaterMeterNotFoundException extends RuntimeException {
         super("Water Meter not found.");
     }
 
+    public WaterMeterNotFoundException(String message) {
+        super(message);
+    }
 }

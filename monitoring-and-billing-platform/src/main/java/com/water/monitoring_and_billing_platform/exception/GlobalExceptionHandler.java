@@ -106,10 +106,10 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleIllegalStateException(IllegalStateException ex) {
         Map<String, Object> response = new HashMap<>();
         response.put("success", false);
-        response.put("status", HttpStatus.FORBIDDEN.value());
+        response.put("status", HttpStatus.BAD_REQUEST.value());
         response.put("message", ex.getMessage());
         response.put("timestamp", LocalDateTime.now());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)

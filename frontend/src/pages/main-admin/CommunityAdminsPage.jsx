@@ -11,12 +11,14 @@ import {
     DialogActions,
     Button,
     TextField,
-    Grid
+    Grid,
+    MenuItem
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AddIcon from "@mui/icons-material/Add";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
@@ -28,6 +30,7 @@ import MainAdminOpsService from "../../services/MainAdminOpsService";
 
 const CommunityAdminsPage = () => {
     const [admins, setAdmins] = useState([]);
+    const [communities, setCommunities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
@@ -36,7 +39,7 @@ const CommunityAdminsPage = () => {
     const [dialogOpen, setDialogOpen] = useState(false);
     const [selectedAdmin, setSelectedAdmin] = useState(null);
     const [formData, setFormData] = useState({
-        fullName: "", phoneNumber: "", officeAddress: ""
+        fullName: "", email: "", password: "", phoneNumber: "", communityId: "", officeAddress: ""
     });
     
     // Confirm Dialog state
@@ -46,8 +49,12 @@ const CommunityAdminsPage = () => {
         try {
             setLoading(true);
             setError(null);
-            const response = await MainAdminOpsService.getAllCommunityAdmins();
-            setAdmins(response.data || []);
+            const [adminRes, commRes] = await Promise.all([
+                MainAdminOpsService.getAllCommunityAdmins(),
+                MainAdminOpsService.getAllCommunities()
+            ]);
+            setAdmins(adminRes.data || []);
+            setCommunities(commRes.data || []);
         } catch (err) {
             setError(err.message || "Failed to fetch community admins");
         } finally {
@@ -73,11 +80,22 @@ const CommunityAdminsPage = () => {
         );
     }, [admins, searchQuery]);
 
-    const handleOpenDialog = (admin) => {
+    const handleOpenCreateDialog = () => {
+        setSelectedAdmin(null);
+        setFormData({
+            fullName: "", email: "", password: "", phoneNumber: "", communityId: "", officeAddress: ""
+        });
+        setDialogOpen(true);
+    };
+
+    const handleOpenEditDialog = (admin) => {
         setSelectedAdmin(admin);
         setFormData({
             fullName: admin.fullName || "",
+            email: admin.email || "",
+            password: "",
             phoneNumber: admin.phoneNumber || "",
+            communityId: "",
             officeAddress: admin.officeAddress || ""
         });
         setDialogOpen(true);
@@ -95,7 +113,20 @@ const CommunityAdminsPage = () => {
     const handleSave = async () => {
         try {
             if (selectedAdmin) {
-                await MainAdminOpsService.updateCommunityAdmin(selectedAdmin.id, formData);
+                await MainAdminOpsService.updateCommunityAdmin(selectedAdmin.id, {
+                    fullName: formData.fullName,
+                    phoneNumber: formData.phoneNumber,
+                    officeAddress: formData.officeAddress
+                });
+            } else {
+                await MainAdminOpsService.createCommunityAdmin({
+                    fullName: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                    phoneNumber: formData.phoneNumber,
+                    communityId: formData.communityId,
+                    officeAddress: formData.officeAddress
+                });
             }
             handleCloseDialog();
             fetchAdmins();
@@ -105,12 +136,7 @@ const CommunityAdminsPage = () => {
     };
 
     const handleToggleStatus = (admin) => {
-        // Assume 'verified' is the status for admins since there's no explicit 'active' field in response,
-        // Wait, the status update request takes { active: boolean }. But the response might only have 'verified'.
-        // If there's an 'active' field in CommunityAdminProfileResponse, use it. But in AdminServiceImpl it sets 'active' in CommunityAdminProfile.
-        // Let's assume we can't fully toggle if 'active' isn't in response, but let's toggle 'active' based on some logic. 
-        // We will just send 'true' or 'false'.
-        const isActive = admin.active !== false; // default to true if undefined
+        const isActive = admin.active !== false;
         const newStatus = !isActive;
         
         setConfirmConfig({
@@ -172,7 +198,7 @@ const CommunityAdminsPage = () => {
             headerName: "Status", 
             width: 150,
             renderCell: (params) => (
-                <StatusBadge status={params.row.verified ? "VERIFIED" : "PENDING"} />
+                <StatusBadge status={params.row.active !== false ? "ACTIVE" : "INACTIVE"} />
             )
         },
         { 
@@ -184,7 +210,7 @@ const CommunityAdminsPage = () => {
             renderCell: (params) => (
                 <Stack direction="row" spacing={1} justifyContent="center">
                     <Tooltip title="Edit" arrow>
-                        <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); handleOpenDialog(params.row); }}>
+                        <IconButton size="small" color="primary" onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(params.row); }}>
                             <EditIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
@@ -214,6 +240,17 @@ const CommunityAdminsPage = () => {
                 <TableToolbar 
                     title="All Community Admins" 
                     onSearch={handleSearch}
+                    actions={
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<AddIcon />}
+                            onClick={handleOpenCreateDialog}
+                            sx={{ textTransform: "none", fontWeight: 600 }}
+                        >
+                            New Community Admin
+                        </Button>
+                    }
                 />
                 
                 <Box sx={{ height: 500 }}>
@@ -228,16 +265,35 @@ const CommunityAdminsPage = () => {
                 </Box>
             </Box>
 
-            {/* Edit Dialog */}
+            {/* Create/Edit Dialog */}
             <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>Edit Community Admin</DialogTitle>
+                <DialogTitle>{selectedAdmin ? "Edit Community Admin" : "Add New Community Admin"}</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
                         <Grid item xs={12}>
-                            <TextField fullWidth label="Full Name" name="fullName" value={formData.fullName} onChange={handleFormChange} />
+                            <TextField fullWidth label="Full Name" name="fullName" value={formData.fullName} onChange={handleFormChange} required />
                         </Grid>
+                        {!selectedAdmin && (
+                            <>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField fullWidth label="Email" name="email" type="email" value={formData.email} onChange={handleFormChange} required />
+                                </Grid>
+                                <Grid item xs={12} sm={6}>
+                                    <TextField fullWidth label="Password" name="password" type="password" value={formData.password} onChange={handleFormChange} required />
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <TextField fullWidth select label="Assign Community" name="communityId" value={formData.communityId} onChange={handleFormChange} required>
+                                        {communities.map((c) => (
+                                            <MenuItem key={c.id} value={c.id}>
+                                                {c.communityName} ({c.communityCode})
+                                            </MenuItem>
+                                        ))}
+                                    </TextField>
+                                </Grid>
+                            </>
+                        )}
                         <Grid item xs={12} sm={6}>
-                            <TextField fullWidth label="Phone Number" name="phoneNumber" value={formData.phoneNumber} onChange={handleFormChange} />
+                            <TextField fullWidth label="Phone Number" name="phoneNumber" value={formData.phoneNumber} onChange={handleFormChange} required />
                         </Grid>
                         <Grid item xs={12} sm={6}>
                             <TextField fullWidth label="Office Address" name="officeAddress" value={formData.officeAddress} onChange={handleFormChange} />

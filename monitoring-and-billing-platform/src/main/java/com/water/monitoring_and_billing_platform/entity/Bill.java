@@ -32,6 +32,15 @@ public class Bill {
     @JoinColumn(name = "tariff_plan_id", nullable = false)
     private TariffPlan tariffPlan;
 
+    @Column(name = "tariff_plan_name", length = 100)
+    private String tariffPlanName;
+
+    @Column(name = "tariff_plan_description", columnDefinition = "TEXT")
+    private String tariffPlanDescription;
+
+    @Column(precision = 5, scale = 4)
+    private BigDecimal taxRate;
+
     @Column(nullable = false)
     private Double unitsConsumed;
 
@@ -90,6 +99,9 @@ public class Bill {
 
     private String paymentStatus;
     private String billStatus;
+
+    @Column(columnDefinition = "TEXT")
+    private String slabBreakdown;
 
     @Column(length = 500)
     private String remarks;

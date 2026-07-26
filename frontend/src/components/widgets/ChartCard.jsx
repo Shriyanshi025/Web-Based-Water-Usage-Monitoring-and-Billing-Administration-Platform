@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Box, Typography, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import {
@@ -91,7 +91,7 @@ const ChartCard = ({
     xAxisKey = "name",
     color,
     unit = "",
-    height = 280,
+    height = 300,
     outerRadius = "78%",
     loading,
     error,
@@ -100,6 +100,7 @@ const ChartCard = ({
     const theme = useTheme();
     const chartColor = color || theme.palette.primary.main;
     const empty = data.length === 0;
+    const gradientId = useMemo(() => `areaGradient-${Math.random().toString(36).substring(2, 9)}`, []);
 
     // Shared axis/grid styles
     const tickStyle = { fill: theme.palette.text.secondary, fontSize: 11 };
@@ -107,7 +108,7 @@ const ChartCard = ({
 
     const commonProps = {
         data,
-        margin: { top: 8, right: 8, left: -16, bottom: 0 },
+        margin: { top: 8, right: 8, left: -8, bottom: 0 },
     };
 
     const tooltipProps = {
@@ -120,7 +121,7 @@ const ChartCard = ({
             return (
                 <AreaChart {...commonProps}>
                     <defs>
-                        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+                        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor={chartColor} stopOpacity={0.12} />
                             <stop offset="95%" stopColor={chartColor} stopOpacity={0} />
                         </linearGradient>
@@ -149,20 +150,21 @@ const ChartCard = ({
                     />
                     <Tooltip {...tooltipProps} cursor={{ stroke: gridStroke, strokeWidth: 1, strokeDasharray: "4 4" }} />
                     <Area
-                        type="monotone"
-                        dataKey={dataKey}
-                        stroke={chartColor}
-                        strokeWidth={2.5}
-                        fill="url(#areaGradient)"
-                        dot={{ r: 3, fill: chartColor, strokeWidth: 0 }}
-                        activeDot={{
-                            r: 5,
-                            fill: chartColor,
-                            stroke: theme.palette.background.paper,
-                            strokeWidth: 2,
-                        }}
-                        isAnimationActive={false}
-                    />
+                         type="monotone"
+                         dataKey={dataKey}
+                         stroke={chartColor}
+                         strokeWidth={2.5}
+                         fill={`url(#${gradientId})`}
+                         dot={{ r: 3, fill: chartColor, strokeWidth: 0 }}
+                         activeDot={{
+                             r: 5,
+                             fill: chartColor,
+                             stroke: theme.palette.background.paper,
+                             strokeWidth: 2,
+                         }}
+                         isAnimationActive={true}
+                         animationDuration={800}
+                     />
                 </AreaChart>
             );
         }
@@ -199,7 +201,8 @@ const ChartCard = ({
                         fill={chartColor}
                         radius={[4, 4, 0, 0]}
                         barSize={28}
-                        isAnimationActive={false}
+                        isAnimationActive={true}
+                        animationDuration={800}
                     />
                 </BarChart>
             );
@@ -241,7 +244,8 @@ const ChartCard = ({
                         innerRadius={isDoughnut ? "58%" : 0}
                         outerRadius={outerRadius}
                         paddingAngle={isDoughnut ? 3 : 0}
-                        isAnimationActive={false}
+                        isAnimationActive={true}
+                        animationDuration={800}
                     >
                         {data.map((entry, index) => (
                             <Cell
@@ -265,7 +269,7 @@ const ChartCard = ({
             empty={empty}
             {...rest}
         >
-            <Box sx={{ width: "100%", height, pt: 1 }}>
+            <Box sx={{ width: "100%", height, pt: 0.5 }}>
                 <ResponsiveContainer width="100%" height="100%">
                     {renderChart()}
                 </ResponsiveContainer>

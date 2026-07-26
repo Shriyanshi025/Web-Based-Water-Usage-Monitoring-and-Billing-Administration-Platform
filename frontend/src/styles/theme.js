@@ -546,8 +546,6 @@ const theme = createTheme({
                     "& .MuiDataGrid-columnHeaders": {
                         backgroundColor: "#F0F4F8", // matches background.default
                         borderBottom:    `1px solid ${COLORS.neutral[200]}`,
-                        minHeight:       "48px !important",
-                        maxHeight:       "48px !important",
                     },
                     "& .MuiDataGrid-columnHeader": {
                         padding: "0 16px",

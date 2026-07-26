@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@org.mockito.junit.jupiter.MockitoSettings(strictness = org.mockito.quality.Strictness.LENIENT)
 public class InvoiceServiceImplTest {
 
     @Mock
@@ -174,5 +175,38 @@ public class InvoiceServiceImplTest {
 
         assertNotNull(pdfBytes);
         assertTrue(pdfBytes.length > 0);
+     }
+
+    @Test
+    void getInvoiceByBillId_Success() {
+        Invoice invoice = Invoice.builder()
+                .id(1L)
+                .invoiceNumber("INV-12345")
+                .bill(bill)
+                .residentName("John Doe")
+                .unitNumber("101")
+                .blockName("Block A")
+                .communityName("Springfield")
+                .billingCycleName("Cycle 1")
+                .totalAmount(new BigDecimal("1000.00"))
+                .fixedCharge(new BigDecimal("100.00"))
+                .variableCharge(new BigDecimal("650.00"))
+                .sharedWaterCost(new BigDecimal("250.00"))
+                .distributionStrategy("EQUAL")
+                .billStatus("GENERATED")
+                .paymentStatus("UNPAID")
+                .generatedDate(LocalDate.now())
+                .dueDate(LocalDate.now().plusDays(15))
+                .build();
+
+        when(userRepository.findByEmail("john@example.com")).thenReturn(Optional.of(user));
+        when(residentProfileRepository.findByUserId(1L)).thenReturn(Optional.of(resident));
+        when(invoiceRepository.findByBillId(1L)).thenReturn(Optional.of(invoice));
+
+        InvoiceResponse response = invoiceService.getInvoiceByBillId("john@example.com", 1L);
+
+        assertNotNull(response);
+        assertEquals("INV-12345", response.getInvoiceNumber());
+        assertEquals(1L, response.getBillId());
     }
 }

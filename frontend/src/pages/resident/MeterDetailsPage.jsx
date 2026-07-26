@@ -1,102 +1,243 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import PageHeader from "../../components/common/PageHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import ErrorState from "../../components/common/ErrorState";
-import LoadingScreen from "../../components/common/LoadingScreen";
-import { Grid, Typography, Stack, Box, Chip } from "@mui/material";
-import { CHART_CONFIG } from "../../constants/dashboardConfig";
+import EmptyState from "../../components/common/EmptyState";
+import SkeletonCard from "../../components/common/SkeletonCard";
+import {
+    Grid,
+    Typography,
+    Stack,
+    Box,
+    Chip,
+    Divider,
+} from "@mui/material";
+import SpeedIcon from "@mui/icons-material/Speed";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import BoltIcon from "@mui/icons-material/Bolt";
+import HistoryIcon from "@mui/icons-material/History";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { getMyMeterDetails, getMyUsageHistory } from "../../services/ResidentOpsService";
 
+// ── Info row for meter spec card ─────────────────────────────────────────────
+const InfoRow = ({ label, value, chip }) => (
+    <Box
+        sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 1.5,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            "&:last-child": { borderBottom: "none" },
+        }}
+    >
+        <Typography variant="body2" color="text.secondary" fontWeight={500}>
+            {label}
+        </Typography>
+        {chip || (
+            <Typography variant="body2" fontWeight={600} color="text.primary">
+                {value ?? "—"}
+            </Typography>
+        )}
+    </Box>
+);
+
 function MeterDetailsPage() {
-    const [meter, setMeter] = useState(null);
+    const [meter, setMeter]     = useState(null);
     const [readings, setReadings] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError]     = useState(null);
 
     const loadData = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            setLoading(true);
             const [meterRes, usageRes] = await Promise.all([
                 getMyMeterDetails(),
-                getMyUsageHistory()
+                getMyUsageHistory(),
             ]);
             setMeter(meterRes);
             setReadings(usageRes || []);
         } catch (err) {
-            setError(err?.response?.data?.message || "Failed to load meter details");
+            setError(err?.response?.data?.message || "Failed to load meter details. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        loadData();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <LoadingScreen />
-            </DashboardLayout>
-        );
-    }
-
-    if (error && !meter) {
-        return (
-            <DashboardLayout>
-                <ErrorState message={error} onRetry={loadData} />
-            </DashboardLayout>
-        );
-    }
+    const isActive = meter?.meterStatus === "ACTIVE";
 
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="Meter Details" 
-                subtitle="View your water meter status and technical specifications" 
+            <PageHeader
+                title="Water Meter"
+                subtitle="View your meter specifications, current reading, and recent consumption history."
+                action={
+                    !loading && meter?.meterStatus ? (
+                        <Chip
+                            icon={
+                                isActive
+                                    ? <CheckCircleIcon sx={{ fontSize: "0.875rem !important" }} />
+                                    : <WarningAmberIcon sx={{ fontSize: "0.875rem !important" }} />
+                            }
+                            label={meter.meterStatus}
+                            size="small"
+                            color={isActive ? "success" : "warning"}
+                            variant="filled"
+                            sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+                        />
+                    ) : undefined
+                }
             />
-            
-            <Grid container spacing={3} justifyContent="center" direction="column" alignItems="center">
-                <Grid item xs={12} md={10} lg={8} sx={{ width: '100%', maxWidth: '800px !important' }}>
-                    <WidgetContainer title="Meter Specifications">
-                        {meter ? (
-                            <Stack spacing={2} sx={{ p: 2, minHeight: '250px' }}>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography color="textSecondary">Meter Number:</Typography>
-                                    <Typography fontWeight="bold">{meter.meterNumber}</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography color="textSecondary">Current Reading:</Typography>
-                                    <Typography fontWeight="bold">{meter.currentReading} units</Typography>
-                                </Box>
-                                <Box display="flex" justifyContent="space-between">
-                                    <Typography color="textSecondary">Status:</Typography>
-                                    <Chip 
-                                        label={meter.meterStatus} 
-                                        color={meter.meterStatus === 'ACTIVE' ? 'success' : 'error'} 
-                                        size="small" 
+
+            <Grid container spacing={3}>
+                {/* ── Left column: Meter Specs ── */}
+                <Grid item xs={12} md={5}>
+                    {loading ? (
+                        <Box sx={{ height: 300 }}><SkeletonCard /></Box>
+                    ) : error && !meter ? (
+                        <ErrorState message={error} onRetry={loadData} />
+                    ) : !meter ? (
+                        <WidgetContainer title="Meter Specifications">
+                            <EmptyState
+                                title="No Meter Assigned"
+                                message="Your account does not have a water meter assigned yet. Contact your community admin."
+                                icon={<SpeedIcon />}
+                            />
+                        </WidgetContainer>
+                    ) : (
+                        <WidgetContainer title="Meter Specifications">
+                            <Stack spacing={0}>
+                                <InfoRow label="Meter Number" value={meter.meterNumber} />
+                                <InfoRow
+                                    label="Status"
+                                    chip={
+                                        <Chip
+                                            label={meter.meterStatus}
+                                            color={isActive ? "success" : "warning"}
+                                            size="small"
+                                            variant="filled"
+                                        />
+                                    }
+                                />
+                                <InfoRow
+                                    label="Current Reading"
+                                    value={meter.currentReading != null ? `${meter.currentReading} units` : "—"}
+                                />
+                                {meter.installationDate && (
+                                    <InfoRow
+                                        label="Installation Date"
+                                        value={new Date(meter.installationDate).toLocaleDateString("en-IN", {
+                                            day: "numeric",
+                                            month: "long",
+                                            year: "numeric",
+                                        })}
                                     />
-                                </Box>
+                                )}
+                                {meter.lastReadingDate && (
+                                    <InfoRow
+                                        label="Last Reading"
+                                        value={new Date(meter.lastReadingDate).toLocaleDateString("en-IN")}
+                                    />
+                                )}
+                                {meter.meterBrand && (
+                                    <InfoRow label="Brand / Model" value={`${meter.meterBrand}${meter.meterModel ? ` · ${meter.meterModel}` : ""}`} />
+                                )}
+                                {meter.location && (
+                                    <InfoRow label="Location" value={meter.location} />
+                                )}
                             </Stack>
-                        ) : (
-                            <Typography>No meter assigned.</Typography>
-                        )}
-                    </WidgetContainer>
+                        </WidgetContainer>
+                    )}
                 </Grid>
-                <Grid item xs={12} md={10} lg={8} sx={{ width: '100%', maxWidth: '800px !important' }}>
-                    <WidgetContainer title="Recent Readings">
-                        <Stack spacing={2} sx={{ p: 2, flex: 1, overflowY: 'auto', minHeight: '250px' }}>
-                            {readings.length > 0 ? readings.slice(0, 5).map(r => (
-                                <Box key={r.id} sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
-                                    <Typography variant="body2" color="textSecondary">{r.readingDate}</Typography>
-                                    <Typography variant="body1">Consumed: {r.unitsConsumed} units</Typography>
-                                </Box>
-                            )) : (
-                                <Typography>No recent readings to display.</Typography>
+
+                {/* ── Right column: Recent Readings ── */}
+                <Grid item xs={12} md={7}>
+                    {loading ? (
+                        <Box sx={{ height: 300 }}><SkeletonCard /></Box>
+                    ) : (
+                        <WidgetContainer title="Recent Consumption Readings">
+                            {readings.length === 0 ? (
+                                <EmptyState
+                                    title="No Readings Yet"
+                                    message="Consumption readings will appear here once your meter has been read."
+                                    icon={<HistoryIcon />}
+                                />
+                            ) : (
+                                <Stack spacing={0}>
+                                    {readings.slice(0, 6).map((r, idx) => (
+                                        <Box
+                                            key={r.id ?? idx}
+                                            sx={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: 2,
+                                                py: 2,
+                                                px: 1,
+                                                borderBottom: "1px solid",
+                                                borderColor: "divider",
+                                                "&:last-child": { borderBottom: "none" },
+                                                "&:hover": { bgcolor: "action.hover" },
+                                                borderRadius: 1,
+                                                transition: "background-color 120ms ease",
+                                            }}
+                                        >
+                                            {/* Icon */}
+                                            <Box
+                                                sx={{
+                                                    width: 36,
+                                                    height: 36,
+                                                    borderRadius: "8px",
+                                                    bgcolor: "primary.50",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    flexShrink: 0,
+                                                }}
+                                            >
+                                                <WaterDropIcon sx={{ fontSize: "1rem", color: "primary.main" }} />
+                                            </Box>
+
+                                            {/* Date */}
+                                            <Box sx={{ flex: 1, minWidth: 0 }}>
+                                                <Stack direction="row" alignItems="center" spacing={0.5} mb={0.25}>
+                                                    <CalendarTodayIcon sx={{ fontSize: "0.75rem", color: "text.disabled" }} />
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {r.readingDate
+                                                            ? new Date(r.readingDate).toLocaleDateString("en-IN", {
+                                                                  day: "numeric",
+                                                                  month: "short",
+                                                                  year: "numeric",
+                                                              })
+                                                            : "—"}
+                                                    </Typography>
+                                                </Stack>
+                                                <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem" }}>
+                                                    {r.previousReading != null ? `${r.previousReading} → ${r.currentReading}` : `Reading: ${r.currentReading}`}
+                                                </Typography>
+                                            </Box>
+
+                                            {/* Consumption */}
+                                            <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                                    <BoltIcon sx={{ fontSize: "0.85rem", color: "warning.main" }} />
+                                                    <Typography variant="body2" fontWeight={700} color="primary.main">
+                                                        {r.unitsConsumed} units
+                                                    </Typography>
+                                                </Stack>
+                                            </Box>
+                                        </Box>
+                                    ))}
+                                </Stack>
                             )}
-                        </Stack>
-                    </WidgetContainer>
+                        </WidgetContainer>
+                    )}
                 </Grid>
             </Grid>
         </DashboardLayout>

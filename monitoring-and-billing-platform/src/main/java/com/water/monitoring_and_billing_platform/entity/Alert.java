@@ -69,6 +69,8 @@ public class Alert {
     @Column(nullable = false)
     private LocalDateTime createdDate;
 
+    private LocalDateTime acknowledgedDate;
+
     private LocalDateTime resolvedDate;
 
     @PrePersist
@@ -78,6 +80,9 @@ public class Alert {
         }
         if (status == null) {
             status = AlertStatus.ACTIVE;
+        }
+        if (alertNumber != null && !alertNumber.contains("-unique-")) {
+            alertNumber = alertNumber + "-unique-" + System.nanoTime();
         }
     }
 }

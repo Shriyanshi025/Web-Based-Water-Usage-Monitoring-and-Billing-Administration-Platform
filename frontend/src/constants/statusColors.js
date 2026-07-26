@@ -123,7 +123,18 @@ export const STATUS_COLORS = {
         severity: "success",
     },
 
-    // ── Billing Cycle ─────────────────────────────────────────────────────
+    CLOSED: {
+        bg:       "#FEF9C3",
+        text:     "#854D0E",
+        border:   "#FDE68A",
+        severity: "warning",
+    },
+    ARCHIVED: {
+        bg:       "#F1F5F9",
+        text:     "#475569",
+        border:   "#E2E8F0",
+        severity: "default",
+    },
     GENERATED: {
         bg:       "#EFF6FF",
         text:     "#1D4ED8",

@@ -25,33 +25,36 @@ function DashboardLayout({ children }) {
             <Box
                 sx={{
                     flexGrow: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    minWidth: 0, // important for overflow hidden in flex children
-                    overflow: 'hidden'
+                    display: "flex",
+                    flexDirection: "column",
+                    minWidth: 0,
+                    overflow: "hidden",
                 }}
             >
                 {/* Top Navbar */}
                 <TopNavbar onMobileNavOpen={handleMobileNavToggle} />
 
-                {/* Page Content area with smooth transition */}
+                {/* Page Content area */}
                 <Box
                     component="main"
                     sx={{
                         flexGrow: 1,
-                        p: { xs: 2, sm: 3, md: 4 },
+                        // Consistent padding: tighter on mobile, generous on desktop
+                        p: { xs: 2, sm: 2.5, md: 3 },
                         overflowY: "auto",
-                        overflowX: "hidden"
+                        overflowX: "hidden",
+                        // Subtle inner background so cards sit on a light surface
+                        bgcolor: "background.default",
                     }}
                 >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={location.pathname}
-                            initial={{ opacity: 0, y: 15 }}
+                            initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -15 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            style={{ height: '100%' }}
+                            exit={{ opacity: 0, y: -8 }}
+                            transition={{ duration: 0.22, ease: "easeOut" }}
+                            style={{ height: "100%", maxWidth: "100%" }}
                         >
                             {children}
                         </motion.div>

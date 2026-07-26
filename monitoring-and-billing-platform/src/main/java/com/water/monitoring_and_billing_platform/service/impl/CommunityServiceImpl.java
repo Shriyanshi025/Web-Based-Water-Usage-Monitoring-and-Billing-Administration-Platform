@@ -4,6 +4,7 @@ import com.water.monitoring_and_billing_platform.dto.CommunityRequest;
 import com.water.monitoring_and_billing_platform.dto.CommunityResponse;
 import com.water.monitoring_and_billing_platform.dto.CommunityStatusUpdateRequest;
 import com.water.monitoring_and_billing_platform.entity.Community;
+import com.water.monitoring_and_billing_platform.entity.TariffPlan;
 import com.water.monitoring_and_billing_platform.exception.CommunityAlreadyExistsException;
 import com.water.monitoring_and_billing_platform.exception.CommunityNotFoundException;
 import com.water.monitoring_and_billing_platform.repository.*;
@@ -32,7 +33,10 @@ public class CommunityServiceImpl implements CommunityService {
     private final ResidentProfileRepository residentProfileRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final UserRepository userRepository;
+    private final AlertRepository alertRepository;
+    private final TariffPlanRepository tariffPlanRepository;
     private final AlertService alertService;
+    private final com.water.monitoring_and_billing_platform.service.TariffPlanService tariffPlanService;
 
     @Override
     @Transactional
@@ -56,6 +60,22 @@ public class CommunityServiceImpl implements CommunityService {
                 .build();
 
         Community savedCommunity = communityRepository.save(community);
+
+        TariffPlan defaultPlan = TariffPlan.builder()
+                .name("Standard Residential Tariff")
+                .description("Initial tariff policy created for " + savedCommunity.getCommunityName())
+                .fixedCharge(java.math.BigDecimal.valueOf(100.00))
+                .ratePerUnit(java.math.BigDecimal.valueOf(5.00))
+                .taxRate(java.math.BigDecimal.valueOf(0.05))
+                .community(savedCommunity)
+                .active(true)
+                .build();
+        List<com.water.monitoring_and_billing_platform.entity.TariffSlab> slabs = new java.util.ArrayList<>();
+        slabs.add(com.water.monitoring_and_billing_platform.entity.TariffSlab.builder().tariffPlan(defaultPlan).minUnits(0.0).maxUnits(10.0).ratePerUnit(java.math.BigDecimal.valueOf(5.00)).build());
+        slabs.add(com.water.monitoring_and_billing_platform.entity.TariffSlab.builder().tariffPlan(defaultPlan).minUnits(10.0).maxUnits(20.0).ratePerUnit(java.math.BigDecimal.valueOf(8.00)).build());
+        slabs.add(com.water.monitoring_and_billing_platform.entity.TariffSlab.builder().tariffPlan(defaultPlan).minUnits(20.0).maxUnits(null).ratePerUnit(java.math.BigDecimal.valueOf(12.00)).build());
+        defaultPlan.setSlabs(slabs);
+        tariffPlanRepository.save(defaultPlan);
 
         activityLogRepository.save(com.water.monitoring_and_billing_platform.entity.ActivityLog.builder()
                 .title("Community Created")
@@ -163,6 +183,8 @@ public class CommunityServiceImpl implements CommunityService {
             throw new IllegalStateException("Community cannot be deleted because it still contains dependent records.");
         }
 
+        alertRepository.deleteByCommunityId(id);
+        tariffPlanRepository.deleteByCommunityId(id);
         activityLogRepository.deleteByCommunityId(id);
         communityRepository.delete(community);
     }

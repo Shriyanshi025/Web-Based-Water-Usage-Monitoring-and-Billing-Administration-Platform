@@ -3,36 +3,46 @@ import { Box, Typography, Stack } from "@mui/material";
 
 /**
  * Reusable SectionHeader — sub-section titles within a page or card.
- *
- * @param {Object}           props
- * @param {string}           props.title  - Section title
- * @param {React.ReactNode}  [props.action] - Optional right-side action
  */
-const SectionHeader = ({ title, action }) => {
+const SectionHeader = ({ title, action, subtitle }) => {
     return (
         <Stack
             direction="row"
-            justifyContent="space-between"
-            alignItems="center"
             sx={{
-                mb: 1.5,
-                pb: 1.25,
-                borderBottom: "1px solid",
-                borderColor: "divider",
+                justifyContent: "space-between",
+                alignItems: subtitle ? "flex-start" : "center",
+                mb: 2,
             }}
         >
-            <Typography
-                variant="subtitle1"
-                sx={{
-                    fontWeight: 600,
-                    fontSize: "0.9375rem",
-                    color: "text.primary",
-                    lineHeight: 1.4,
-                }}
-            >
-                {title}
-            </Typography>
-            {action && <Box sx={{ flexShrink: 0 }}>{action}</Box>}
+            <Box sx={{ minWidth: 0 }}>
+                <Typography
+                    variant="subtitle1"
+                    sx={{
+                        fontWeight: 600,
+                        fontSize: "0.9375rem",
+                        color: "text.primary",
+                        lineHeight: 1.4,
+                        letterSpacing: "-0.1px",
+                    }}
+                >
+                    {title}
+                </Typography>
+                {subtitle && (
+                    <Typography
+                        variant="caption"
+                        sx={{
+                            color: "text.secondary",
+                            fontSize: "0.75rem",
+                            lineHeight: 1.4,
+                            display: "block",
+                            mt: 0.25,
+                        }}
+                    >
+                        {subtitle}
+                    </Typography>
+                )}
+            </Box>
+            {action && <Box sx={{ flexShrink: 0, ml: 2 }}>{action}</Box>}
         </Stack>
     );
 };

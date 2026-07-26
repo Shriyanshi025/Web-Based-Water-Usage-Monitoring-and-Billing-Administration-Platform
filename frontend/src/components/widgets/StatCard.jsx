@@ -7,7 +7,6 @@ import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 
 /**
  * AnimatedCounter — counts up from 0 to `value` using rAF.
- * For string values it renders directly.
  */
 const AnimatedCounter = ({ value, formatValue }) => {
     const [count, setCount] = React.useState(0);
@@ -17,21 +16,17 @@ const AnimatedCounter = ({ value, formatValue }) => {
             setCount(value);
             return;
         }
-
         let startTime = null;
-        const duration = 1200;
+        const duration = 1000;
         const end = value;
-
         const animate = (timestamp) => {
             if (!startTime) startTime = timestamp;
             const progress = Math.min((timestamp - startTime) / duration, 1);
-            // Ease-out quart
             const easeOut = 1 - Math.pow(1 - progress, 4);
             setCount(end * easeOut);
             if (progress < 1) requestAnimationFrame(animate);
             else setCount(end);
         };
-
         requestAnimationFrame(animate);
     }, [value]);
 
@@ -39,42 +34,21 @@ const AnimatedCounter = ({ value, formatValue }) => {
     return <>{formatValue ? formatValue(count) : Math.round(count).toLocaleString()}</>;
 };
 
-// ─── Shared card shell sx ────────────────────────────────────────────────────
+// ─── Shared card shell ────────────────────────────────────────────────────────
 const cardShell = {
     p: "20px 24px",
     bgcolor: "background.paper",
-    borderRadius: 2,
+    borderRadius: "12px",
     border: "1px solid",
     borderColor: "divider",
-    boxShadow: "0 1px 3px rgba(12, 25, 41, 0.06), 0 1px 2px rgba(12, 25, 41, 0.04)",
+    boxShadow: "0 1px 4px rgba(12, 25, 41, 0.05), 0 1px 2px rgba(12, 25, 41, 0.03)",
     height: "100%",
-    transition: "box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1)",
+    transition: "box-shadow 200ms ease",
     "&:hover": {
-        boxShadow: "0 4px 12px rgba(12, 25, 41, 0.08)",
+        boxShadow: "0 4px 16px rgba(12, 25, 41, 0.08)",
     },
 };
 
-/**
- * StatCard — top-level KPI card.
- *
- * Layout (top → bottom):
- *   Row:  [icon avatar]          [optional trend badge]
- *         [value]
- *         [title / label]
- *         [trend label text]
- *
- * @param {Object}           props
- * @param {string}           props.title
- * @param {string|number}    props.value
- * @param {React.ReactNode}  props.icon
- * @param {string}           [props.color="primary.main"] - Resolved theme color path
- * @param {number}           [props.trend]      - % change (positive or negative)
- * @param {string}           [props.trendLabel] - e.g. "vs last month"
- * @param {function}         [props.formatValue]
- * @param {boolean}          [props.loading]
- * @param {string}           [props.error]
- * @param {boolean}          [props.empty]
- */
 const StatCard = ({
     title,
     value,
@@ -90,13 +64,10 @@ const StatCard = ({
 }) => {
     const theme = useTheme();
 
-    // Resolve color path string → actual hex from theme palette
     const resolveColor = (colorPath) => {
         const keys = colorPath.split(".");
         let resolved = theme.palette;
-        for (const k of keys) {
-            resolved = resolved?.[k];
-        }
+        for (const k of keys) resolved = resolved?.[k];
         return typeof resolved === "string" ? resolved : theme.palette.primary.main;
     };
 
@@ -106,12 +77,12 @@ const StatCard = ({
     if (loading) {
         return (
             <Box sx={{ ...cardShell, "&:hover": undefined }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                    <Skeleton variant="rounded" width={40} height={40} sx={{ borderRadius: "8px" }} />
-                    <Skeleton variant="text" width="30%" height={20} />
+                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5}>
+                    <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: "10px" }} />
+                    <Skeleton variant="text" width="28%" height={18} />
                 </Stack>
-                <Skeleton variant="text" width="50%" height={36} sx={{ mb: 0.5 }} />
-                <Skeleton variant="text" width="65%" height={16} />
+                <Skeleton variant="text" width="55%" height={38} sx={{ mb: 0.5 }} />
+                <Skeleton variant="text" width="70%" height={14} />
             </Box>
         );
     }
@@ -119,8 +90,8 @@ const StatCard = ({
     // ── Error ────────────────────────────────────────────────────────────────
     if (error) {
         return (
-            <Box sx={{ ...cardShell, borderColor: "error.main" }}>
-                <Typography variant="body2" color="error.main" fontWeight={500}>
+            <Box sx={{ ...cardShell, borderColor: "error.light" }}>
+                <Typography variant="body2" color="error.main" fontWeight={500} fontSize="0.8125rem">
                     {error}
                 </Typography>
             </Box>
@@ -131,43 +102,41 @@ const StatCard = ({
     if (empty) {
         return (
             <Box sx={cardShell}>
-                <Typography variant="body2" color="text.disabled">
+                <Typography variant="body2" color="text.disabled" fontSize="0.8125rem">
                     No data available
                 </Typography>
             </Box>
         );
     }
 
-    // ── Trend visuals ────────────────────────────────────────────────────────
-    const trendUp    = trend > 0;
-    const trendDown  = trend < 0;
-    const trendFlat  = trend === 0;
+    const trendUp   = trend > 0;
+    const trendDown = trend < 0;
     const trendColor = trendUp ? "success.main" : trendDown ? "error.main" : "text.secondary";
     const TrendIcon  = trendUp ? TrendingUpIcon : trendDown ? TrendingDownIcon : TrendingFlatIcon;
 
     return (
-        <Box 
-            sx={{ 
+        <Box
+            sx={{
                 ...cardShell,
                 cursor: onClick ? "pointer" : "default",
-                transition: "transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease",
                 "&:hover": {
-                    boxShadow: "0 4px 12px rgba(12, 25, 41, 0.08)",
+                    boxShadow: "0 6px 20px rgba(12, 25, 41, 0.10)",
                     transform: onClick ? "translateY(-2px)" : "none",
-                    borderColor: onClick ? "primary.light" : "divider"
-                }
+                    borderColor: onClick ? alpha(resolvedColor, 0.3) : "divider",
+                },
+                transition: "transform 150ms ease, box-shadow 200ms ease, border-color 200ms ease",
             }}
             onClick={onClick}
         >
             {/* ── Top row: icon mark + trend badge ── */}
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2.5}>
                 {/* Icon container */}
                 <Box
                     sx={{
-                        width: 40,
-                        height: 40,
-                        borderRadius: "8px",
-                        bgcolor: alpha(resolvedColor, 0.12),
+                        width: 42,
+                        height: 42,
+                        borderRadius: "10px",
+                        bgcolor: alpha(resolvedColor, 0.10),
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -179,28 +148,28 @@ const StatCard = ({
                     {icon}
                 </Box>
 
-                {/* Trend badge (only if provided) */}
+                {/* Trend badge */}
                 {trend !== undefined && (
                     <Stack
                         direction="row"
                         alignItems="center"
                         spacing={0.25}
                         sx={{
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: "4px",
+                            px: 0.875,
+                            py: 0.375,
+                            borderRadius: "6px",
                             bgcolor: trendUp
-                                ? alpha(theme.palette.success.main, 0.10)
+                                ? alpha(theme.palette.success.main, 0.09)
                                 : trendDown
-                                    ? alpha(theme.palette.error.main, 0.10)
+                                    ? alpha(theme.palette.error.main, 0.09)
                                     : "action.hover",
                         }}
                     >
-                        <TrendIcon sx={{ fontSize: "0.875rem", color: trendColor }} />
+                        <TrendIcon sx={{ fontSize: "0.8125rem", color: trendColor }} />
                         <Typography
                             sx={{
                                 fontSize: "0.6875rem",
-                                fontWeight: 600,
+                                fontWeight: 700,
                                 color: trendColor,
                                 lineHeight: 1,
                             }}
@@ -220,6 +189,7 @@ const StatCard = ({
                     lineHeight: 1.1,
                     letterSpacing: "-0.5px",
                     mb: 0.5,
+                    fontSize: { xs: "1.5rem", sm: "1.75rem" },
                 }}
             >
                 <AnimatedCounter value={value} formatValue={formatValue} />
@@ -238,14 +208,13 @@ const StatCard = ({
                 {title}
             </Typography>
 
-            {/* ── Trend label text (below title) ── */}
+            {/* ── Trend label text ── */}
             {trend !== undefined && trendLabel && (
                 <Typography
-                    variant="caption"
                     sx={{
                         display: "block",
-                        mt: 0.5,
-                        fontSize: "0.75rem",
+                        mt: 0.75,
+                        fontSize: "0.725rem",
                         color: "text.disabled",
                         lineHeight: 1.3,
                     }}

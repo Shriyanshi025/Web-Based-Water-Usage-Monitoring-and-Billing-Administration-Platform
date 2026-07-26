@@ -25,6 +25,12 @@ export const ROUTES = {
     COMMUNITY_ADMIN_INVITATIONS: "/community-admin/invitations",
     COMMUNITY_ADMIN_COMPLAINTS: "/community-admin/complaints",
     COMMUNITY_ADMIN_NOTIFICATIONS: "/community-admin/notifications",
+    COMMUNITY_ADMIN_BULK_PURCHASE: "/community-admin/bulk-purchases",
+    COMMUNITY_ADMIN_COST_DISTRIBUTION: "/community-admin/cost-distribution",
+    COMMUNITY_ADMIN_ALERTS: "/community-admin/alerts",
+    COMMUNITY_ADMIN_EMAIL_HISTORY: "/community-admin/email-history",
+    INVOICE_DETAILS: "/invoices/:invoiceId",
+    BILL_INVOICE: "/invoices/bill/:billId",
     
     // Main Admin Protected
     MAIN_ADMIN_DASHBOARD: "/main-admin",

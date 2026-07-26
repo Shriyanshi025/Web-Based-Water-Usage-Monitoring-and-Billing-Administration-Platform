@@ -26,6 +26,11 @@ const BillsPage = lazy(() => import("../pages/community-admin/BillsPage"));
 const BillingCyclePage = lazy(() => import("../pages/community-admin/BillingCyclePage"));
 const TariffPlanPage = lazy(() => import("../pages/community-admin/TariffPlanPage"));
 const HouseholdDirectoryPage = lazy(() => import("../pages/community-admin/HouseholdDirectoryPage"));
+const BulkWaterPurchasePage = lazy(() => import("../pages/community-admin/BulkWaterPurchasePage"));
+const CostDistributionPage = lazy(() => import("../pages/community-admin/CostDistributionPage"));
+const AlertsManagementPage = lazy(() => import("../pages/community-admin/AlertsManagementPage"));
+const EmailHistoryPage = lazy(() => import("../pages/community-admin/EmailHistoryPage"));
+const InvoicePage = lazy(() => import("../pages/common/InvoicePage"));
 
 // Resident Pages
 const ResidentBillsPage = lazy(() => import("../pages/resident/BillsPage"));
@@ -57,7 +62,7 @@ function AppRoutes() {
                 {/* Public Landing Page */}
                 <Route path={ROUTES.LANDING} element={<LandingPage />} />
 
-                {/* Guest Pages (Guarded against authenticated users) */}
+                {/* Guest Pages */}
                 <Route path={ROUTES.LOGIN} element={
                     <PublicRoute>
                         <LoginPage />
@@ -69,7 +74,7 @@ function AppRoutes() {
                     </PublicRoute>
                 } />
 
-                {/* Pending Approval Screen (For authenticated users pending verification) */}
+                {/* Pending Approval Screen */}
                 <Route path={ROUTES.PENDING_APPROVAL} element={
                     <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN, ROLES.COMMUNITY_ADMIN, ROLES.USER]}>
                         <PendingApproval />
@@ -102,9 +107,14 @@ function AppRoutes() {
                         <ProfilePage />
                     </ProtectedRoute>
                 } />
-                
+
                 {/* Community Admin Routes */}
                 <Route path={ROUTES.COMMUNITY_ADMIN_DASHBOARD} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <CommunityDashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/dashboard" element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <CommunityDashboard />
                     </ProtectedRoute>
@@ -124,12 +134,22 @@ function AppRoutes() {
                         <WaterMetersPage />
                     </ProtectedRoute>
                 } />
+                <Route path="/community-admin/water-meters" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <WaterMetersPage />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.COMMUNITY_ADMIN_INVITATIONS} element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <InvitationsPage />
                     </ProtectedRoute>
                 } />
                 <Route path={ROUTES.COMMUNITY_ADMIN_USAGE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <WaterUsagePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/water-usage" element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <WaterUsagePage />
                     </ProtectedRoute>
@@ -144,9 +164,54 @@ function AppRoutes() {
                         <BillingCyclePage />
                     </ProtectedRoute>
                 } />
+                <Route path="/community-admin/billing-cycles" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <BillingCyclePage />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.COMMUNITY_ADMIN_TARIFF_PLANS} element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <TariffPlanPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/tariff-policies" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <TariffPlanPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/tariff-plan" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <TariffPlanPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_BULK_PURCHASE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <BulkWaterPurchasePage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_COST_DISTRIBUTION} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <CostDistributionPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_ALERTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <AlertsManagementPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_EMAIL_HISTORY} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <EmailHistoryPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/payments" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <PaymentHistoryPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/payment-history" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <PaymentHistoryPage />
                     </ProtectedRoute>
                 } />
                 <Route path="/admin/households" element={
@@ -155,6 +220,16 @@ function AppRoutes() {
                     </ProtectedRoute>
                 } />
                 <Route path={ROUTES.COMMUNITY_ADMIN_PROFILE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/community-profile" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/settings" element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <ProfilePage />
                     </ProtectedRoute>
@@ -171,12 +246,37 @@ function AppRoutes() {
                         <UserDashboard />
                     </ProtectedRoute>
                 } />
+                <Route path="/resident" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <UserDashboard />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/dashboard" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <UserDashboard />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.RESIDENT_BILLS} element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <ResidentBillsPage />
                     </ProtectedRoute>
                 } />
+                <Route path="/resident/bills" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <ResidentBillsPage />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.RESIDENT_USAGE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <UsagePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/usage" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <UsagePage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/usage-history" element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <UsagePage />
                     </ProtectedRoute>
@@ -191,6 +291,11 @@ function AppRoutes() {
                         <ProfilePage />
                     </ProtectedRoute>
                 } />
+                <Route path="/resident/profile" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.RESIDENT_COMPLAINTS} element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <ResidentComplaintsPage />
@@ -201,7 +306,27 @@ function AppRoutes() {
                         <NotificationsPage />
                     </ProtectedRoute>
                 } />
+                <Route path="/resident/notifications" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/alerts" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <NotificationsPage />
+                    </ProtectedRoute>
+                } />
                 <Route path={ROUTES.RESIDENT_PAYMENTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <PaymentHistoryPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/payments" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <PaymentHistoryPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/payment-history" element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <PaymentHistoryPage />
                     </ProtectedRoute>
@@ -214,6 +339,17 @@ function AppRoutes() {
                 <Route path={ROUTES.MAIN_ADMIN_NOTIFICATIONS} element={
                     <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
                         <NotificationsPage />
+                    </ProtectedRoute>
+                } />
+
+                <Route path={ROUTES.INVOICE_DETAILS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.COMMUNITY_ADMIN]}>
+                        <InvoicePage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.BILL_INVOICE} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER, ROLES.COMMUNITY_ADMIN]}>
+                        <InvoicePage />
                     </ProtectedRoute>
                 } />
 

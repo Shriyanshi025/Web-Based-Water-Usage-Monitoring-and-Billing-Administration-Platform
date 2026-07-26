@@ -28,6 +28,7 @@ public class BillResponse {
     private BigDecimal additionalCharge;
     private BigDecimal subtotal;
     private BigDecimal tax;
+    private BigDecimal taxRate;
     private BigDecimal amount;
     private BigDecimal totalAmount;
     private BigDecimal sharedWaterCost;
@@ -38,5 +39,6 @@ public class BillResponse {
     private String status;
     private String billStatus;
     private String paymentStatus;
+    private String slabBreakdown;
     private String remarks;
 }

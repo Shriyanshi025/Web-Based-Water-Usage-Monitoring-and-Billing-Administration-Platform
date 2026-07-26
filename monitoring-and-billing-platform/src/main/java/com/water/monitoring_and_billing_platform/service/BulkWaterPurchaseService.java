@@ -10,4 +10,8 @@ public interface BulkWaterPurchaseService {
     BulkWaterPurchaseResponse recordPurchase(String adminEmail, BulkWaterPurchaseRequest request);
     List<BulkWaterPurchaseResponse> getPurchasesForCycle(String adminEmail, Long billingCycleId);
     BulkWaterPurchaseSummaryResponse getSummaryForCycle(String adminEmail, Long billingCycleId);
+    BulkWaterPurchaseResponse updatePurchase(String adminEmail, Long id, BulkWaterPurchaseRequest request);
+    void deletePurchase(String adminEmail, Long id);
+    BulkWaterPurchaseResponse getPurchaseById(String adminEmail, Long id);
+    List<BulkWaterPurchaseResponse> getAllPurchases(String adminEmail);
 }

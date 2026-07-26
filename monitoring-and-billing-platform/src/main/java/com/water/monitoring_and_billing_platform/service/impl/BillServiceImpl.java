@@ -28,6 +28,8 @@ public class BillServiceImpl implements BillService {
     private final BulkWaterPurchaseRepository bulkWaterPurchaseRepository;
     private final com.water.monitoring_and_billing_platform.service.InvoiceService invoiceService;
     private final com.water.monitoring_and_billing_platform.service.AlertService alertService;
+    private final com.water.monitoring_and_billing_platform.service.ConsumptionCostDistributionService consumptionCostDistributionService;
+    private final com.water.monitoring_and_billing_platform.service.TariffPlanService tariffPlanService;
 
     @Override
     @Transactional
@@ -46,8 +48,7 @@ public class BillServiceImpl implements BillService {
             throw new IllegalStateException("A bill already exists for this resident for the active cycle: " + cycle.getName());
         }
 
-        TariffPlan plan = tariffPlanRepository.findByActiveTrue().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No active tariff plan found"));
+        TariffPlan plan = tariffPlanService.getActiveTariffPlan(resident.getCommunity());
 
         WaterMeter meter = waterMeterRepository.findByResidentProfileId(residentId)
                 .orElseThrow(() -> new IllegalStateException("No water meter assigned to this resident"));
@@ -72,8 +73,10 @@ public class BillServiceImpl implements BillService {
             throw new IllegalArgumentException("Current reading (" + currentReading + ") cannot be less than previous reading (" + previousReading + ")");
         }
 
-        BigDecimal additionalCharge = BigDecimal.ZERO;
-        BigDecimal taxRate = new BigDecimal("0.05"); // Default 5% tax
+        BigDecimal planMaintenance = plan.getMaintenanceCharge() != null ? plan.getMaintenanceCharge() : BigDecimal.ZERO;
+        BigDecimal planService = plan.getServiceCharge() != null ? plan.getServiceCharge() : BigDecimal.ZERO;
+        BigDecimal additionalCharge = planMaintenance.add(planService);
+        BigDecimal taxRate = plan.getTaxRate() != null ? plan.getTaxRate() : new BigDecimal("0.05");
 
         Bill bill = billGenerationService.prepareBill(
                 resident,
@@ -153,6 +156,26 @@ public class BillServiceImpl implements BillService {
             return dist;
         }
 
+        try {
+            com.water.monitoring_and_billing_platform.dto.ConsumptionCostDistributionResponse consDist =
+                    consumptionCostDistributionService.calculateDistribution(
+                            resident.getCommunity().getId(),
+                            billingCycleId
+                    );
+
+            if (consDist.getTotalCommunityConsumption() > 0.0) {
+                dist.strategy = "CONSUMPTION";
+                dist.sharedCost = consDist.getDistributions().stream()
+                        .filter(d -> d.getResidentProfileId().equals(resident.getId()))
+                        .map(com.water.monitoring_and_billing_platform.dto.HouseholdCostDistributionResponse::getDistributedCost)
+                        .findFirst()
+                        .orElse(BigDecimal.ZERO);
+                return dist;
+            }
+        } catch (Exception e) {
+            // Ignore and fallback to legacy strategies
+        }
+
         List<BulkWaterPurchase> purchases = bulkWaterPurchaseRepository.findByBillingCycleIdAndCommunityId(
                 billingCycleId,
                 resident.getCommunity().getId()
@@ -223,8 +246,7 @@ public class BillServiceImpl implements BillService {
         BillingCycle cycle = billingCycleRepository.findById(billingCycleId)
                 .orElseThrow(() -> new IllegalArgumentException("Billing cycle not found"));
 
-        TariffPlan plan = tariffPlanRepository.findByActiveTrue().stream().findFirst()
-                .orElseThrow(() -> new IllegalStateException("No active tariff plan found"));
+        TariffPlan plan = tariffPlanService.getActiveTariffPlan(resident.getCommunity());
 
         Optional<WaterMeter> meterOpt = waterMeterRepository.findByResidentProfileId(residentId);
         if (meterOpt.isEmpty()) {
@@ -256,7 +278,7 @@ public class BillServiceImpl implements BillService {
             }
         }
 
-        BigDecimal taxRate = new BigDecimal("0.05"); // Default 5% tax
+        BigDecimal planTaxRate = plan.getTaxRate() != null ? plan.getTaxRate() : new BigDecimal("0.05");
         
         Bill tempBill = billGenerationService.prepareBill(
                 resident,
@@ -266,7 +288,7 @@ public class BillServiceImpl implements BillService {
                 previousReading,
                 currentReading,
                 BigDecimal.ZERO,
-                taxRate,
+                planTaxRate,
                 "Simulated Estimation"
         );
 
