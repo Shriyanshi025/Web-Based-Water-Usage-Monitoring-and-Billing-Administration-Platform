@@ -1,76 +1,66 @@
 import React, { memo } from "react";
-import { Grid, Box } from "@mui/material";
+import { Grid, Box, Stack } from "@mui/material";
 import PageHeader from "../common/PageHeader";
 
 /**
  * DashboardGrid — shared shell used by CommunityDashboard and MainAdminDashboard.
- * Resident dashboard (UserDashboard) composes its own layout directly.
- *
- * @param {Object}           props
- * @param {string}           [props.headerTitle]
- * @param {string}           [props.headerSubtitle]
- * @param {React.ReactNode}  [props.headerAction]
- * @param {React.ReactNode[]} [props.kpiCards]
- * @param {React.ReactNode[]} [props.leftColumn]
- * @param {React.ReactNode[]} [props.rightColumn]
- * @param {React.ReactNode[]} [props.quickActions]
+ * 
+ * Top analytics remain unchanged in kpiCards.
+ * All main content sections below stack as full-width enterprise sections.
  */
 const DashboardGrid = ({
     headerTitle,
     headerSubtitle,
     headerAction,
     kpiCards,
+    sections,
     leftColumn,
     rightColumn,
     quickActions,
 }) => {
+    // Combine leftColumn and rightColumn or custom sections into full-width stacked sections
+    const contentSections = sections || [
+        ...(leftColumn ? (Array.isArray(leftColumn) ? leftColumn : [leftColumn]) : []),
+        ...(rightColumn ? (Array.isArray(rightColumn) ? rightColumn : [rightColumn]) : []),
+    ];
+
     return (
         <Box>
             {/* Page Header */}
-            <PageHeader
-                title={headerTitle}
-                subtitle={headerSubtitle}
-                action={headerAction}
-            />
-
-            {/* KPI Cards */}
-            {kpiCards && kpiCards.length > 0 && (
-                <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                    {kpiCards.map((card, index) => (
-                        <Grid item xs={12} sm={6} md={4} lg={4} key={`kpi-${index}`}>
-                            {card}
-                        </Grid>
-                    ))}
-                </Grid>
+            {headerTitle && (
+                <PageHeader
+                    title={headerTitle}
+                    subtitle={headerSubtitle}
+                    action={headerAction}
+                />
             )}
 
-            {/* Main Content — left (wider) + right (narrower) columns */}
-            {(leftColumn || rightColumn) && (
-                <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                    {leftColumn && (
-                        <Grid item xs={12} lg={8}>
-                            <Grid container spacing={2.5}>
-                                {React.Children.map(leftColumn, (child, index) => (
-                                    <Grid item xs={12} key={`left-${index}`}>
-                                        {child}
-                                    </Grid>
-                                ))}
-                            </Grid>
+            {/* Top Analytics Hero Overview (Unchanged) */}
+            {kpiCards && (
+                <Box sx={{ mb: 3 }}>
+                    {Array.isArray(kpiCards) ? (
+                        <Grid container spacing={2.5}>
+                            {kpiCards.map((card, index) => (
+                                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={`kpi-${index}`}>
+                                    {card}
+                                </Grid>
+                            ))}
                         </Grid>
+                    ) : (
+                        kpiCards
                     )}
+                </Box>
+            )}
 
-                    {rightColumn && (
-                        <Grid item xs={12} lg={4}>
-                            <Grid container spacing={2.5}>
-                                {React.Children.map(rightColumn, (child, index) => (
-                                    <Grid item xs={12} key={`right-${index}`}>
-                                        {child}
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </Grid>
-                    )}
-                </Grid>
+            {/* Main Content — Full-Width Enterprise Sections */}
+            {contentSections && contentSections.length > 0 && (
+                <Stack spacing={3} sx={{ mb: 3 }}>
+                    {contentSections.map((section, index) => (
+                        <Box key={`section-${index}`} sx={{ width: "100%" }}>
+                            {section}
+                        </Box>
+                    ))}
+                </Stack>
             )}
 
             {/* Quick Actions */}
@@ -79,7 +69,7 @@ const DashboardGrid = ({
                     <PageHeader title="Quick Actions" />
                     <Grid container spacing={2.5}>
                         {quickActions.map((action, index) => (
-                            <Grid item xs={12} sm={6} md={4} lg={4} key={`quick-action-${index}`}>
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }} key={`quick-action-${index}`}>
                                 {action}
                             </Grid>
                         ))}

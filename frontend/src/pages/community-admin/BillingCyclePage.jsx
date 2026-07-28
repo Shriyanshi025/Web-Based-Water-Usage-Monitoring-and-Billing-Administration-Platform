@@ -23,7 +23,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import AddIcon from "@mui/icons-material/Add";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import StatusBadge from "../../components/common/StatusBadge";
@@ -268,11 +269,30 @@ function BillingCyclePage() {
         return {};
     }, [confirmDialog.type]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Cycles", value: rows.length },
+        { label: "Active", value: rows.filter(r => r.active || r.status === "ACTIVE").length, color: "success" },
+        { label: "Closed", value: rows.filter(r => r.status === "CLOSED").length, color: "warning" },
+    ], [rows]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
+            <PageSummaryHeader 
                 title="Billing Cycle Management" 
                 subtitle="Manage, finalize, open, and archive billing cycles for your community." 
+                icon={CalendarMonthIcon}
+                metadata={headerMetadata}
+                action={
+                    <Button
+                        variant="contained"
+                        size="small"
+                        startIcon={<AddIcon />}
+                        onClick={() => setCreateModalOpen(true)}
+                        sx={{ textTransform: "none", borderRadius: 2, fontWeight: 700, height: 36 }}
+                    >
+                        New Billing Cycle
+                    </Button>
+                }
             />
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>

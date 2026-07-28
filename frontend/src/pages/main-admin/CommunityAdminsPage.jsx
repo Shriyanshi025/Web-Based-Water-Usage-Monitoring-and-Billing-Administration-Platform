@@ -27,7 +27,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import BusinessIcon from "@mui/icons-material/Business";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import StatusBadge from "../../components/common/StatusBadge";
@@ -285,11 +285,18 @@ const CommunityAdminsPage = () => {
         }
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Administrators", value: admins.length },
+        { label: "Active", value: admins.filter(a => a.active !== false).length, color: "success" },
+    ], [admins]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
+            <PageSummaryHeader 
                 title="Community Admins Management" 
                 subtitle="View and manage community administrators."
+                icon={PeopleIcon}
+                metadata={headerMetadata}
             />
 
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
@@ -344,26 +351,30 @@ const CommunityAdminsPage = () => {
                             <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, color: "primary.main" }}>
                                 Personal Information
                             </Typography>
+                            {/* Personal Information */}
+                            <Typography variant="subtitle2" fontWeight={700} sx={{ mb: 1.5, color: "primary.main" }}>
+                                Personal Information
+                            </Typography>
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Full Name</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.fullName || "—"}</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Email Address</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.email || "—"}</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Mobile Number</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.phoneNumber || "—"}</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Office Address</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.officeAddress || "N/A"}</Typography>
@@ -376,19 +387,19 @@ const CommunityAdminsPage = () => {
                                 Community Information
                             </Typography>
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Assigned Community</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.communityName || "Unassigned"}</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Community ID</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.communityId ? `COMM-${viewAdmin.communityId}` : "N/A"}</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5 }}>
                                         <Typography variant="caption" color="text.secondary" display="block">Community Address</Typography>
                                         <Typography variant="body2" fontWeight={600}>{viewAdmin.communityAddress || "N/A"}</Typography>
@@ -401,7 +412,7 @@ const CommunityAdminsPage = () => {
                                 Management Statistics
                             </Typography>
                             <Grid container spacing={2} sx={{ mb: 2 }}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
                                         <PeopleIcon color="primary" sx={{ fontSize: 32 }} />
                                         <Box>
@@ -414,7 +425,7 @@ const CommunityAdminsPage = () => {
                                         </Box>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <Paper variant="outlined" sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
                                         <BusinessIcon color="info" sx={{ fontSize: 32 }} />
                                         <Box>
@@ -432,25 +443,25 @@ const CommunityAdminsPage = () => {
                             {/* Soft Activity Metadata Section */}
                             <Divider sx={{ my: 2 }} />
                             <Grid container spacing={2}>
-                                <Grid item xs={12} sm={3}>
+                                <Grid size={{ xs: 12, sm: 3 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Created On</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewAdmin.createdAt ? new Date(viewAdmin.createdAt).toLocaleDateString() : "N/A"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={3}>
+                                <Grid size={{ xs: 12, sm: 3 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Assigned Community</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewAdmin.communityName || "N/A"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={3}>
+                                <Grid size={{ xs: 12, sm: 3 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Total Residents</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewAdmin.totalResidents ?? 0} Residents
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={3}>
+                                <Grid size={{ xs: 12, sm: 3 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Account Status</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewAdmin.active !== false ? "Active Admin Account" : "Inactive Account"}
@@ -473,18 +484,18 @@ const CommunityAdminsPage = () => {
                 <DialogTitle>{selectedAdmin ? "Edit Community Admin" : "Add New Community Admin"}</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <TextField fullWidth label="Full Name" name="fullName" value={formData.fullName} onChange={handleFormChange} required />
                         </Grid>
                         {!selectedAdmin && (
                             <>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField fullWidth label="Email" name="email" type="email" value={formData.email} onChange={handleFormChange} required />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                     <TextField fullWidth label="Password" name="password" type="password" value={formData.password} onChange={handleFormChange} required />
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                     <TextField fullWidth select label="Assign Community" name="communityId" value={formData.communityId} onChange={handleFormChange} required>
                                         {communities.map((c) => (
                                             <MenuItem key={c.id} value={c.id}>
@@ -495,10 +506,10 @@ const CommunityAdminsPage = () => {
                                 </Grid>
                             </>
                         )}
-                        <Grid item xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <TextField fullWidth label="Phone Number" name="phoneNumber" value={formData.phoneNumber} onChange={handleFormChange} required />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <TextField fullWidth label="Office Address" name="officeAddress" value={formData.officeAddress} onChange={handleFormChange} />
                         </Grid>
                     </Grid>

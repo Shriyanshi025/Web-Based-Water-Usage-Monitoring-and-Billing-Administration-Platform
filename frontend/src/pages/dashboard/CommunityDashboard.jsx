@@ -1,7 +1,8 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Grid, Typography, Chip, Stack, Button, Divider, useTheme } from "@mui/material";
+import { Box, Grid, Typography, Chip, Stack, Button, Divider, Paper, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { safeAlpha } from "../../helpers/colorHelper";
 
 // Layout
 import DashboardLayout from "../../components/layout/DashboardLayout";
@@ -19,6 +20,9 @@ import AdminStatCard from "../../components/common/AdminStatCard";
 import ChartCard from "../../components/widgets/ChartCard";
 import TimelineWidget from "../../components/widgets/TimelineWidget";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
+import DashboardHero from "../../components/widgets/DashboardHero";
+import DashboardInsight from "../../components/widgets/DashboardInsight";
+import DashboardOverview from "../../components/widgets/DashboardOverview";
 
 // Icons — KPIs
 import PeopleIcon from "@mui/icons-material/People";
@@ -61,7 +65,7 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                 bgcolor: "background.paper",
                 borderRadius: 3,
                 border: "1px solid",
-                borderColor: alpha(theme.palette.primary.main, 0.12),
+                borderColor: safeAlpha(theme, "primary.main", 0.12),
                 boxShadow: "0 2px 12px rgba(12, 25, 41, 0.04)",
                 display: "flex",
                 alignItems: "center",
@@ -80,8 +84,8 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                             height: 32,
                             borderRadius: 2,
                             bgcolor: loading
-                                ? alpha(theme.palette.warning.main, 0.1)
-                                : alpha(theme.palette.success.main, 0.1),
+                                ? safeAlpha(theme, "warning.main", 0.1)
+                                : safeAlpha(theme, "success.main", 0.1),
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -99,8 +103,8 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                                 borderRadius: "50%",
                                 bgcolor: loading ? "warning.main" : "success.main",
                                 boxShadow: loading
-                                    ? `0 0 0 3px ${alpha(theme.palette.warning.main, 0.2)}`
-                                    : `0 0 0 3px ${alpha(theme.palette.success.main, 0.2)}`,
+                                    ? `0 0 0 3px ${safeAlpha(theme, "warning.main", 0.2)}`
+                                    : `0 0 0 3px ${safeAlpha(theme, "success.main", 0.2)}`,
                             }}
                         />
                         <Typography
@@ -126,7 +130,7 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                                 width: 32,
                                 height: 32,
                                 borderRadius: 2,
-                                bgcolor: alpha(theme.palette.info.main, 0.1),
+                                bgcolor: safeAlpha(theme, "info.main", 0.1),
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -158,8 +162,8 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                                 height: 32,
                                 borderRadius: 2,
                                 bgcolor: pendingUrgent
-                                    ? alpha(theme.palette.warning.main, 0.12)
-                                    : alpha(theme.palette.primary.main, 0.08),
+                                    ? safeAlpha(theme, "warning.main", 0.12)
+                                    : safeAlpha(theme, "primary.main", 0.08),
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -208,10 +212,10 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
                         height: 32,
                         fontSize: "0.8125rem",
                         fontWeight: 700,
-                        bgcolor: alpha(theme.palette.primary.main, 0.08),
+                        bgcolor: safeAlpha(theme, "primary.main", 0.08),
                         color: "primary.main",
                         border: "1px solid",
-                        borderColor: alpha(theme.palette.primary.main, 0.2),
+                        borderColor: safeAlpha(theme, "primary.main", 0.2),
                         borderRadius: "8px",
                         px: 0.5,
                         "& .MuiChip-label": { px: 1 },
@@ -342,74 +346,51 @@ function CommunityDashboard() {
                 {/* ── 2. Redesigned Status Summary Banner ──────────────────────── */}
                 <StatusSummaryBar dashboard={dashboard} loading={loading} />
 
-                {/* ── 3. Primary KPIs (Standardized Equal Height Grid Cards) ─── */}
+                {/* ── 3. Community Operations Overview ─── */}
                 <Box sx={{ mb: 4 }}>
-                    <SectionHeader title="Community Overview" />
-                    <Grid container spacing={2.5} alignItems="stretch">
-                        {/* Row 1: Resident Health */}
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
-                                title="Total Residents"
-                                value={loading ? 0 : (dashboard?.totalResidents || 0)}
-                                icon={<PeopleIcon />}
-                                color="info"
-                                onClick={() => navigate("/community-admin/residents")}
+                    <DashboardOverview
+                        hero={
+                            <DashboardHero
+                                badge="COMMUNITY OPERATIONS"
+                                statusColor="info"
+                                title="Water Operations & Resident Telemetry"
+                                primaryValue={formatWaterUsage(dashboard?.totalWaterConsumption || 0)}
+                                subtitle="Total water consumption tracked across all active households and smart meters in your community."
+                                metrics={[
+                                    { label: "Active Residents", value: (dashboard?.totalResidents || 0).toLocaleString(), icon: <PeopleIcon fontSize="small" /> },
+                                    { label: "Active Meters", value: `${dashboard?.activeWaterMeters || 0} / ${dashboard?.totalWaterMeters || 0}`, icon: <CheckCircleIcon fontSize="small" /> },
+                                    { label: "Pending Approvals", value: pendingCount, color: pendingCount > 0 ? "warning.main" : "text.secondary", icon: <PendingActionsIcon fontSize="small" /> },
+                                ]}
                             />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
-                                title="Pending Approvals"
-                                value={loading ? 0 : pendingCount}
-                                icon={<PendingActionsIcon />}
-                                color="warning"
-                                onClick={() => navigate("/community-admin/approvals")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
+                        }
+                        insights={[
+                            <DashboardInsight
+                                key="revenue"
                                 title="Revenue Collected"
-                                value={loading ? "₹0" : formatCurrency(dashboard?.totalRevenue || 0)}
+                                value={formatCurrency(dashboard?.totalRevenue || 0)}
+                                caption="Total billed water usage payments collected"
                                 icon={<ReceiptIcon />}
-                                color="success"
+                                color="success.main"
                                 onClick={() => navigate("/community-admin/bills")}
-                            />
-                        </Grid>
-
-                        {/* Row 2: Infrastructure + Usage */}
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
-                                title="Total Water Meters"
-                                value={loading ? 0 : (dashboard?.totalWaterMeters || 0)}
+                            />,
+                            <DashboardInsight
+                                key="meters"
+                                title="Smart Water Meters"
+                                value={`${dashboard?.activeWaterMeters || 0} Online`}
+                                caption={`${dashboard?.totalWaterMeters || 0} Total Installed Meters`}
                                 icon={<SpeedIcon />}
-                                color="primary"
+                                color="primary.main"
                                 onClick={() => navigate("/community-admin/meters")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
-                                title="Active Meters"
-                                value={loading ? 0 : (dashboard?.activeWaterMeters || 0)}
-                                icon={<CheckCircleIcon />}
-                                color="success"
-                                onClick={() => navigate("/community-admin/meters")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={4}>
-                            <AdminStatCard
-                                title="Total Water Consumption"
-                                value={loading ? "0 kL" : formatWaterUsage(dashboard?.totalWaterConsumption || 0)}
-                                icon={<WaterDropIcon />}
-                                color="info"
-                                onClick={() => navigate("/community-admin/usage")}
-                            />
-                        </Grid>
-                    </Grid>
+                            />,
+                        ]}
+                    />
                 </Box>
 
-                {/* ── 4. Water Usage Overview + Charts (Equal Ratios) ─────────── */}
-                <Box sx={{ mb: 4 }}>
+                {/* ── 4. Merged Water Consumption & Meter Distribution Analytics Section ── */}
+                <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
                     <SectionHeader
-                        title="Water Usage Overview"
+                        title="Water Consumption & Meter Distribution Analytics"
+                        subtitle="Aggregated community monthly water consumption telemetry and operational meter status distribution"
                         action={
                             <Button
                                 size="small"
@@ -430,9 +411,8 @@ function CommunityDashboard() {
                             </Button>
                         }
                     />
-                    <Grid container spacing={2.5} alignItems="stretch">
-                        {/* Monthly Water Usage — bar chart — wider */}
-                        <Grid item xs={12} lg={8}>
+                    <Grid container spacing={2.5}>
+                        <Grid size={{ xs: 12, lg: 8 }}>
                             <ChartCard
                                 title="Monthly Water Consumption"
                                 data={dashboard?.monthlyWaterUsage || []}
@@ -446,8 +426,7 @@ function CommunityDashboard() {
                             />
                         </Grid>
 
-                        {/* Meter Status — doughnut — narrower */}
-                        <Grid item xs={12} lg={4}>
+                        <Grid size={{ xs: 12, lg: 4 }}>
                             <ChartCard
                                 title="Meter Status Distribution"
                                 data={dashboard?.meterStatusData || []}
@@ -459,12 +438,13 @@ function CommunityDashboard() {
                             />
                         </Grid>
                     </Grid>
-                </Box>
+                </Paper>
 
-                {/* ── 5. Operational Panels: Approvals + Activity ────────────── */}
-                <Box>
+                {/* ── 5. Full-Width Pending Approvals Governance Section ────────────── */}
+                <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
                     <SectionHeader
-                        title="Community Operations"
+                        title="Pending Resident Approvals & Governance"
+                        subtitle="Resident registration and unit allocation requests awaiting administrator verification"
                         action={
                             <Button
                                 size="small"
@@ -485,54 +465,50 @@ function CommunityDashboard() {
                             </Button>
                         }
                     />
-                    <Grid container spacing={2.5} alignItems="stretch">
-                        {/* Pending Approvals Table — wider */}
-                        <Grid item xs={12} lg={7}>
-                            <WidgetContainer
-                                title="Recent Pending Approvals"
-                                loading={loading}
-                                empty={!loading && pendingRows.length === 0}
-                                onRefresh={loadDashboard}
-                                action={
-                                    pendingRows.length > 0 && !loading ? (
-                                        <Chip
-                                            label={`${pendingRows.length} pending`}
-                                            size="small"
-                                            color="warning"
-                                            sx={{
-                                                height: 22,
-                                                fontSize: "0.75rem",
-                                                fontWeight: 700,
-                                                borderRadius: "6px",
-                                                "& .MuiChip-label": { px: 1 },
-                                            }}
-                                        />
-                                    ) : null
-                                }
-                                sx={{ minHeight: 320, height: "100%" }}
-                                bodyPadding={0}
-                            >
-                                <DataGrid
-                                    rows={pendingRows}
-                                    columns={DATAGRID_COLUMNS.COMMUNITY_ADMIN_APPROVALS}
-                                    pageSize={5}
-                                    autoHeight
+                    <WidgetContainer
+                        loading={loading}
+                        empty={!loading && pendingRows.length === 0}
+                        onRefresh={loadDashboard}
+                        action={
+                            pendingRows.length > 0 && !loading ? (
+                                <Chip
+                                    label={`${pendingRows.length} pending`}
+                                    size="small"
+                                    color="warning"
+                                    sx={{
+                                        height: 22,
+                                        fontSize: "0.75rem",
+                                        fontWeight: 700,
+                                        borderRadius: "6px",
+                                        "& .MuiChip-label": { px: 1 },
+                                    }}
                                 />
-                            </WidgetContainer>
-                        </Grid>
+                            ) : null
+                        }
+                        sx={{ minHeight: 240 }}
+                        bodyPadding={0}
+                    >
+                        <DataGrid
+                            rows={pendingRows}
+                            columns={DATAGRID_COLUMNS.COMMUNITY_ADMIN_APPROVALS}
+                            pageSize={5}
+                            autoHeight
+                        />
+                    </WidgetContainer>
+                </Paper>
 
-                        {/* Recent Activities — narrower */}
-                        <Grid item xs={12} lg={5}>
-                            <TimelineWidget
-                                title="Recent Activities"
-                                activities={dashboard?.recentActivities || []}
-                                loading={loading}
-                                maxHeight={320}
-                            />
-                        </Grid>
-                    </Grid>
-                </Box>
-
+                {/* ── 6. Full-Width Community Activity Log Section ────────────── */}
+                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
+                    <SectionHeader
+                        title="Recent Community Activities & Audit Trail"
+                        subtitle="Real-time log of community management events, meter telemetry alerts, and resident updates"
+                    />
+                    <TimelineWidget
+                        activities={dashboard?.recentActivities || []}
+                        loading={loading}
+                        maxHeight={340}
+                    />
+                </Paper>
             </Box>
         </DashboardLayout>
     );

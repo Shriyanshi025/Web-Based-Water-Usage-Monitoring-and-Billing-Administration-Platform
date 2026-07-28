@@ -22,7 +22,7 @@ import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import SearchBar from "../../components/common/SearchBar";
@@ -194,14 +194,26 @@ const ApprovalsPage = () => {
         }
     ], [handleAction]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Pending Requests", value: pendingResidents.length, color: "warning" }
+    ], [pendingResidents]);
+
     // ── Render ────────────────────────────────────────────────────────────────
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Resident Approvals"
-                subtitle="Review and action pending resident registration requests."
+                subtitle="Review and manage pending resident registration requests."
+                icon={PendingActionsIcon}
+                metadata={headerMetadata}
                 action={
-                    <ActionButton variant="outlined" startIcon={<RefreshIcon />} onClick={fetchPending} disabled={loading} sx={{ fontSize: "0.8125rem" }}>
+                    <ActionButton
+                        variant="outlined"
+                        size="small"
+                        startIcon={<RefreshIcon />}
+                        onClick={fetchPending}
+                        sx={{ textTransform: "none", borderRadius: 2 }}
+                    >
                         Refresh
                     </ActionButton>
                 }
@@ -243,7 +255,7 @@ const ApprovalsPage = () => {
                     title="Pending Applications"
                     count={filteredRows.length}
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap" }}>
                             <SearchBar
                                 value={searchTerm}
                                 onChange={setSearchTerm}

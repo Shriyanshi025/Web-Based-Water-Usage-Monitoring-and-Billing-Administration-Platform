@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import TableToolbar from "../../components/common/TableToolbar";
 import DataGrid from "../../components/common/DataGrid";
@@ -536,48 +536,21 @@ function BillsPage() {
         />
     ), []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Statements", value: bills.length },
+        { label: "Unpaid", value: unpaidBillsCount, color: "warning" },
+        { label: "Paid", value: paidBillsCount, color: "success" },
+        { label: "Outstanding", value: formatCurrency(totalOutstandingAmount), color: "error" },
+    ], [bills.length, unpaidBillsCount, paidBillsCount, totalOutstandingAmount]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
+            <PageSummaryHeader 
                 title="My Bills" 
                 subtitle="View and track your water usage bills and statements" 
+                icon={ReceiptIcon}
+                metadata={headerMetadata}
             />
-            
-            {/* KPI Summary Strip */}
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Total Statements"
-                        value={bills.length}
-                        icon={<ReceiptIcon />}
-                        iconColor="primary.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Unpaid Statements"
-                        value={unpaidBillsCount}
-                        icon={<PendingActionsIcon />}
-                        iconColor="warning.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Paid Statements"
-                        value={paidBillsCount}
-                        icon={<CheckCircleIcon />}
-                        iconColor="success.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Total Outstanding"
-                        value={formatCurrency(totalOutstandingAmount)}
-                        icon={<PaymentIcon />}
-                        iconColor="error.main"
-                    />
-                </Grid>
-            </Grid>
 
             <WidgetContainer>
                 {memoizedToolbar}
@@ -620,13 +593,13 @@ function BillsPage() {
                         <Stack spacing={2.5}>
                             {/* Bill Header Info */}
                             <Grid container spacing={2}>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Bill Number</Typography>
                                     <Typography variant="body1" fontWeight="bold">
                                         {selectedBill.billNumber || "-"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Billing Period</Typography>
                                     <Typography variant="body1" fontWeight="medium">
                                         {selectedBill.billingMonth && selectedBill.billingYear ? 
@@ -635,11 +608,11 @@ function BillsPage() {
                                         }
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Generated Date</Typography>
                                     <Typography variant="body2">{selectedBill.generatedDate || "-"}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Due Date</Typography>
                                     <Typography variant="body2" color="error.main" fontWeight="medium">
                                         {selectedBill.dueDate || "-"}
@@ -654,15 +627,15 @@ function BillsPage() {
                                 Meter Readings
                             </Typography>
                             <Grid container spacing={2}>
-                                <Grid item xs={4}>
+                                <Grid size={{ xs: 4 }}>
                                     <Typography variant="caption" color="text.secondary">Previous Reading</Typography>
                                     <Typography variant="body2">{selectedBill.previousReading !== undefined ? `${selectedBill.previousReading} units` : "-"}</Typography>
                                 </Grid>
-                                <Grid item xs={4}>
+                                <Grid size={{ xs: 4 }}>
                                     <Typography variant="caption" color="text.secondary">Current Reading</Typography>
                                     <Typography variant="body2">{selectedBill.currentReading !== undefined ? `${selectedBill.currentReading} units` : "-"}</Typography>
                                 </Grid>
-                                <Grid item xs={4}>
+                                <Grid size={{ xs: 4 }}>
                                     <Typography variant="caption" color="text.secondary">Units Consumed</Typography>
                                     <Typography variant="body2" fontWeight="bold">{selectedBill.unitsConsumed} units</Typography>
                                 </Grid>

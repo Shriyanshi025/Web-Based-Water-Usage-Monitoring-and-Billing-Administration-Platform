@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import SearchBar from "../../components/common/SearchBar";
 import DataGrid from "../../components/common/DataGrid";
@@ -149,11 +149,19 @@ function EmailHistoryPage() {
         },
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Emails", value: history.length },
+        { label: "Sent", value: history.filter(h => h.status === "SENT").length, color: "success" },
+        { label: "Failed", value: history.filter(h => h.status === "FAILED").length, color: "error" },
+    ], [history]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Email Delivery History"
                 subtitle="Complete audit log of all system emails, delivery statuses, duplicate suppressions, and user preferences."
+                icon={MarkEmailReadIcon}
+                metadata={headerMetadata}
             />
 
             <WidgetContainer>

@@ -215,7 +215,7 @@ public class DashboardServiceImpl implements DashboardService {
     public MainAdminDashboardResponse getMainAdminDashboardData() {
         long totalCommunities = communityRepository.count();
         long totalCommunityAdmins = userRepository.countByRole(Role.COMMUNITY_ADMIN);
-        long pendingUsers = userRepository.countByApprovalStatus(ApprovalStatus.PENDING);
+        long pendingUsers = userRepository.countByRoleAndApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.PENDING);
         long totalResidents = residentProfileRepository.count();
 
         List<WaterUsage> allUsages = waterUsageRepository.findAll();
@@ -246,7 +246,7 @@ public class DashboardServiceImpl implements DashboardService {
             .collect(Collectors.toList());
 
         List<CommunityAdminProfileResponse> pendingApprovals = communityAdminProfileRepository.findAll().stream()
-            .filter(p -> p.getUser().getApprovalStatus() == ApprovalStatus.PENDING)
+            .filter(p -> p.getUser().getRole() == Role.COMMUNITY_ADMIN && p.getUser().getApprovalStatus() == ApprovalStatus.PENDING)
             .map(p -> CommunityAdminProfileResponse.builder()
                 .id(p.getId())
                 .userId(p.getUser().getId())

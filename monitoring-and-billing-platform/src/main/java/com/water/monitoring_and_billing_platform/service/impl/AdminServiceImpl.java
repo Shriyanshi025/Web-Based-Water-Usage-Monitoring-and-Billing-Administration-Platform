@@ -69,89 +69,39 @@ public class AdminServiceImpl implements AdminService {
         }
 
         if (request.getApprovalStatus() == ApprovalStatus.APPROVED) {
-            if (user.getRole() == Role.USER) {
-                ResidentProfile profile = residentProfileRepository.findByUserId(user.getId())
-                        .orElseThrow(ResidentProfileNotFoundException::new);
-
-                long verifiedCount = residentProfileRepository.countByCommunityIdAndVerifiedTrue(profile.getCommunity().getId());
-                long sequence = verifiedCount + 1;
-
-                String officialUserId = IdGenerator.generateOfficialResidentId(
-                        profile.getCommunity().getCommunityCode(),
-                        profile.getBlock().getBlockName(),
-                        profile.getUnit().getUnitNumber(),
-                        sequence
-                );
-
-                profile.setVerified(true);
-                profile.setOfficialUserId(officialUserId);
-
-                user.setApprovalStatus(ApprovalStatus.APPROVED);
-
-                userRepository.save(user);
-                ResidentProfile savedProfile = residentProfileRepository.save(profile);
-                
-                // Assign a UNIQUE Water Meter automatically
-                if (waterMeterRepository.findByResidentProfileId(savedProfile.getId()).isEmpty()) {
-                    long totalMeters = waterMeterRepository.count();
-                    String meterNumber = String.format("WM-%06d", totalMeters + 1);
-                    com.water.monitoring_and_billing_platform.entity.WaterMeter meter = com.water.monitoring_and_billing_platform.entity.WaterMeter.builder()
-                            .meterNumber(meterNumber)
-                            .residentProfile(savedProfile)
-                            .meterStatus(com.water.monitoring_and_billing_platform.enums.MeterStatus.ACTIVE)
-                            .initialReading(0.0)
-                            .currentReading(0.0)
-                            .installationDate(java.time.LocalDate.now())
-                            .active(true)
-                            .build();
-                    waterMeterRepository.save(meter);
-                }
-
-                alertService.createInAppNotification(
-                        user,
-                        savedProfile,
-                        savedProfile.getCommunity(),
-                        "Registration Approved",
-                        "Your registration request has been approved by the administrator. Welcome to HydroSync!",
-                        com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
-                        com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
-                        null
-                );
-
-            } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
-                CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(user.getId())
-                        .orElseThrow(() -> new RuntimeException("Community Admin profile not found."));
-
-                long verifiedCount = communityAdminProfileRepository.countByCommunityIdAndVerifiedTrue(profile.getCommunity().getId());
-                long sequence = verifiedCount + 1;
-
-                String officialAdminId = IdGenerator.generateOfficialCommunityAdminId(
-                        profile.getCommunity().getCommunityCode(),
-                        sequence
-                );
-
-                profile.setVerified(true);
-                profile.setOfficialAdminId(officialAdminId);
-
-                user.setApprovalStatus(ApprovalStatus.APPROVED);
-
-                userRepository.save(user);
-                communityAdminProfileRepository.save(profile);
-
-                alertService.createInAppNotification(
-                        user,
-                        null,
-                        profile.getCommunity(),
-                        "Registration Approved",
-                        "Your community administrator registration request has been approved. Welcome to HydroSync!",
-                        com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
-                        com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
-                        null
-                );
-            } else {
-                user.setApprovalStatus(ApprovalStatus.APPROVED);
-                userRepository.save(user);
+            if (user.getRole() != Role.COMMUNITY_ADMIN) {
+                throw new IllegalStateException("Main Admin can only approve Community Admin registration requests.");
             }
+
+            CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(user.getId())
+                    .orElseThrow(() -> new RuntimeException("Community Admin profile not found."));
+
+            long verifiedCount = communityAdminProfileRepository.countByCommunityIdAndVerifiedTrue(profile.getCommunity().getId());
+            long sequence = verifiedCount + 1;
+
+            String officialAdminId = IdGenerator.generateOfficialCommunityAdminId(
+                    profile.getCommunity().getCommunityCode(),
+                    sequence
+            );
+
+            profile.setVerified(true);
+            profile.setOfficialAdminId(officialAdminId);
+
+            user.setApprovalStatus(ApprovalStatus.APPROVED);
+
+            userRepository.save(user);
+            communityAdminProfileRepository.save(profile);
+
+            alertService.createInAppNotification(
+                    user,
+                    null,
+                    profile.getCommunity(),
+                    "Registration Approved",
+                    "Your community administrator registration request has been approved. Welcome to HydroSync!",
+                    com.water.monitoring_and_billing_platform.enums.AlertType.REGISTRATION_APPROVED,
+                    com.water.monitoring_and_billing_platform.enums.AlertSeverity.LOW,
+                    null
+            );
         } else {
             user.setApprovalStatus(request.getApprovalStatus());
             userRepository.save(user);
@@ -166,6 +116,8 @@ public class AdminServiceImpl implements AdminService {
                 .fullName(user.getFullName())
                 .role(user.getRole().name())
                 .approvalStatus(user.getApprovalStatus().name())
+                .active(com.water.monitoring_and_billing_platform.util.UserStatusUtil.calculateActiveStatus(user))
+                .lastLogin(user.getLastLogin())
                 .build();
     }
 
@@ -181,6 +133,7 @@ public class AdminServiceImpl implements AdminService {
                 .blockName(resident.getBlock().getBlockName())
                 .unitNumber(resident.getUnit().getUnitNumber())
                 .verified(resident.isVerified())
+                .active(resident.getUser() != null ? com.water.monitoring_and_billing_platform.util.UserStatusUtil.calculateActiveStatus(resident.getUser()) : resident.isActive())
                 .build();
     }
 
@@ -194,6 +147,7 @@ public class AdminServiceImpl implements AdminService {
                 .phoneNumber(admin.getPhoneNumber())
                 .communityName(admin.getCommunity().getCommunityName())
                 .verified(admin.isVerified())
+                .active(admin.getUser() != null ? com.water.monitoring_and_billing_platform.util.UserStatusUtil.calculateActiveStatus(admin.getUser()) : admin.isActive())
                 .build();
     }
 
@@ -256,30 +210,28 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public List<UserMeResponse> getPendingUsers() {
-        return userRepository.findByApprovalStatus(ApprovalStatus.PENDING).stream()
+        return userRepository.findByRoleAndApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.PENDING).stream()
                 .map(this::mapToUserMeResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<UserMeResponse> getApprovedUsers() {
-        return userRepository.findByApprovalStatus(ApprovalStatus.APPROVED).stream()
+        return userRepository.findByRoleAndApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.APPROVED).stream()
                 .map(this::mapToUserMeResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<UserMeResponse> getRejectedUsers() {
-        return userRepository.findByApprovalStatus(ApprovalStatus.REJECTED).stream()
+        return userRepository.findByRoleAndApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.REJECTED).stream()
                 .map(this::mapToUserMeResponse)
                 .collect(Collectors.toList());
     }
 
     @Override
     public List<ResidentProfileResponse> getPendingResidents() {
-        return residentProfileRepository.findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus.PENDING).stream()
-                .map(this::mapToResidentProfileResponse)
-                .collect(Collectors.toList());
+        return java.util.Collections.emptyList();
     }
 
     @Override

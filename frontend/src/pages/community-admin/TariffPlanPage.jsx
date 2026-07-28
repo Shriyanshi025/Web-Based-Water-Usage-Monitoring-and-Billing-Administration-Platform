@@ -50,7 +50,7 @@ import ArchiveIcon from "@mui/icons-material/Archive";
 import InventoryIcon from "@mui/icons-material/Inventory";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import AdminStatCard from "../../components/common/AdminStatCard";
 import CommunityOpsService from "../../services/CommunityOpsService";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
@@ -442,68 +442,31 @@ function TariffPlanPage() {
         );
     }
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Policies", value: summary.total },
+        { label: "Active", value: summary.active, color: "success" },
+        { label: "Draft", value: summary.draft, color: "warning" },
+        { label: "Archived", value: summary.archived, color: "primary" },
+    ], [summary]);
+
     return (
         <DashboardLayout>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }} flexWrap="wrap" gap={2}>
-                <PageHeader
-                    title="Enterprise Tariff Policy Management"
-                    subtitle="Configure production billing policies, status lifecycles (Draft, Active, Inactive, Archived), effective date ranges, and slabs."
-                />
-                <Stack direction="row" spacing={1.5}>
-                    <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={fetchPlans} sx={{ textTransform: "none", borderRadius: 2, height: 38 }}>
-                        Refresh
-                    </Button>
-                    <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenCreateDialog} sx={{ textTransform: "none", borderRadius: 2, height: 38, fontWeight: "bold" }}>
-                        Create Tariff Policy
-                    </Button>
-                </Stack>
-            </Stack>
-
-            {error && <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>{error}</Alert>}
-
-            {/* ── Summary statistics strip ── */}
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <AdminStatCard
-                        title="Total Policies"
-                        value={summary.total}
-                        icon={<PolicyIcon />}
-                        color="primary"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <AdminStatCard
-                        title="Active Policy"
-                        value={summary.active}
-                        icon={<CheckCircleIcon />}
-                        color="success"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <AdminStatCard
-                        title="Draft Policies"
-                        value={summary.draft}
-                        icon={<EditIcon />}
-                        color="warning"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <AdminStatCard
-                        title="Inactive Policies"
-                        value={summary.inactive}
-                        icon={<CancelIcon />}
-                        color="default"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={2.4}>
-                    <AdminStatCard
-                        title="Archived"
-                        value={summary.archived}
-                        icon={<InventoryIcon />}
-                        color="secondary"
-                    />
-                </Grid>
-            </Grid>
+            <PageSummaryHeader
+                title="Enterprise Tariff Policy Management"
+                subtitle="Configure production billing policies, status lifecycles (Draft, Active, Inactive, Archived), effective date ranges, and slabs."
+                icon={PolicyIcon}
+                metadata={headerMetadata}
+                action={
+                    <Stack direction="row" spacing={1.5}>
+                        <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={fetchPlans} sx={{ textTransform: "none", borderRadius: 2, height: 38 }}>
+                            Refresh
+                        </Button>
+                        <Button variant="contained" size="small" startIcon={<AddIcon />} onClick={handleOpenCreateDialog} sx={{ textTransform: "none", borderRadius: 2, height: 38, fontWeight: "bold" }}>
+                            Create Tariff Policy
+                        </Button>
+                    </Stack>
+                }
+            />
 
             {/* ── Toolbar: Search, Filter & Sort ── */}
             <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", bgcolor: "background.paper" }}>

@@ -2,16 +2,14 @@ import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import DashboardGrid from "../../components/layout/DashboardGrid";
-import AdminStatCard from "../../components/common/AdminStatCard";
-import PageHeader from "../../components/common/PageHeader";
 import ChartCard from "../../components/widgets/ChartCard";
 import TimelineWidget from "../../components/widgets/TimelineWidget";
 import DataGrid from "../../components/common/DataGrid";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
-import QuickActionCard from "../../components/widgets/QuickActionCard";
 import LoadingScreen from "../../components/common/LoadingScreen";
 import ActionButton from "../../components/common/ActionButton";
-import { Button } from "@mui/material";
+import SectionHeader from "../../components/common/SectionHeader";
+import { Button, Grid, Paper } from "@mui/material";
 
 // Icons
 import BusinessIcon from "@mui/icons-material/Business";
@@ -22,9 +20,12 @@ import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import AddIcon from "@mui/icons-material/Add";
 
-import { QUICK_ACTIONS_CONFIG, DATAGRID_COLUMNS } from "../../constants/dashboardConfig";
+import { DATAGRID_COLUMNS } from "../../constants/dashboardConfig";
 import { getMainDashboard } from "../../services/DashboardService";
 import { formatCurrency, formatWaterUsage } from "../../helpers/numberHelper";
+import DashboardHero from "../../components/widgets/DashboardHero";
+import DashboardInsight from "../../components/widgets/DashboardInsight";
+import DashboardOverview from "../../components/widgets/DashboardOverview";
 
 function MainAdminDashboard() {
     const navigate = useNavigate();
@@ -47,114 +48,109 @@ function MainAdminDashboard() {
         }
     };
 
-    const memoizedQuickActions = useMemo(() => 
-        QUICK_ACTIONS_CONFIG.MAIN_ADMIN.filter(action => !action.hidden).map((action) => (
-            <QuickActionCard 
-                key={action.id}
-                title={action.title} 
-                description={action.description}
-                icon={action.icon}
-                color={action.color}
-                comingSoon={action.comingSoon}
-                disabled={action.disabled}
-                onClick={() => action.path && navigate(action.path)}
-            />
-        )), 
-    []);
-
-    const memoizedKpiCards = useMemo(() => [
-        <AdminStatCard 
-            key="total-communities"
-            title="Total Communities" 
-            value={dashboard?.totalCommunities || 0} 
-            icon={<BusinessIcon />} 
-            iconColor="primary.main"
-            onClick={() => navigate("/main-admin/communities")}
-        />,
-        <AdminStatCard 
-            key="active-residents"
-            title="Active Residents" 
-            value={dashboard?.totalResidents || 0} 
-            icon={<PeopleIcon />} 
-            iconColor="success.main"
-            onClick={() => navigate("/main-admin/communities")}
-        />,
-        <AdminStatCard 
-            key="pending-approvals"
-            title="Pending Approvals" 
-            value={dashboard?.pendingCommunityAdmins || 0} 
-            icon={<PendingActionsIcon />} 
-            iconColor="warning.main"
-            onClick={() => navigate("/main-admin/approvals")}
-        />,
-        <AdminStatCard 
-            key="community-admins"
-            title="Community Admins" 
-            value={dashboard?.totalCommunityAdmins || 0} 
-            icon={<SupervisorAccountIcon />} 
-            iconColor="info.main"
-            onClick={() => navigate("/main-admin/community-admins")}
-        />,
-        <AdminStatCard 
-            key="water-consumption"
-            title="Water Consumption" 
-            value={formatWaterUsage(dashboard?.totalWaterConsumption || 0)} 
-            icon={<WaterDropIcon />} 
-            iconColor="primary.main"
-            onClick={() => navigate("/main-admin/communities")}
-        />,
-        <AdminStatCard 
-            key="revenue-summary"
-            title="Revenue Summary" 
-            value={formatCurrency(dashboard?.totalRevenue || 0)}
-            icon={<CurrencyRupeeIcon />} 
-            iconColor="success.main"
-            onClick={() => navigate("/main-admin/communities")}
+    // Top Analytics Overview Hero Section (Unchanged)
+    const overviewHero = useMemo(() => (
+        <DashboardOverview
+            hero={
+                <DashboardHero
+                    badge="SYSTEM PLATFORM HEALTH"
+                    statusColor="success"
+                    title="Enterprise Overview & Performance"
+                    primaryValue={`${dashboard?.totalCommunities || 0} Registered Communities`}
+                    subtitle="Platform operational status, active resident allocations, and water distribution telemetry across all managed properties."
+                    metrics={[
+                        { label: "Active Residents", value: (dashboard?.totalResidents || 0).toLocaleString(), icon: <PeopleIcon fontSize="small" /> },
+                        { label: "Water Consumption", value: formatWaterUsage(dashboard?.totalWaterConsumption || 0), icon: <WaterDropIcon fontSize="small" /> },
+                        { label: "Pending Approvals", value: dashboard?.pendingCommunityAdmins || 0, color: (dashboard?.pendingCommunityAdmins || 0) > 0 ? "warning.main" : "text.secondary", icon: <PendingActionsIcon fontSize="small" /> },
+                        { label: "Community Admins", value: dashboard?.totalCommunityAdmins || 0, icon: <SupervisorAccountIcon fontSize="small" /> },
+                    ]}
+                />
+            }
+            insights={[
+                <DashboardInsight
+                    key="revenue"
+                    title="Total Platform Revenue"
+                    value={formatCurrency(dashboard?.totalRevenue || 0)}
+                    caption="Aggregated billing volume across all communities"
+                    icon={<CurrencyRupeeIcon />}
+                    color="success.main"
+                    onClick={() => navigate("/main-admin/communities")}
+                />,
+                <DashboardInsight
+                    key="communities"
+                    title="Active Communities"
+                    value={dashboard?.totalCommunities || 0}
+                    caption="Fully onboarded water management networks"
+                    icon={<BusinessIcon />}
+                    color="primary.main"
+                    onClick={() => navigate("/main-admin/communities")}
+                />,
+            ]}
         />
-    ], [dashboard]);
+    ), [dashboard, navigate]);
 
-    const memoizedLeftColumn = useMemo(() => [
-        <ChartCard 
-            key="monthly-water"
-            title="Monthly Water Consumption (Millions Litres)" 
-            data={dashboard?.monthlyWaterConsumptionChart || []} 
-            type="line" 
-        />,
-        <WidgetContainer 
-            key="pending-approvals" 
-            title="Pending Approvals"
-            action={<Button size="small" variant="outlined" onClick={() => navigate("/main-admin/approvals")}>View All</Button>}
-        >
-            <DataGrid 
-                rows={(dashboard?.pendingApprovals || []).map(admin => ({
-                    id: admin.id,
-                    name: admin.fullName,
-                    role: 'Community Admin',
-                    community: admin.communityName,
-                    date: new Date().toLocaleDateString(),
-                    status: admin.verified ? 'VERIFIED' : 'PENDING'
-                }))} 
-                columns={DATAGRID_COLUMNS.MAIN_ADMIN_APPROVALS} 
-                pageSize={5} 
-                autoHeight 
+    // Full-Width Enterprise Content Sections
+    const dashboardSections = useMemo(() => [
+        // Section 1: Merged Analytics & Growth Telemetry
+        <Paper key="analytics-section" variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
+            <SectionHeader 
+                title="Platform Analytics & Community Growth" 
+                subtitle="Aggregated monthly water consumption telemetry alongside platform community onboarding velocity" 
             />
-        </WidgetContainer>
-    ], [dashboard]);
+            <Grid container spacing={2.5}>
+                <Grid size={{ xs: 12, lg: 6 }}>
+                    <ChartCard 
+                        title="Monthly Water Consumption (Millions Litres)" 
+                        data={dashboard?.monthlyWaterConsumptionChart || []} 
+                        type="line" 
+                    />
+                </Grid>
+                <Grid size={{ xs: 12, lg: 6 }}>
+                    <ChartCard 
+                        title="Community Onboarding Growth" 
+                        data={dashboard?.communityGrowth || []} 
+                        type="bar" 
+                        color="#10b981"
+                    />
+                </Grid>
+            </Grid>
+        </Paper>,
 
-    const memoizedRightColumn = useMemo(() => [
-        <TimelineWidget 
-            key="recent-activities"
-            title="Recent Activities" 
-            activities={dashboard?.recentActivities || []} 
-        />,
-        <ChartCard 
-            key="community-growth"
-            title="Community Growth" 
-            data={dashboard?.communityGrowth || []} 
-            type="bar" 
-            color="#10b981"
-        />
-    ], [dashboard]);
+        // Section 2: Pending Approvals & Governance
+        <Paper key="approvals-section" variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
+            <SectionHeader 
+                title="Pending Approvals & Administrative Governance" 
+                subtitle="Community Admin registrations awaiting verification and role assignment"
+                action={<Button size="small" variant="outlined" onClick={() => navigate("/main-admin/approvals")}>View All Approvals</Button>}
+            />
+            <WidgetContainer bodyPadding={0}>
+                <DataGrid 
+                    rows={(dashboard?.pendingApprovals || []).map(admin => ({
+                        id: admin.id,
+                        name: admin.fullName,
+                        role: 'Community Admin',
+                        community: admin.communityName,
+                        date: new Date().toLocaleDateString(),
+                        status: admin.verified ? 'VERIFIED' : 'PENDING'
+                    }))} 
+                    columns={DATAGRID_COLUMNS.MAIN_ADMIN_APPROVALS} 
+                    pageSize={5} 
+                    autoHeight 
+                />
+            </WidgetContainer>
+        </Paper>,
+
+        // Section 3: System Activity & Audit Log
+        <Paper key="activity-section" variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
+            <SectionHeader 
+                title="Recent System Activity & Audit Log" 
+                subtitle="System-wide audit trail of administrative actions, onboarding updates, and platform events"
+            />
+            <TimelineWidget 
+                activities={dashboard?.recentActivities || []} 
+            />
+        </Paper>
+    ], [dashboard, navigate]);
 
     if (loading) {
         return (
@@ -170,9 +166,8 @@ function MainAdminDashboard() {
                 headerTitle="Welcome back, Administrator"
                 headerSubtitle={new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                 headerAction={<ActionButton variant="contained" icon={<AddIcon />} onClick={() => navigate("/main-admin/communities")}>Create Community</ActionButton>}
-                kpiCards={memoizedKpiCards}
-                leftColumn={memoizedLeftColumn}
-                rightColumn={memoizedRightColumn}
+                kpiCards={overviewHero}
+                sections={dashboardSections}
                 quickActions={null}
             />
         </DashboardLayout>

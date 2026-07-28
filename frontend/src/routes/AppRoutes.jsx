@@ -15,6 +15,7 @@ const UserDashboard = lazy(() => import("../pages/dashboard/UserDashboard"));
 const CommunitiesPage = lazy(() => import("../pages/main-admin/CommunitiesPage"));
 const CommunityAdminsPage = lazy(() => import("../pages/main-admin/CommunityAdminsPage"));
 const MainAdminApprovalsPage = lazy(() => import("../pages/main-admin/MainAdminApprovalsPage"));
+const MainAdminSupportPage = lazy(() => import("../pages/main-admin/MainAdminSupportPage"));
 
 // Community Admin Pages
 const ResidentsPage = lazy(() => import("../pages/community-admin/ResidentsPage"));
@@ -30,6 +31,7 @@ const BulkWaterPurchasePage = lazy(() => import("../pages/community-admin/BulkWa
 const CostDistributionPage = lazy(() => import("../pages/community-admin/CostDistributionPage"));
 const AlertsManagementPage = lazy(() => import("../pages/community-admin/AlertsManagementPage"));
 const EmailHistoryPage = lazy(() => import("../pages/community-admin/EmailHistoryPage"));
+const CommunityAdminSupportPage = lazy(() => import("../pages/community-admin/CommunityAdminSupportPage"));
 const InvoicePage = lazy(() => import("../pages/common/InvoicePage"));
 
 // Resident Pages
@@ -38,6 +40,7 @@ const UsagePage = lazy(() => import("../pages/resident/UsagePage"));
 const MeterDetailsPage = lazy(() => import("../pages/resident/MeterDetailsPage"));
 const ProfilePage = lazy(() => import("../pages/resident/ProfilePage"));
 const ResidentComplaintsPage = lazy(() => import("../pages/resident/ComplaintsPage"));
+const ResidentSupportPage = lazy(() => import("../pages/resident/ResidentSupportPage"));
 const CommunityComplaintsPage = lazy(() => import("../pages/community-admin/ComplaintsPage"));
 const NotificationsPage = lazy(() => import("../pages/common/NotificationsPage"));
 const PaymentHistoryPage = lazy(() => import("../pages/resident/PaymentHistoryPage"));
@@ -100,6 +103,11 @@ function AppRoutes() {
                 <Route path={ROUTES.MAIN_ADMIN_APPROVALS} element={
                     <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
                         <MainAdminApprovalsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/main-admin/support" element={
+                    <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
+                        <MainAdminSupportPage />
                     </ProtectedRoute>
                 } />
                 <Route path={ROUTES.MAIN_ADMIN_PROFILE} element={
@@ -239,6 +247,11 @@ function AppRoutes() {
                         <CommunityComplaintsPage />
                     </ProtectedRoute>
                 } />
+                <Route path="/community-admin/support" element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <CommunityAdminSupportPage />
+                    </ProtectedRoute>
+                } />
 
                 {/* Resident Routes */}
                 <Route path={ROUTES.RESIDENT_DASHBOARD} element={
@@ -299,6 +312,16 @@ function AppRoutes() {
                 <Route path={ROUTES.RESIDENT_COMPLAINTS} element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <ResidentComplaintsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/user/support" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <ResidentSupportPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/support" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <ResidentSupportPage />
                     </ProtectedRoute>
                 } />
                 <Route path={ROUTES.RESIDENT_NOTIFICATIONS} element={

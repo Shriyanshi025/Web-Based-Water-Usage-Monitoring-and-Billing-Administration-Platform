@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Typography, Stack, Skeleton, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { safeAlpha } from "../../helpers/colorHelper";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import TrendingDownIcon from "@mui/icons-material/TrendingDown";
 import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
@@ -77,7 +78,7 @@ const StatCard = ({
     if (loading) {
         return (
             <Box sx={{ ...cardShell, "&:hover": undefined }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5}>
+                <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
                     <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: "10px" }} />
                     <Skeleton variant="text" width="28%" height={18} />
                 </Stack>
@@ -129,7 +130,7 @@ const StatCard = ({
             onClick={onClick}
         >
             {/* ── Top row: icon mark + trend badge ── */}
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2.5}>
+            <Stack direction="row" sx={{ justifyContent: "space-between", alignItems: "flex-start", mb: 2.5 }}>
                 {/* Icon container */}
                 <Box
                     sx={{
@@ -152,16 +153,16 @@ const StatCard = ({
                 {trend !== undefined && (
                     <Stack
                         direction="row"
-                        alignItems="center"
                         spacing={0.25}
                         sx={{
+                            alignItems: "center",
                             px: 0.875,
                             py: 0.375,
                             borderRadius: "6px",
                             bgcolor: trendUp
-                                ? alpha(theme.palette.success.main, 0.09)
+                                ? safeAlpha(theme, "success.main", 0.09)
                                 : trendDown
-                                    ? alpha(theme.palette.error.main, 0.09)
+                                    ? safeAlpha(theme, "error.main", 0.09)
                                     : "action.hover",
                         }}
                     >

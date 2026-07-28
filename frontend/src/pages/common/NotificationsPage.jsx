@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import SearchBar from "../../components/common/SearchBar";
 import DataGrid from "../../components/common/DataGrid";
@@ -128,7 +128,7 @@ function NotificationsPage() {
     };
 
     const handleNotificationClick = async (alert) => {
-        if (alert.status !== "READ") {
+        if (alert?.status !== "READ" && alert?.id) {
             try { await AlertService.markAlertAsRead(alert.id); } catch (_) {}
         }
 
@@ -136,56 +136,94 @@ function NotificationsPage() {
         const isCommunityAdmin = role === "COMMUNITY_ADMIN";
         const isMainAdmin = role === "MAIN_ADMIN";
 
-        // Determine the correct prefix based on role
-        const prefix = isCommunityAdmin
-            ? "/community-admin"
-            : isMainAdmin
-                ? "/main-admin"
-                : "/user";
+        // Separate extraction for Support Tickets vs Complaints
+        const supMatch = alert?.message?.match(/SUP-\d{4}-\d+/i) || alert?.title?.match(/SUP-\d{4}-\d+/i);
+        const cmpMatch = alert?.message?.match(/CMP-\d{4}-\d+/i) || alert?.title?.match(/CMP-\d{4}-\d+/i);
 
-        // Route map: alert type → destination path
-        // Community/Main Admin: meter/usage/bill types go to the admin equivalents
-        const routeMap = isCommunityAdmin || isMainAdmin
-            ? {
-                BILL_GENERATED:           `${prefix}/bills`,
-                BILL_OVERDUE:             `${prefix}/bills`,
-                PAYMENT_SUCCESS:          `${prefix}/bills`,
-                PAYMENT_FAILED:           `${prefix}/bills`,
-                HIGH_WATER_USAGE:         `${prefix}/usage`,
-                ABNORMAL_HIGH_USAGE:      `${prefix}/usage`,
-                ABNORMAL_LOW_USAGE:       `${prefix}/usage`,
-                SUSPECTED_LEAK:           `${prefix}/usage`,
-                POSSIBLE_LEAK:            `${prefix}/usage`,
-                CONTINUOUS_CONSUMPTION:   `${prefix}/usage`,
-                METER_OFFLINE:            `${prefix}/meters`,
-                METER_STUCK:              `${prefix}/meters`,
-                INVALID_READING:          `${prefix}/usage`,
-                MANUAL_TAMPERING:         `${prefix}/meters`,
-                REGISTRATION_PENDING:     "/community-admin/approvals",
-                COMPLAINT_CREATED:        "/community-admin/complaints",
-                COMPLAINT_STATUS_UPDATED: "/community-admin/complaints",
-            }
-            : {
-                BILL_GENERATED:           "/user/bills",
-                BILL_OVERDUE:             "/user/bills",
-                PAYMENT_SUCCESS:          "/user/bills",
-                PAYMENT_FAILED:           "/user/bills",
-                HIGH_WATER_USAGE:         "/user/usage",
-                ABNORMAL_HIGH_USAGE:      "/user/usage",
-                ABNORMAL_LOW_USAGE:       "/user/usage",
-                SUSPECTED_LEAK:           "/user/usage",
-                POSSIBLE_LEAK:            "/user/usage",
-                CONTINUOUS_CONSUMPTION:   "/user/usage",
-                METER_OFFLINE:            "/user/meter",
-                METER_STUCK:              "/user/meter",
-                INVALID_READING:          "/user/usage",
-                MANUAL_TAMPERING:         "/user/meter",
-                REGISTRATION_PENDING:     "/user/notifications",
-                COMPLAINT_CREATED:        "/user/complaints",
-                COMPLAINT_STATUS_UPDATED: "/user/complaints",
+        const supQuery = supMatch ? `?ticketNumber=${encodeURIComponent(supMatch[0])}` : "";
+        const cmpQuery = cmpMatch ? `?ticketNumber=${encodeURIComponent(cmpMatch[0])}` : "";
+
+        if (isMainAdmin) {
+            const mainAdminRoutes = {
+                BILL_GENERATED:           "/main-admin/bills",
+                BILL_OVERDUE:             "/main-admin/bills",
+                PAYMENT_SUCCESS:          "/main-admin/bills",
+                PAYMENT_FAILED:           "/main-admin/bills",
+                HIGH_WATER_USAGE:         "/main-admin/usage",
+                ABNORMAL_HIGH_USAGE:      "/main-admin/usage",
+                ABNORMAL_LOW_USAGE:       "/main-admin/usage",
+                SUSPECTED_LEAK:           "/main-admin/usage",
+                POSSIBLE_LEAK:            "/main-admin/usage",
+                CONTINUOUS_CONSUMPTION:   "/main-admin/usage",
+                METER_OFFLINE:            "/main-admin/meters",
+                METER_STUCK:              "/main-admin/meters",
+                INVALID_READING:          "/main-admin/usage",
+                MANUAL_TAMPERING:         "/main-admin/meters",
+                REGISTRATION_PENDING:     "/main-admin/approvals",
+                SUPPORT_TICKET_CREATED:   `/main-admin/support${supQuery}`,
+                SUPPORT_TICKET_UPDATED:   `/main-admin/support${supQuery}`,
+                SUPPORT_TICKET_REPLY:     `/main-admin/support${supQuery}`,
+                COMPLAINT_CREATED:        `/main-admin/support${cmpQuery}`,
+                COMPLAINT_STATUS_UPDATED: `/main-admin/support${cmpQuery}`,
             };
+            const dest = mainAdminRoutes[alert.alertType] || `/main-admin/support${supQuery}`;
+            navigate(dest);
+            return;
+        }
 
-        navigate(routeMap[alert.alertType] || `${prefix}/notifications`);
+        if (isCommunityAdmin) {
+            const communityAdminRoutes = {
+                BILL_GENERATED:           "/community-admin/bills",
+                BILL_OVERDUE:             "/community-admin/bills",
+                PAYMENT_SUCCESS:          "/community-admin/bills",
+                PAYMENT_FAILED:           "/community-admin/bills",
+                HIGH_WATER_USAGE:         "/community-admin/usage",
+                ABNORMAL_HIGH_USAGE:      "/community-admin/usage",
+                ABNORMAL_LOW_USAGE:       "/community-admin/usage",
+                SUSPECTED_LEAK:           "/community-admin/usage",
+                POSSIBLE_LEAK:            "/community-admin/usage",
+                CONTINUOUS_CONSUMPTION:   "/community-admin/usage",
+                METER_OFFLINE:            "/community-admin/meters",
+                METER_STUCK:              "/community-admin/meters",
+                INVALID_READING:          "/community-admin/usage",
+                MANUAL_TAMPERING:         "/community-admin/meters",
+                REGISTRATION_PENDING:     "/community-admin/approvals",
+                COMPLAINT_CREATED:        `/community-admin/complaints${cmpQuery}`,
+                COMPLAINT_STATUS_UPDATED: `/community-admin/complaints${cmpQuery}`,
+                SUPPORT_TICKET_CREATED:   `/community-admin/support${supQuery}`,
+                SUPPORT_TICKET_UPDATED:   `/community-admin/support${supQuery}`,
+                SUPPORT_TICKET_REPLY:     `/community-admin/support${supQuery}`,
+            };
+            const dest = communityAdminRoutes[alert.alertType] || alert.targetRoute || `/community-admin/complaints${cmpQuery}`;
+            navigate(dest);
+            return;
+        }
+
+        // Resident / USER Role
+        const residentRoutes = {
+            BILL_GENERATED:           "/user/bills",
+            BILL_OVERDUE:             "/user/bills",
+            PAYMENT_SUCCESS:          "/user/bills",
+            PAYMENT_FAILED:           "/user/bills",
+            HIGH_WATER_USAGE:         "/user/usage",
+            ABNORMAL_HIGH_USAGE:      "/user/usage",
+            ABNORMAL_LOW_USAGE:       "/user/usage",
+            SUSPECTED_LEAK:           "/user/usage",
+            POSSIBLE_LEAK:            "/user/usage",
+            CONTINUOUS_CONSUMPTION:   "/user/usage",
+            METER_OFFLINE:            "/user/meter",
+            METER_STUCK:              "/user/meter",
+            INVALID_READING:          "/user/usage",
+            MANUAL_TAMPERING:         "/user/meter",
+            REGISTRATION_PENDING:     "/user/notifications",
+            COMPLAINT_CREATED:        `/user/complaints${cmpQuery}`,
+            COMPLAINT_STATUS_UPDATED: `/user/complaints${cmpQuery}`,
+            SUPPORT_TICKET_CREATED:   `/user/support${supQuery}`,
+            SUPPORT_TICKET_UPDATED:   `/user/support${supQuery}`,
+            SUPPORT_TICKET_REPLY:     `/user/support${supQuery}`,
+        };
+        const dest = residentRoutes[alert.alertType] || `/user/complaints${cmpQuery}`;
+        navigate(dest);
     };
 
     const filteredAlerts = useMemo(() => {
@@ -377,15 +415,23 @@ function NotificationsPage() {
         },
     ], [markingId]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Notifications", value: alerts.length },
+        { label: "Unread", value: unreadCount, color: "warning" },
+        { label: "Resolved / Read", value: alerts.length - unreadCount, color: "success" },
+    ], [alerts.length, unreadCount]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Notifications"
                 subtitle={
                     unreadCount > 0
                         ? `You have ${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}.`
                         : "All notifications are up to date."
                 }
+                icon={NotificationsNoneIcon}
+                metadata={headerMetadata}
                 action={
                     <Button
                         variant="outlined"

@@ -48,7 +48,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import LockIcon from "@mui/icons-material/Lock";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import SearchBar from "../../components/common/SearchBar";
@@ -481,11 +481,19 @@ function WaterUsagePage() {
         }
     ], [latestReadingRecord, meters, resetAllowed]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Usage Records", value: filteredRows.length },
+        { label: "Active Meters", value: uniqueMetersCount, color: "primary" },
+        { label: "Total Consumption", value: `${totalUnits.toLocaleString()} kL`, color: "info" },
+    ], [filteredRows.length, uniqueMetersCount, totalUnits]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Water Meter Usage"
                 subtitle="Track meter readings sorted latest date first. Software reading reset allowed after bill generation."
+                icon={WaterDropIcon}
+                metadata={headerMetadata}
                 action={
                     <Stack direction="row" spacing={1.5}>
                         <ActionButton variant="outlined" startIcon={<HistoryIcon />} onClick={fetchResetLogs} sx={{ fontSize: "0.8125rem" }}>
@@ -497,39 +505,6 @@ function WaterUsagePage() {
                     </Stack>
                 }
             />
-
-            {/* ── Summary KPI Cards Row ──────────────────────────────────────── */}
-            {!loading && !error && (
-                <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                    <Grid item xs={12} sm={4}>
-                        <AdminStatCard
-                            title="Usage Records Found"
-                            value={filteredRows.length}
-                            icon={<CalendarMonthIcon />}
-                            color="info"
-                            subtitle={`Filtered from ${rows.length} total records`}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                        <AdminStatCard
-                            title="Active Water Meters"
-                            value={uniqueMetersCount}
-                            icon={<SpeedIcon />}
-                            color="primary"
-                            subtitle="Distinct monitored meters"
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={4}>
-                        <AdminStatCard
-                            title="Total Consumption (kL)"
-                            value={totalUnits.toLocaleString()}
-                            icon={<WaterDropIcon />}
-                            color="info"
-                            subtitle="Cumulative units consumed"
-                        />
-                    </Grid>
-                </Grid>
-            )}
 
             {/* ── Error state display ────────────────────────────────────────── */}
             {error && !rows.length && (

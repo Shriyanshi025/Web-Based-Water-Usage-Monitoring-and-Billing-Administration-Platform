@@ -424,6 +424,29 @@ const theme = createTheme({
 
         // ── SELECT ───────────────────────────────────────────────────────────
         MuiSelect: {
+            defaultProps: {
+                MenuProps: {
+                    keepMounted: true,
+                    disableRestoreFocus: true,
+                    anchorOrigin: {
+                        vertical: "bottom",
+                        horizontal: "left",
+                    },
+                    transformOrigin: {
+                        vertical: "top",
+                        horizontal: "left",
+                    },
+                    slotProps: {
+                        paper: {
+                            elevation: 4,
+                            sx: {
+                                maxHeight: 220,
+                                mt: 0.5,
+                            },
+                        },
+                    },
+                },
+            },
             styleOverrides: {
                 select: {
                     fontSize: FONT_SIZE.md,

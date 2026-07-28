@@ -9,7 +9,7 @@ import { Box, Stack } from "@mui/material";
 const FilterBar = ({ children }) => {
     return (
         <Box sx={{ mb: 3, p: 2, bgcolor: "background.paper", borderRadius: 2, border: '1px solid', borderColor: 'divider' }}>
-            <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: "center", flexWrap: "wrap" }}>
                 {children}
             </Stack>
         </Box>

@@ -66,5 +66,11 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
 
     List<Alert> findByRecipientIdOrCommunityIdOrderByCreatedDateDesc(Long recipientId, Long communityId);
 
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Alert a WHERE a.recipient.id = :recipientId OR (a.recipient IS NULL AND a.community.id = :communityId) ORDER BY a.createdDate DESC")
+    List<Alert> findMyCommunityAdminAlerts(@org.springframework.data.repository.query.Param("recipientId") Long recipientId, @org.springframework.data.repository.query.Param("communityId") Long communityId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT a FROM Alert a WHERE a.recipient.id = :recipientId OR (a.recipient IS NULL AND a.resident.id = :residentId) ORDER BY a.createdDate DESC")
+    List<Alert> findMyResidentAlerts(@org.springframework.data.repository.query.Param("recipientId") Long recipientId, @org.springframework.data.repository.query.Param("residentId") Long residentId);
+
     void deleteByCommunityId(Long communityId);
 }

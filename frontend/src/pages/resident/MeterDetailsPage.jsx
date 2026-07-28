@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import ErrorState from "../../components/common/ErrorState";
 import EmptyState from "../../components/common/EmptyState";
@@ -73,32 +73,24 @@ function MeterDetailsPage() {
 
     const isActive = meter?.meterStatus === "ACTIVE";
 
+    const headerMetadata = useMemo(() => [
+        { label: "Meter Number", value: meter?.meterNumber || "—" },
+        { label: "Current Reading", value: meter?.currentReading != null ? `${meter.currentReading} units` : "—", color: "primary" },
+        { label: "Status", value: meter?.meterStatus || "UNASSIGNED", color: isActive ? "success" : "warning" },
+    ], [meter, isActive]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Water Meter"
                 subtitle="View your meter specifications, current reading, and recent consumption history."
-                action={
-                    !loading && meter?.meterStatus ? (
-                        <Chip
-                            icon={
-                                isActive
-                                    ? <CheckCircleIcon sx={{ fontSize: "0.875rem !important" }} />
-                                    : <WarningAmberIcon sx={{ fontSize: "0.875rem !important" }} />
-                            }
-                            label={meter.meterStatus}
-                            size="small"
-                            color={isActive ? "success" : "warning"}
-                            variant="filled"
-                            sx={{ fontWeight: 700, fontSize: "0.75rem" }}
-                        />
-                    ) : undefined
-                }
+                icon={SpeedIcon}
+                metadata={headerMetadata}
             />
 
             <Grid container spacing={3}>
                 {/* ── Left column: Meter Specs ── */}
-                <Grid item xs={12} md={5}>
+                <Grid size={{ xs: 12, md: 5 }}>
                     {loading ? (
                         <Box sx={{ height: 300 }}><SkeletonCard /></Box>
                     ) : error && !meter ? (
@@ -158,7 +150,7 @@ function MeterDetailsPage() {
                 </Grid>
 
                 {/* ── Right column: Recent Readings ── */}
-                <Grid item xs={12} md={7}>
+                <Grid size={{ xs: 12, md: 7 }}>
                     {loading ? (
                         <Box sx={{ height: 300 }}><SkeletonCard /></Box>
                     ) : (

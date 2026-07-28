@@ -160,9 +160,9 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         var block = resident.getBlock();
         var unit = resident.getUnit();
 
-        String meterSerial = null;
-        // meterSerial = waterMeterRepository.findByResidentProfileId(resident.getId()).map(WaterMeter::getSerialNumber).orElse(null);
-        // We will just leave it null for now since it's not easily accessible without repository injection here.
+        String meterSerial = waterMeterRepository.findByResidentProfileId(resident.getId())
+                .map(WaterMeter::getMeterNumber)
+                .orElse(null);
 
         return ResidentProfileResponse.builder()
                 .id(resident.getId())
@@ -177,7 +177,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                 .approvalStatus(user != null && user.getApprovalStatus() != null ? user.getApprovalStatus().name() : null)
                 .meterSerialNumber(meterSerial)
                 .verified(resident.isVerified())
-                .active(resident.isActive())
+                .active(user != null ? com.water.monitoring_and_billing_platform.util.UserStatusUtil.calculateActiveStatus(user) : resident.isActive())
                 .build();
     }
 
@@ -350,6 +350,8 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
                     return com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse.builder()
                             .residentId(resident.getId())
                             .residentName(resident.getUser() != null ? resident.getUser().getFullName() : null)
+                            .communityName(resident.getCommunity() != null ? resident.getCommunity().getCommunityName() : null)
+                            .blockName(resident.getBlock() != null ? resident.getBlock().getBlockName() : null)
                             .unitNumber(resident.getUnit() != null ? resident.getUnit().getUnitNumber() : null)
                             .meterNumber(meter != null ? meter.getMeterNumber() : "No Meter")
                             .currentReading(meter != null ? meter.getCurrentReading() : 0.0)

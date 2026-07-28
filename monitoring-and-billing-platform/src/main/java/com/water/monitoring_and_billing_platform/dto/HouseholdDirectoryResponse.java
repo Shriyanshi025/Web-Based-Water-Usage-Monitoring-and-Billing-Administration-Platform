@@ -11,6 +11,8 @@ import java.math.BigDecimal;
 public class HouseholdDirectoryResponse {
     private Long residentId;
     private String residentName;
+    private String communityName;
+    private String blockName;
     private String unitNumber;
     private String meterNumber;
     private Double currentReading;

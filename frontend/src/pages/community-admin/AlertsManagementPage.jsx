@@ -49,7 +49,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import AdminStatCard from "../../components/common/AdminStatCard";
 import SearchBar from "../../components/common/SearchBar";
 import CommunityOpsService from "../../services/CommunityOpsService";
@@ -414,108 +414,59 @@ function AlertsManagementPage() {
         };
     };
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Alerts", value: counts.total },
+        { label: "Critical", value: counts.critical, color: "error" },
+        { label: "High", value: counts.high, color: "warning" },
+        { label: "Resolved", value: counts.resolved, color: "success" },
+    ], [counts]);
+
     return (
         <DashboardLayout>
-            {/* Header with Export Actions */}
-            <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={2} sx={{ mb: 3 }}>
-                <PageHeader
-                    title="Alerts & Incident Management"
-                    subtitle="Software Alert Engine for water usage anomalies, leaks, stuck meters, invalid readings, and tampering."
-                />
-                <Stack direction="row" spacing={1.5}>
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<DownloadIcon />}
-                        onClick={handleExportCSV}
-                        sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
-                    >
-                        Export CSV
-                    </Button>
-                    <Button
-                        variant="outlined"
-                        color="secondary"
-                        size="small"
-                        startIcon={<PictureAsPdfIcon />}
-                        onClick={handleExportPDF}
-                        sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
-                    >
-                        Export PDF
-                    </Button>
-                    <Button
-                        variant="contained"
-                        size="small"
-                        startIcon={<RefreshIcon />}
-                        onClick={fetchAlerts}
-                        sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
-                    >
-                        Refresh
-                    </Button>
-                </Stack>
-            </Stack>
+            <PageSummaryHeader
+                title="Alerts & Incident Management"
+                subtitle="Software Alert Engine for water usage anomalies, leaks, stuck meters, invalid readings, and tampering."
+                icon={NotificationsActiveIcon}
+                metadata={headerMetadata}
+                action={
+                    <Stack direction="row" spacing={1.5}>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<DownloadIcon />}
+                            onClick={handleExportCSV}
+                            sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
+                        >
+                            Export CSV
+                        </Button>
+                        <Button
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                            startIcon={<PictureAsPdfIcon />}
+                            onClick={handleExportPDF}
+                            sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
+                        >
+                            Export PDF
+                        </Button>
+                        <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<RefreshIcon />}
+                            onClick={fetchAlerts}
+                            sx={{ textTransform: "none", borderRadius: 2, height: 36, fontWeight: 600 }}
+                        >
+                            Refresh
+                        </Button>
+                    </Stack>
+                }
+            />
 
             {error && (
                 <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
                     {error}
                 </Alert>
             )}
-            {/* ── SUMMARY STATS BAR ── */}
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="TOTAL ALERTS"
-                        value={counts.total}
-                        icon={<NotificationsActiveIcon />}
-                        color="primary"
-                        onClick={() => { setSelectedStatus("ALL"); setSelectedSeverity("ALL"); }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="CRITICAL"
-                        value={counts.critical}
-                        icon={<ErrorIcon />}
-                        color="error"
-                        onClick={() => { setSelectedSeverity("CRITICAL"); setSelectedStatus("ALL"); }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="HIGH"
-                        value={counts.high}
-                        icon={<WarningAmberIcon />}
-                        color="warning"
-                        onClick={() => { setSelectedSeverity("HIGH"); setSelectedStatus("ALL"); }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="MEDIUM"
-                        value={counts.medium}
-                        icon={<WarningAmberIcon />}
-                        color="info"
-                        onClick={() => { setSelectedSeverity("MEDIUM"); setSelectedStatus("ALL"); }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="LOW / INFO"
-                        value={counts.low}
-                        icon={<InfoIcon />}
-                        color="info"
-                        onClick={() => { setSelectedSeverity("LOW"); setSelectedStatus("ALL"); }}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4} md={2}>
-                    <AdminStatCard
-                        title="RESOLVED"
-                        value={counts.resolved}
-                        icon={<CheckCircleIcon />}
-                        color="success"
-                        onClick={() => { setSelectedStatus("RESOLVED"); setSelectedSeverity("ALL"); }}
-                    />
-                </Grid>
-            </Grid>
 
             {/* Bulk Actions Header */}
             {selectedIds.length > 0 && (

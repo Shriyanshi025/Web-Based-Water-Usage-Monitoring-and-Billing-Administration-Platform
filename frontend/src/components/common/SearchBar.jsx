@@ -3,6 +3,7 @@ import { Paper, InputBase, IconButton, useTheme } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
+import { safeAlpha } from "../../helpers/colorHelper";
 
 /**
  * Reusable SearchBar component.
@@ -39,7 +40,7 @@ const SearchBar = ({
                 transition: "border-color 180ms ease, box-shadow 180ms ease",
                 "&:focus-within": {
                     borderColor: theme.palette.primary.main,
-                    boxShadow: `0 0 0 3px ${alpha(theme.palette.primary.main, 0.12)}`,
+                    boxShadow: `0 0 0 3px ${safeAlpha(theme, "primary.main", 0.12)}`,
                 },
                 ...sx,
             }}

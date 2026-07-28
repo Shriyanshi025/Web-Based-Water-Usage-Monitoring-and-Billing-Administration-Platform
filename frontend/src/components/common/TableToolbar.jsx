@@ -8,7 +8,6 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    Divider,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
@@ -62,16 +61,18 @@ const TableToolbar = ({
             {/* ── Top row: title + controls ── */}
             <Stack
                 direction={{ xs: "column", sm: "row" }}
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                justifyContent="space-between"
                 spacing={1.25}
-                flexWrap="wrap"
-                minHeight={44}
+                sx={{
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    minHeight: 44,
+                }}
             >
                 {/* Title block */}
                 {title && (
                     <Box sx={{ minWidth: 0 }}>
-                        <Stack direction="row" alignItems="center" spacing={1}>
+                        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                             <Typography
                                 component="div"
                                 sx={{

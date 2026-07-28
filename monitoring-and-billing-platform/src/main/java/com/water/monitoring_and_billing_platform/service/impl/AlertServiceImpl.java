@@ -69,14 +69,14 @@ public class AlertServiceImpl implements AlertService {
         } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
             CommunityAdminProfile adminProfile = communityAdminProfileRepository.findByUserId(user.getId()).orElse(null);
             if (adminProfile != null && adminProfile.getCommunity() != null) {
-                alerts = alertRepository.findByRecipientIdOrCommunityIdOrderByCreatedDateDesc(user.getId(), adminProfile.getCommunity().getId());
+                alerts = alertRepository.findMyCommunityAdminAlerts(user.getId(), adminProfile.getCommunity().getId());
             } else {
                 alerts = alertRepository.findByRecipientIdOrderByCreatedDateDesc(user.getId());
             }
         } else {
             ResidentProfile resident = residentProfileRepository.findByUserId(user.getId()).orElse(null);
             if (resident != null) {
-                alerts = alertRepository.findByRecipientIdOrResidentIdOrderByCreatedDateDesc(user.getId(), resident.getId());
+                alerts = alertRepository.findMyResidentAlerts(user.getId(), resident.getId());
             } else {
                 alerts = alertRepository.findByRecipientIdOrderByCreatedDateDesc(user.getId());
             }
@@ -848,14 +848,14 @@ public class AlertServiceImpl implements AlertService {
         } else if (user.getRole() == Role.COMMUNITY_ADMIN) {
             CommunityAdminProfile adminProfile = communityAdminProfileRepository.findByUserId(user.getId()).orElse(null);
             if (adminProfile != null && adminProfile.getCommunity() != null) {
-                alerts = alertRepository.findByRecipientIdOrCommunityIdOrderByCreatedDateDesc(user.getId(), adminProfile.getCommunity().getId());
+                alerts = alertRepository.findMyCommunityAdminAlerts(user.getId(), adminProfile.getCommunity().getId());
             } else {
                 alerts = alertRepository.findByRecipientIdOrderByCreatedDateDesc(user.getId());
             }
         } else {
             ResidentProfile resident = residentProfileRepository.findByUserId(user.getId()).orElse(null);
             if (resident != null) {
-                alerts = alertRepository.findByRecipientIdOrResidentIdOrderByCreatedDateDesc(user.getId(), resident.getId());
+                alerts = alertRepository.findMyResidentAlerts(user.getId(), resident.getId());
             } else {
                 alerts = alertRepository.findByRecipientIdOrderByCreatedDateDesc(user.getId());
             }
@@ -916,6 +916,15 @@ public class AlertServiceImpl implements AlertService {
         String targetRoute = "/";
         if (alert.getAlertType() != null) {
             switch (alert.getAlertType()) {
+                case COMPLAINT_CREATED:
+                case COMPLAINT_STATUS_UPDATED:
+                    targetRoute = "/community-admin/complaints";
+                    break;
+                case SUPPORT_TICKET_CREATED:
+                case SUPPORT_TICKET_UPDATED:
+                case SUPPORT_TICKET_REPLY:
+                    targetRoute = "/community-admin/support";
+                    break;
                 case BILL_GENERATED:
                 case BILL_OVERDUE:
                 case PAYMENT_SUCCESS:

@@ -182,7 +182,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
                 .communityId(profile.getCommunity() != null ? profile.getCommunity().getId() : null)
                 .communityName(profile.getCommunity() != null ? profile.getCommunity().getCommunityName() : null)
                 .verified(profile.isVerified())
-                .active(profile.isActive())
+                .active(profile.getUser() != null ? com.water.monitoring_and_billing_platform.util.UserStatusUtil.calculateActiveStatus(profile.getUser()) : profile.isActive())
                 .createdAt(profile.getCreatedAt())
                 .communityAddress(commAddr)
                 .totalResidents(totalRes)

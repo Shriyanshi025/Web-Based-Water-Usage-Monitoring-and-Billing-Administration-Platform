@@ -10,8 +10,7 @@ import {
     DialogContent,
     DialogActions,
     Button,
-    TextField,
-    Grid
+    TextField
 } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -19,11 +18,13 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import StatusBadge from "../../components/common/StatusBadge";
 import MainAdminOpsService from "../../services/MainAdminOpsService";
+import { UserCell, TextSubtextCell, formatRole } from "../../components/common/DataGridCells";
 
 const MainAdminApprovalsPage = () => {
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -42,9 +43,11 @@ const MainAdminApprovalsPage = () => {
             setLoading(true);
             setError(null);
             const response = await MainAdminOpsService.getPendingUsers();
-            setPendingUsers(response.data || []);
+            // Ensure only COMMUNITY_ADMIN requests are handled
+            const list = (response?.data || []).filter(u => u.role === "COMMUNITY_ADMIN" || !u.role);
+            setPendingUsers(list);
         } catch (err) {
-            setError(err.message || "Failed to fetch pending users");
+            setError(err.message || "Failed to fetch pending community admin approvals");
         } finally {
             setLoading(false);
         }
@@ -85,7 +88,7 @@ const MainAdminApprovalsPage = () => {
     const handleDeleteUser = (user) => {
         setConfirmConfig({
             open: true,
-            title: "Delete User",
+            title: "Delete User Request",
             content: `Are you sure you want to completely delete ${user.fullName}? This action cannot be undone.`,
             confirmColor: "error",
             confirmText: "Delete",
@@ -120,23 +123,41 @@ const MainAdminApprovalsPage = () => {
     const columns = useMemo(() => [
         { 
             field: "fullName", 
-            headerName: "Name", 
+            headerName: "Applicant", 
+            flex: 1, 
+            minWidth: 220,
+            renderCell: (params) => (
+                <UserCell 
+                    name={params?.row?.fullName} 
+                    role={params?.row?.role || "COMMUNITY_ADMIN"} 
+                    email={params?.row?.email} 
+                />
+            )
+        },
+        { 
+            field: "email", 
+            headerName: "Email Address", 
             flex: 1, 
             minWidth: 200,
             renderCell: (params) => (
-                <Typography variant="body2" fontWeight={500}>
-                    {params.row.fullName}
-                </Typography>
+                <TextSubtextCell 
+                    primary={params?.row?.email} 
+                    secondary="Community Admin Applicant"
+                />
             )
         },
-        { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
-        { field: "role", headerName: "Role", width: 150 },
+        { 
+            field: "role", 
+            headerName: "Role Requested", 
+            width: 180,
+            valueGetter: (params) => formatRole(params?.row?.role || "COMMUNITY_ADMIN")
+        },
         { 
             field: "status", 
-            headerName: "Status", 
-            width: 150,
+            headerName: "Approval Status", 
+            width: 160,
             renderCell: (params) => (
-                <StatusBadge status={params.row.accountStatus || "PENDING"} />
+                <StatusBadge status={params?.row?.approvalStatus || params?.row?.accountStatus || "PENDING"} />
             )
         },
         { 
@@ -147,17 +168,17 @@ const MainAdminApprovalsPage = () => {
             align: "center",
             renderCell: (params) => (
                 <Stack direction="row" spacing={1} justifyContent="center">
-                    <Tooltip title="Approve" arrow>
+                    <Tooltip title="Approve Community Admin" arrow>
                         <IconButton size="small" color="success" onClick={(e) => { e.stopPropagation(); handleOpenDialog(params.row, "APPROVED"); }}>
                             <CheckCircleIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Reject" arrow>
+                    <Tooltip title="Reject Request" arrow>
                         <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleOpenDialog(params.row, "REJECTED"); }}>
                             <CancelIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete" arrow>
+                    <Tooltip title="Delete Request" arrow>
                         <IconButton size="small" color="error" onClick={(e) => { e.stopPropagation(); handleDeleteUser(params.row); }}>
                             <DeleteIcon fontSize="small" />
                         </IconButton>
@@ -167,25 +188,33 @@ const MainAdminApprovalsPage = () => {
         }
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Pending Admin Applications", value: pendingUsers.length, color: "warning" }
+    ], [pendingUsers]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="Pending User Approvals" 
-                subtitle="Review and approve user registrations."
+            <PageSummaryHeader 
+                title="Community Admin Approvals" 
+                subtitle="Review and approve registration requests for Community Administrators."
+                icon={HowToRegIcon}
+                metadata={headerMetadata}
             />
 
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
                 <TableToolbar 
-                    title="Pending Approvals" 
+                    title="Pending Community Admin Applications" 
                     onSearch={handleSearch}
                 />
                 
-                <Box sx={{ height: 500 }}>
+                <Box sx={{ height: 520 }}>
                     <DataGrid 
                         rows={filteredUsers} 
                         columns={columns} 
                         loading={loading}
                         error={error}
+                        emptyTitle="No pending Community Admin applications"
+                        emptyMessage="There are currently no Community Admin registration requests awaiting approval."
                         onRetry={fetchPendingUsers}
                         disableRowSelectionOnClick
                     />
@@ -194,12 +223,12 @@ const MainAdminApprovalsPage = () => {
 
             {/* Approval Dialog */}
             <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>
-                    {approvalStatus === "APPROVED" ? "Approve User" : "Reject User"}
+                <DialogTitle sx={{ fontWeight: 700 }}>
+                    {approvalStatus === "APPROVED" ? "Approve Community Admin" : "Reject Community Admin Request"}
                 </DialogTitle>
                 <DialogContent dividers>
                     <Typography variant="body1" mb={2}>
-                        Are you sure you want to {approvalStatus === "APPROVED" ? "approve" : "reject"} <strong>{selectedUser?.fullName}</strong>?
+                        Are you sure you want to {approvalStatus === "APPROVED" ? "approve" : "reject"} <strong>{selectedUser?.fullName}</strong> ({selectedUser?.email}) as a Community Admin?
                     </Typography>
                     <TextField 
                         fullWidth 
@@ -221,6 +250,7 @@ const MainAdminApprovalsPage = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
             <ConfirmationDialog 
                 open={confirmConfig.open}
                 title={confirmConfig.title}

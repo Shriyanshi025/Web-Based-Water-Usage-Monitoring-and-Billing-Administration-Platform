@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import DataGrid from "../../components/common/DataGrid";
 import SearchBar from "../../components/common/SearchBar";
@@ -247,19 +247,21 @@ function PaymentHistoryPage() {
         },
     ], [downloadingId]);
 
+    const totalPaidAmount = useMemo(() => payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0), [payments]);
+
+    const headerMetadata = useMemo(() => [
+        { label: "Total Transactions", value: payments.length },
+        { label: "Successful", value: payments.filter(p => p.paymentStatus === "SUCCESS" || !p.paymentStatus).length, color: "success" },
+        { label: "Total Paid", value: formatCurrency(totalPaidAmount), color: "primary" },
+    ], [payments, totalPaidAmount]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Payment History"
                 subtitle="View past transactions, invoices, and download payment receipts."
-                action={
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                        <ReceiptLongIcon sx={{ color: "text.disabled", fontSize: "1.1rem" }} />
-                        <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                            {filteredPayments.length} record{filteredPayments.length !== 1 ? "s" : ""}
-                        </Typography>
-                    </Stack>
-                }
+                icon={ReceiptLongIcon}
+                metadata={headerMetadata}
             />
 
             <WidgetContainer>

@@ -31,7 +31,7 @@ import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import AutoAwesomeIcon from "@mui/icons-material/AutoAwesome";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import SearchBar from "../../components/common/SearchBar";
@@ -485,11 +485,21 @@ function BillsPage() {
         return count;
     }, [quickChip, cycleFilter, latestCycle, monthFilter, yearFilter, statusFilter, paymentStatusFilter, searchTerm]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Bills", value: summaryMetrics.totalBills },
+        { label: "Paid", value: summaryMetrics.paidCount, color: "success" },
+        { label: "Pending", value: summaryMetrics.unpaidCount, color: "warning" },
+        { label: "Overdue", value: summaryMetrics.overdueCount, color: "error" },
+        { label: "Total Value", value: formatCurrency(summaryMetrics.totalAmount) },
+    ], [summaryMetrics]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Bills & Billing Policy"
                 subtitle="Review resident bills sorted latest cycle first. Use historical filters to explore past billing periods."
+                icon={ReceiptIcon}
+                metadata={headerMetadata}
                 action={
                     <Stack direction="row" spacing={1.5}>
                         <ActionButton variant="outlined" startIcon={<RefreshIcon />} onClick={fetchBills} disabled={loading} sx={{ fontSize: "0.8125rem" }}>
@@ -501,57 +511,6 @@ function BillsPage() {
                     </Stack>
                 }
             />
-
-            {/* ── Summary KPI Cards Row ──────────────────────────────────────── */}
-            {!loading && !error && (
-                <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                        <AdminStatCard
-                            title="Current Billing Cycle"
-                            value={activeCycle ? activeCycle.name : "None"}
-                            icon={<HourglassEmptyIcon />}
-                            color="primary"
-                            subtitle={activeCycle ? `${activeCycle.periodStart} to ${activeCycle.periodEnd}` : "No active cycle"}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                        <AdminStatCard
-                            title="Bills Generated"
-                            value={summaryMetrics.totalBills}
-                            icon={<ReceiptIcon />}
-                            color="info"
-                            subtitle={`Total: ${formatCurrency(summaryMetrics.totalAmount)}`}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                        <AdminStatCard
-                            title="Paid Bills"
-                            value={summaryMetrics.paidCount}
-                            icon={<PaidIcon />}
-                            color="success"
-                            subtitle={`Revenue: ${formatCurrency(summaryMetrics.paidAmount)}`}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                        <AdminStatCard
-                            title="Pending Bills"
-                            value={summaryMetrics.unpaidCount}
-                            icon={<HourglassEmptyIcon />}
-                            color="warning"
-                            subtitle={`Amount: ${formatCurrency(summaryMetrics.unpaidAmount)}`}
-                        />
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={2.4}>
-                        <AdminStatCard
-                            title="Overdue Bills"
-                            value={summaryMetrics.overdueCount}
-                            icon={<WarningAmberIcon />}
-                            color="error"
-                            subtitle={`Amount: ${formatCurrency(summaryMetrics.overdueAmount)}`}
-                        />
-                    </Grid>
-                </Grid>
-            )}
 
             {/* ── Error state display ────────────────────────────────────────── */}
             {error && !rows.length && (
@@ -787,55 +746,131 @@ function BillsPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* ── Bill Calculation Breakdown Dialog ── */}
+            {/* ── RICH INVOICE INSPECTION VIEW MODAL ── */}
             <Dialog
                 open={detailsOpen}
                 onClose={handleCloseDetails}
-                maxWidth="sm"
+                maxWidth="md"
                 fullWidth
                 PaperProps={{ sx: { borderRadius: 3 } }}
             >
-                <DialogTitle sx={{ fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid", borderColor: "divider", pb: 2 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                            <Typography variant="h6" fontWeight="bold">
-                                Resident Bill Breakdown
-                            </Typography>
-                            {selectedBill && (
-                                <Typography variant="caption" color="text.secondary">
-                                    Resident: {selectedBill.residentName} (Unit {selectedBill.unitNumber}) | Bill #{selectedBill.billNumber || selectedBill.id}
-                                </Typography>
-                            )}
-                        </Box>
-                        {selectedBill && (
-                            <Chip
-                                label={selectedBill.status || "UNPAID"}
-                                color={selectedBill.status === "PAID" ? "success" : selectedBill.status === "OVERDUE" ? "error" : "warning"}
-                                size="small"
-                                sx={{ fontWeight: "bold" }}
-                            />
-                        )}
-                    </Stack>
-                </DialogTitle>
-                <DialogContent sx={{ p: 3 }}>
-                    {selectedBill && (
-                        <BillBreakdownSection bill={selectedBill} defaultExpanded={true} />
-                    )}
-                </DialogContent>
-                <DialogActions sx={{ borderTop: "1px solid", borderColor: "divider", px: 3, py: 2 }}>
-                    {selectedBill && (
-                        <Button
-                            onClick={() => handleDownloadPdf(selectedBill.id)}
-                            variant="outlined"
-                            color="primary"
-                        >
-                            Download PDF
-                        </Button>
-                    )}
-                    <Button onClick={handleCloseDetails} variant="contained" color="secondary">
-                        Close
-                    </Button>
-                </DialogActions>
+                {selectedBill && (
+                    <>
+                        <DialogTitle sx={{ p: 2.5, bgcolor: "background.paper", borderBottom: "1px solid", borderColor: "divider" }}>
+                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                <Box>
+                                    <Stack direction="row" spacing={1} alignItems="center">
+                                        <Typography variant="h6" fontWeight={700}>
+                                            Bill #{selectedBill.billNumber || selectedBill.id}
+                                        </Typography>
+                                        <Chip label="WATER BILL" size="small" color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
+                                    </Stack>
+                                    <Typography variant="body2" color="text.secondary">
+                                        Resident: <strong>{selectedBill.residentName}</strong> · Unit {selectedBill.unitNumber || "N/A"} · Cycle: {selectedBill.billingCycleName || "Default Cycle"}
+                                    </Typography>
+                                </Box>
+                                <StatusBadge status={selectedBill.status || "UNPAID"} />
+                            </Stack>
+                        </DialogTitle>
+
+                        <DialogContent dividers sx={{ p: 3 }}>
+                            <Stack spacing={3}>
+                                {/* 1. Summary KPIs */}
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} sm={3}>
+                                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", bgcolor: "grey.50" }}>
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">TOTAL AMOUNT DUE</Typography>
+                                            <Typography variant="h6" fontWeight={700} color={selectedBill.status === "PAID" ? "success.main" : "error.main"}>
+                                                {formatCurrency(selectedBill.amount != null ? selectedBill.amount : selectedBill.totalAmount || 0)}
+                                            </Typography>
+                                        </Paper>
+                                    </Grid>
+                                    <Grid item xs={12} sm={3}>
+                                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", bgcolor: "grey.50" }}>
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">CONSUMPTION</Typography>
+                                            <Typography variant="h6" fontWeight={700} color="info.main">
+                                                {selectedBill.unitsConsumed != null ? `${selectedBill.unitsConsumed} kL` : "—"}
+                                            </Typography>
+                                        </Paper>
+                                    </Grid>
+                                    <Grid item xs={12} sm={3}>
+                                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", bgcolor: "grey.50" }}>
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">BILLING CYCLE</Typography>
+                                            <Typography variant="body2" fontWeight={700} color="text.primary" noWrap>
+                                                {selectedBill.billingCycleName || "N/A"}
+                                            </Typography>
+                                        </Paper>
+                                    </Grid>
+                                    <Grid item xs={12} sm={3}>
+                                        <Paper variant="outlined" sx={{ p: 1.5, textAlign: "center", bgcolor: "grey.50" }}>
+                                            <Typography variant="caption" color="text.secondary" fontWeight={600} display="block">PAYMENT STATUS</Typography>
+                                            <Box sx={{ mt: 0.5, display: "flex", justifyContent: "center" }}>
+                                                <StatusBadge status={selectedBill.status || "UNPAID"} />
+                                            </Box>
+                                        </Paper>
+                                    </Grid>
+                                </Grid>
+
+                                {/* 2. Comprehensive Itemized Breakdown */}
+                                <BillBreakdownSection bill={selectedBill} defaultExpanded={true} />
+
+                                {/* 3. Quick Navigation Shortcuts */}
+                                <Box>
+                                    <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 1, textTransform: "uppercase" }}>
+                                        Quick Navigation Shortcuts
+                                    </Typography>
+                                    <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                                        {selectedBill.residentName && (
+                                            <Button 
+                                                variant="outlined" 
+                                                size="small" 
+                                                onClick={() => {
+                                                    setDetailsOpen(false);
+                                                    navigate("/community-admin/residents", { state: { search: selectedBill.residentName } });
+                                                }}
+                                            >
+                                                Resident Profile
+                                            </Button>
+                                        )}
+                                        <Button 
+                                            variant="outlined" 
+                                            size="small" 
+                                            onClick={() => {
+                                                setDetailsOpen(false);
+                                                navigate("/community-admin/meters", { state: { search: selectedBill.unitNumber } });
+                                            }}
+                                        >
+                                            Water Meter
+                                        </Button>
+                                        <Button 
+                                            variant="outlined" 
+                                            size="small" 
+                                            onClick={() => {
+                                                setDetailsOpen(false);
+                                                navigate("/community-admin/usage");
+                                            }}
+                                        >
+                                            Water Usage Report
+                                        </Button>
+                                    </Stack>
+                                </Box>
+                            </Stack>
+                        </DialogContent>
+
+                        <DialogActions sx={{ p: 2, borderTop: "1px solid", borderColor: "divider", gap: 1 }}>
+                            <Button
+                                onClick={() => handleDownloadPdf(selectedBill.id)}
+                                variant="outlined"
+                                color="primary"
+                            >
+                                Download PDF
+                            </Button>
+                            <Button onClick={handleCloseDetails} variant="contained" color="secondary">
+                                Close
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
             </Dialog>
         </DashboardLayout>
     );

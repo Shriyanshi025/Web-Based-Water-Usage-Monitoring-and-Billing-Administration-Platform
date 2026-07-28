@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import LoadingScreen from "../../components/common/LoadingScreen";
 import ErrorState from "../../components/common/ErrorState";
-import { Grid, TextField, Button, Box, Typography, Card, CardContent, Stack } from "@mui/material";
+import { Grid, TextField, Button, Box, Typography, Stack, Paper } from "@mui/material";
+import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
+import SecurityIcon from "@mui/icons-material/Security";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import BadgeIcon from "@mui/icons-material/Badge";
 import { useNotification } from "../../context/NotificationContext";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/api";
@@ -77,7 +81,6 @@ function ProfilePage() {
             setSaving(true);
             const endpoint = getEndpoint();
             
-            // Adjust body based on role
             let body = { fullName: formData.fullName };
             if (user.role === "COMMUNITY_ADMIN") {
                 body.phoneNumber = formData.phoneNumber;
@@ -137,177 +140,201 @@ function ProfilePage() {
 
     return (
         <DashboardLayout>
-            <PageHeader 
-                title="My Profile" 
-                subtitle="Manage your personal information and contact details" 
+            <PageSummaryHeader 
+                title="Account Settings & Profile" 
+                subtitle="Manage your personal profile, credentials, and email notification preferences"
+                icon={<BadgeIcon />}
+                statusText={(profile?.active || user?.role === "MAIN_ADMIN") ? "Account Active" : "Account Inactive"}
+                metadata={[
+                    { label: "Role", value: user?.role?.replace("_", " ").toLowerCase() || "User", color: "primary" },
+                    ...(profile?.communityName ? [{ label: "Community", value: profile.communityName, color: "info" }] : []),
+                    ...(profile?.blockName ? [{ label: "Block / Unit", value: `${profile.blockName} - ${profile.unitNumber || ''}`, color: "secondary" }] : [])
+                ]}
             />
             
-            <Grid container spacing={3}>
-                {/* Left Column: Personal Details & Password Change */}
-                <Grid item xs={12} md={8}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <WidgetContainer title="Personal Details">
-                                <Box component="form" onSubmit={handleSubmitProfile} sx={{ mt: 2 }}>
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12} sm={6}>
-                                            <TextField
-                                                fullWidth
-                                                label="Full Name"
-                                                name="fullName"
-                                                value={formData.fullName}
-                                                onChange={handleChange}
-                                                required
-                                            />
-                                        </Grid>
-                                        
-                                        {user?.role !== "MAIN_ADMIN" && (
-                                            <Grid item xs={12} sm={6}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Contact Number"
-                                                    name="phoneNumber"
-                                                    value={formData.phoneNumber}
-                                                    onChange={handleChange}
-                                                    required
-                                                />
-                                            </Grid>
-                                        )}
-
-                                        <Grid item xs={12} sm={6}>
-                                            <TextField
-                                                fullWidth
-                                                label="Email Address"
-                                                value={profile?.email || ""}
-                                                disabled
-                                                helperText="Email cannot be changed"
-                                            />
-                                        </Grid>
-
-                                        {user?.role === "COMMUNITY_ADMIN" && (
-                                            <Grid item xs={12}>
-                                                <TextField
-                                                    fullWidth
-                                                    label="Office Address"
-                                                    name="officeAddress"
-                                                    value={formData.officeAddress}
-                                                    onChange={handleChange}
-                                                    multiline
-                                                    rows={3}
-                                                />
-                                            </Grid>
-                                        )}
-
-                                        <Grid item xs={12}>
-                                            <Button 
-                                                type="submit" 
-                                                variant="contained" 
-                                                color="primary"
-                                                disabled={saving}
-                                            >
-                                                {saving ? "Saving…" : "Save Changes"}
-                                            </Button>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            </WidgetContainer>
-                        </Grid>
-
-                        <Grid item xs={12}>
-                            <WidgetContainer title="Change Password">
-                                <Box component="form" onSubmit={handleSubmitPassword} sx={{ mt: 2 }}>
-                                    <Grid container spacing={2}>
-                                        <Grid item xs={12}>
-                                            <TextField
-                                                fullWidth
-                                                type="password"
-                                                label="Current Password"
-                                                name="currentPassword"
-                                                value={passwordData.currentPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <TextField
-                                                fullWidth
-                                                type="password"
-                                                label="New Password"
-                                                name="newPassword"
-                                                value={passwordData.newPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
-                                            <TextField
-                                                fullWidth
-                                                type="password"
-                                                label="Confirm New Password"
-                                                name="confirmPassword"
-                                                value={passwordData.confirmPassword}
-                                                onChange={handlePasswordChange}
-                                                required
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12}>
-                                            <Button 
-                                                type="submit" 
-                                                variant="contained" 
-                                                color="secondary"
-                                                disabled={changingPassword}
-                                            >
-                                                {changingPassword ? "Updating…" : "Change Password"}
-                                            </Button>
-                                        </Grid>
-                                    </Grid>
-                                </Box>
-                            </WidgetContainer>
-                        </Grid>
-                    </Grid>
-                </Grid>
-                
-                {/* Right Column: Account Information */}
-                <Grid item xs={12} md={4}>
-                    <WidgetContainer title="Account Information">
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                            <Box>
-                                <Typography variant="caption" color="text.secondary">Role</Typography>
-                                <Typography variant="body1" sx={{ textTransform: 'capitalize' }}>
+            <Stack spacing={3} sx={{ pb: 4 }}>
+                {/* 1. Account Information */}
+                <WidgetContainer 
+                    title="Account Information" 
+                    subtitle="System access level, community assignment, and account status overview"
+                >
+                    <Grid container spacing={3} sx={{ mt: 0.5 }}>
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                            <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: "8px", border: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                                    System Role
+                                </Typography>
+                                <Typography variant="subtitle1" fontWeight={700} sx={{ textTransform: "capitalize", color: "primary.main" }}>
                                     {user?.role?.replace("_", " ").toLowerCase() || "N/A"}
                                 </Typography>
                             </Box>
-                            
-                            {user?.role !== "MAIN_ADMIN" && (
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Community</Typography>
-                                    <Typography variant="body1">{profile?.communityName || "N/A"}</Typography>
-                                </Box>
-                            )}
+                        </Grid>
 
-                            {user?.role === "USER" && (
-                                <Box>
-                                    <Typography variant="caption" color="text.secondary">Block & Unit</Typography>
-                                    <Typography variant="body1">
+                        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                            <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: "8px", border: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                                    Community Network
+                                </Typography>
+                                <Typography variant="subtitle1" fontWeight={700} color="text.primary">
+                                    {profile?.communityName || (user?.role === "MAIN_ADMIN" ? "Platform Administrator" : "N/A")}
+                                </Typography>
+                            </Box>
+                        </Grid>
+
+                        {user?.role === "USER" && (
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: "8px", border: "1px solid", borderColor: "divider" }}>
+                                    <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                                        Block & Unit Location
+                                    </Typography>
+                                    <Typography variant="subtitle1" fontWeight={700} color="text.primary">
                                         {profile?.blockName || "N/A"} - {profile?.unitNumber || "N/A"}
                                     </Typography>
                                 </Box>
-                            )}
+                            </Grid>
+                        )}
 
-                            <Box>
-                                <Typography variant="caption" color="text.secondary">Status</Typography>
-                                <Typography variant="body1" color="success.main" sx={{ textTransform: 'capitalize' }}>
-                                    {profile?.active ? "Active" : "Inactive"}
+                        <Grid size={{ xs: 12, sm: 6, md: user?.role === "USER" ? 3 : 6 }}>
+                            <Box sx={{ p: 2, bgcolor: "grey.50", borderRadius: "8px", border: "1px solid", borderColor: "divider" }}>
+                                <Typography variant="caption" color="text.secondary" fontWeight={600} display="block" sx={{ mb: 0.5 }}>
+                                    Account Status
+                                </Typography>
+                                <Typography variant="subtitle1" fontWeight={700} color={(profile?.active || user?.role === "MAIN_ADMIN") ? "success.main" : "error.main"}>
+                                    {(profile?.active || user?.role === "MAIN_ADMIN") ? "Active & Verified" : "Inactive"}
                                 </Typography>
                             </Box>
-                        </Box>
-                    </WidgetContainer>
+                        </Grid>
+                    </Grid>
+                </WidgetContainer>
 
-                    <Box sx={{ mt: 3 }}>
-                        <EmailPreferencesCard />
+                {/* 2. Personal Details */}
+                <WidgetContainer 
+                    title="Personal Details" 
+                    subtitle="Update your full name, contact information, and primary mailing address"
+                >
+                    <Box component="form" onSubmit={handleSubmitProfile} sx={{ mt: 1 }}>
+                        <Grid container spacing={2.5}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Full Name"
+                                    name="fullName"
+                                    value={formData.fullName}
+                                    onChange={handleChange}
+                                    required
+                                />
+                            </Grid>
+                            
+                            {user?.role !== "MAIN_ADMIN" && (
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Contact Number"
+                                        name="phoneNumber"
+                                        value={formData.phoneNumber}
+                                        onChange={handleChange}
+                                        required
+                                    />
+                                </Grid>
+                            )}
+
+                            <Grid size={{ xs: 12, sm: user?.role === "MAIN_ADMIN" ? 6 : 12 }}>
+                                <TextField
+                                    fullWidth
+                                    label="Email Address"
+                                    value={profile?.email || ""}
+                                    disabled
+                                    helperText="Email address is fixed to your registration credential"
+                                />
+                            </Grid>
+
+                            {user?.role === "COMMUNITY_ADMIN" && (
+                                <Grid size={{ xs: 12 }}>
+                                    <TextField
+                                        fullWidth
+                                        label="Office Address"
+                                        name="officeAddress"
+                                        value={formData.officeAddress}
+                                        onChange={handleChange}
+                                        multiline
+                                        rows={2}
+                                    />
+                                </Grid>
+                            )}
+
+                            <Grid size={{ xs: 12 }}>
+                                <Button 
+                                    type="submit" 
+                                    variant="contained" 
+                                    color="primary"
+                                    disabled={saving}
+                                    sx={{ px: 3, fontWeight: 700 }}
+                                >
+                                    {saving ? "Saving…" : "Save Changes"}
+                                </Button>
+                            </Grid>
+                        </Grid>
                     </Box>
-                </Grid>
-            </Grid>
+                </WidgetContainer>
+
+                {/* 3. Security & Password */}
+                <WidgetContainer 
+                    title="Security & Password" 
+                    subtitle="Update your account password to ensure ongoing platform security"
+                >
+                    <Box component="form" onSubmit={handleSubmitPassword} sx={{ mt: 1 }}>
+                        <Grid container spacing={2.5}>
+                            <Grid size={{ xs: 12 }}>
+                                <TextField
+                                    fullWidth
+                                    type="password"
+                                    label="Current Password"
+                                    name="currentPassword"
+                                    value={passwordData.currentPassword}
+                                    onChange={handlePasswordChange}
+                                    required
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                    fullWidth
+                                    type="password"
+                                    label="New Password"
+                                    name="newPassword"
+                                    value={passwordData.newPassword}
+                                    onChange={handlePasswordChange}
+                                    required
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6 }}>
+                                <TextField
+                                    fullWidth
+                                    type="password"
+                                    label="Confirm New Password"
+                                    name="confirmPassword"
+                                    value={passwordData.confirmPassword}
+                                    onChange={handlePasswordChange}
+                                    required
+                                />
+                            </Grid>
+                            <Grid size={{ xs: 12 }}>
+                                <Button 
+                                    type="submit" 
+                                    variant="contained" 
+                                    color="secondary"
+                                    disabled={changingPassword}
+                                    sx={{ px: 3, fontWeight: 700 }}
+                                >
+                                    {changingPassword ? "Updating…" : "Update Password"}
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </Box>
+                </WidgetContainer>
+
+                {/* 4. Notification Preferences */}
+                <EmailPreferencesCard />
+            </Stack>
         </DashboardLayout>
     );
 }
@@ -353,70 +380,92 @@ function EmailPreferencesCard() {
     if (loading) return null;
 
     return (
-        <WidgetContainer title="Email Notification Preferences">
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Control which automated email notifications you receive from HydroSync.
-            </Typography>
-            <Stack spacing={1.5}>
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" fontWeight={600}>Bill & Payment Statements</Typography>
-                    <Button
-                        size="small"
-                        variant={prefs.billEmails ? "contained" : "outlined"}
-                        color={prefs.billEmails ? "success" : "inherit"}
-                        onClick={() => handleToggle("billEmails")}
-                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
-                    >
-                        {prefs.billEmails ? "Enabled" : "Disabled"}
-                    </Button>
+        <WidgetContainer 
+            title="Email Notification Preferences" 
+            subtitle="Configure automated email alerts and operational notifications"
+        >
+            <Stack spacing={2} sx={{ mt: 1 }}>
+                <Grid container spacing={2}>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <Paper variant="outlined" sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>Bill & Payment Statements</Typography>
+                                <Typography variant="caption" color="text.secondary">Invoices, payment receipts, and billing summaries</Typography>
+                            </Box>
+                            <Button
+                                size="small"
+                                variant={prefs.billEmails ? "contained" : "outlined"}
+                                color={prefs.billEmails ? "success" : "inherit"}
+                                onClick={() => handleToggle("billEmails")}
+                                sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}
+                            >
+                                {prefs.billEmails ? "Enabled" : "Disabled"}
+                            </Button>
+                        </Paper>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <Paper variant="outlined" sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>Water Leak & Usage Alerts</Typography>
+                                <Typography variant="caption" color="text.secondary">Excessive consumption warnings and leak detection</Typography>
+                            </Box>
+                            <Button
+                                size="small"
+                                variant={prefs.alertEmails ? "contained" : "outlined"}
+                                color={prefs.alertEmails ? "success" : "inherit"}
+                                onClick={() => handleToggle("alertEmails")}
+                                sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}
+                            >
+                                {prefs.alertEmails ? "Enabled" : "Disabled"}
+                            </Button>
+                        </Paper>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <Paper variant="outlined" sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>Bill Due Reminders</Typography>
+                                <Typography variant="caption" color="text.secondary">Automated reminders before invoice due dates</Typography>
+                            </Box>
+                            <Button
+                                size="small"
+                                variant={prefs.reminderEmails ? "contained" : "outlined"}
+                                color={prefs.reminderEmails ? "success" : "inherit"}
+                                onClick={() => handleToggle("reminderEmails")}
+                                sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}
+                            >
+                                {prefs.reminderEmails ? "Enabled" : "Disabled"}
+                            </Button>
+                        </Paper>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                        <Paper variant="outlined" sx={{ p: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <Box>
+                                <Typography variant="subtitle2" fontWeight={700}>Community Announcements</Typography>
+                                <Typography variant="caption" color="text.secondary">Important maintenance notices and community updates</Typography>
+                            </Box>
+                            <Button
+                                size="small"
+                                variant={prefs.announcementEmails ? "contained" : "outlined"}
+                                color={prefs.announcementEmails ? "success" : "inherit"}
+                                onClick={() => handleToggle("announcementEmails")}
+                                sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 700 }}
+                            >
+                                {prefs.announcementEmails ? "Enabled" : "Disabled"}
+                            </Button>
+                        </Paper>
+                    </Grid>
                 </Grid>
 
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" fontWeight={600}>Water Leak & Usage Alerts</Typography>
-                    <Button
-                        size="small"
-                        variant={prefs.alertEmails ? "contained" : "outlined"}
-                        color={prefs.alertEmails ? "success" : "inherit"}
-                        onClick={() => handleToggle("alertEmails")}
-                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
-                    >
-                        {prefs.alertEmails ? "Enabled" : "Disabled"}
-                    </Button>
-                </Grid>
-
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" fontWeight={600}>Bill Due Reminders</Typography>
-                    <Button
-                        size="small"
-                        variant={prefs.reminderEmails ? "contained" : "outlined"}
-                        color={prefs.reminderEmails ? "success" : "inherit"}
-                        onClick={() => handleToggle("reminderEmails")}
-                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
-                    >
-                        {prefs.reminderEmails ? "Enabled" : "Disabled"}
-                    </Button>
-                </Grid>
-
-                <Grid container alignItems="center" justifyContent="space-between">
-                    <Typography variant="body2" fontWeight={600}>Community Announcements</Typography>
-                    <Button
-                        size="small"
-                        variant={prefs.announcementEmails ? "contained" : "outlined"}
-                        color={prefs.announcementEmails ? "success" : "inherit"}
-                        onClick={() => handleToggle("announcementEmails")}
-                        sx={{ px: 1.5, py: 0.25, fontSize: "0.75rem" }}
-                    >
-                        {prefs.announcementEmails ? "Enabled" : "Disabled"}
-                    </Button>
-                </Grid>
-
-                <Box sx={{ pt: 1, textAlign: "right" }}>
+                <Box sx={{ pt: 1, textAlign: "left" }}>
                     <Button
                         variant="contained"
                         color="primary"
-                        size="small"
                         onClick={handleSave}
                         disabled={saving}
+                        sx={{ px: 3, fontWeight: 700 }}
                     >
                         {saving ? "Saving..." : "Save Preferences"}
                     </Button>

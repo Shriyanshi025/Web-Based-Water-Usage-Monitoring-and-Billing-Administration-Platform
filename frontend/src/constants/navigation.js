@@ -31,6 +31,11 @@ export const NAVIGATION_CONFIG = {
             icon: "MailIcon" 
         },
         { 
+            label: "Support Center", 
+            path: "/main-admin/support", 
+            icon: "MailIcon" 
+        },
+        { 
             label: "My Profile", 
             path: ROUTES.MAIN_ADMIN_PROFILE, 
             icon: "PersonIcon" 
@@ -113,6 +118,11 @@ export const NAVIGATION_CONFIG = {
             icon: "MailIcon"
         },
         {
+            label: "Support Center",
+            path: "/community-admin/support",
+            icon: "MailIcon"
+        },
+        {
             label: "Notifications",
             path: ROUTES.COMMUNITY_ADMIN_NOTIFICATIONS,
             icon: "MailIcon"
@@ -157,6 +167,11 @@ export const NAVIGATION_CONFIG = {
         { 
             label: "Complaint History", 
             path: ROUTES.RESIDENT_COMPLAINTS + "?tab=history", 
+            icon: "MailIcon" 
+        },
+        { 
+            label: "Help & Support", 
+            path: "/user/support", 
             icon: "MailIcon" 
         },
         { 

@@ -1,26 +1,27 @@
 import React from "react";
-import { Box, Typography, Button, useTheme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Box, Typography, Button, Paper, useTheme } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
+import { safeAlpha } from "../../helpers/colorHelper";
 
 /**
  * Reusable ErrorState component — shown when a data fetch fails.
  *
  * @param {Object}   props
- * @param {string}   [props.title="Something went wrong"]
- * @param {string}   [props.message]
+ * @param {string}   [props.title="Failed to Load Data"]
+ * @param {string}   [props.message="An unexpected error occurred while fetching information. Please try again."]
  * @param {function} [props.onRetry] - If provided, renders a retry button
  */
 const ErrorState = ({
-    title = "Something went wrong",
-    message = "An error occurred while loading this content.",
+    title = "Failed to Load Data",
+    message = "An unexpected error occurred while fetching information. Please try again.",
     onRetry,
 }) => {
     const theme = useTheme();
 
     return (
-        <Box
+        <Paper
+            elevation={0}
             sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -29,10 +30,10 @@ const ErrorState = ({
                 py: 6,
                 px: 4,
                 textAlign: "center",
-                bgcolor: alpha(theme.palette.error.main, 0.04),
+                bgcolor: safeAlpha(theme, "error.main", 0.04),
                 borderRadius: 2,
                 border: "1px solid",
-                borderColor: alpha(theme.palette.error.main, 0.18),
+                borderColor: safeAlpha(theme, "error.main", 0.18),
                 width: "100%",
             }}
         >
@@ -88,7 +89,7 @@ const ErrorState = ({
                     Try again
                 </Button>
             )}
-        </Box>
+        </Paper>
     );
 };
 

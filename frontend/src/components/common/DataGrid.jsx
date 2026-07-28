@@ -6,7 +6,7 @@ import EmptyState from "./EmptyState";
 import ErrorState from "./ErrorState";
 
 /**
- * Reusable DataGrid wrapper with consistent loading, error, and empty states.
+ * Reusable DataGrid wrapper with consistent design, row heights, loading, error, and empty states.
  */
 const DataGrid = ({
     rows = [],
@@ -21,6 +21,8 @@ const DataGrid = ({
     emptyTitle = "No Records Found",
     emptyMessage = "Try adjusting your filters or search terms.",
     getRowClassName,
+    rowHeight = 58,
+    columnHeaderHeight = 48,
     sx = {},
     ...rest
 }) => {
@@ -63,9 +65,11 @@ const DataGrid = ({
                     bgcolor: "#F0F4F8",
                     borderBottom: "1px solid",
                     borderColor: "divider",
+                    minHeight: `${columnHeaderHeight}px !important`,
+                    maxHeight: `${columnHeaderHeight}px !important`,
                 },
                 "& .MuiDataGrid-columnHeaderTitle": {
-                    fontWeight: 600,
+                    fontWeight: 700,
                     fontSize: "0.75rem",
                     color: "text.secondary",
                     textTransform: "uppercase",
@@ -73,6 +77,8 @@ const DataGrid = ({
                 },
                 // Rows
                 "& .MuiDataGrid-row": {
+                    minHeight: `${rowHeight}px !important`,
+                    maxHeight: `${rowHeight}px !important`,
                     "&:hover": {
                         bgcolor: "action.hover",
                     },
@@ -89,9 +95,10 @@ const DataGrid = ({
                     borderColor: "divider",
                     display: "flex",
                     alignItems: "center",
-                    py: 0,
+                    py: 0.5,
+                    overflow: "hidden",
                 },
-                // Row height
+                // Last visible row border
                 "& .MuiDataGrid-row--lastVisible .MuiDataGrid-cell": {
                     borderBottom: "none",
                 },
@@ -139,7 +146,8 @@ const DataGrid = ({
                 onRowClick={onRowClick}
                 autoHeight={autoHeight}
                 getRowClassName={getRowClassName}
-                rowHeight={52}
+                rowHeight={rowHeight}
+                columnHeaderHeight={columnHeaderHeight}
                 slots={{
                     noRowsOverlay: () => (
                         <EmptyState

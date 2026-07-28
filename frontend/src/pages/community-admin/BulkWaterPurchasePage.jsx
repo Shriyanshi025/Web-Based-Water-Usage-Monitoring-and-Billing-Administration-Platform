@@ -38,7 +38,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import SearchBar from "../../components/common/SearchBar";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import CommunityOpsService from "../../services/CommunityOpsService";
@@ -268,11 +269,22 @@ function BulkWaterPurchasePage() {
         );
     }
 
+    const totalVolume = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.purchasedVolume) || 0), 0), [purchases]);
+    const totalCostSum = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.totalCost) || 0), 0), [purchases]);
+
+    const headerMetadata = useMemo(() => [
+        { label: "Total Purchases", value: purchases.length },
+        { label: "Volume Purchased", value: `${totalVolume.toLocaleString()} kL`, color: "info" },
+        { label: "Total Expenditure", value: `₹${totalCostSum.toLocaleString()}`, color: "primary" },
+    ], [purchases.length, totalVolume, totalCostSum]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Bulk Water Purchases"
                 subtitle="Track external bulk water purchases made by the community."
+                icon={WaterDropIcon}
+                metadata={headerMetadata}
                 action={
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <Button

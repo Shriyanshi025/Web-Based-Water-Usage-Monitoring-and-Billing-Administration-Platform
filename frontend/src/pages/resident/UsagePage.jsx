@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import TableToolbar from "../../components/common/TableToolbar";
 import EmptyState from "../../components/common/EmptyState";
@@ -141,48 +141,21 @@ function UsagePage() {
         />
     ), [usage]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Latest", value: formatWaterUsage(latestUsage), color: "info" },
+        { label: "Monthly Avg", value: formatWaterUsage(averageUsage), color: "primary" },
+        { label: "Peak", value: formatWaterUsage(peakUsage), color: "warning" },
+        { label: "Recorded Cycles", value: usage.length, color: "success" },
+    ], [latestUsage, averageUsage, peakUsage, usage.length]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
+            <PageSummaryHeader 
                 title="Water Usage History" 
                 subtitle="Track your water consumption trends over time" 
+                icon={WaterDropIcon}
+                metadata={headerMetadata}
             />
-            
-            {/* KPI Summary Strip */}
-            <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Latest Consumption"
-                        value={formatWaterUsage(latestUsage)}
-                        icon={<WaterDropIcon />}
-                        iconColor="info.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Average Monthly"
-                        value={formatWaterUsage(averageUsage)}
-                        icon={<ShowChartIcon />}
-                        iconColor="primary.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Peak Consumption"
-                        value={formatWaterUsage(peakUsage)}
-                        icon={<SpeedIcon />}
-                        iconColor="warning.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={6} md={3}>
-                    <AdminStatCard
-                        title="Recorded Cycles"
-                        value={usage.length}
-                        icon={<EqualizerIcon />}
-                        iconColor="success.main"
-                    />
-                </Grid>
-            </Grid>
 
             <Box sx={{ mb: 3 }}>
                 <ChartCard 

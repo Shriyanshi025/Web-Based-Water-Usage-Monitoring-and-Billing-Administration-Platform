@@ -34,7 +34,7 @@ import DomainIcon from "@mui/icons-material/Domain";
 import HomeWorkIcon from "@mui/icons-material/HomeWork";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import StatusBadge from "../../components/common/StatusBadge";
@@ -288,11 +288,18 @@ const CommunitiesPage = () => {
         }
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Communities", value: communities.length },
+        { label: "Active", value: communities.filter(c => c.active !== false).length, color: "success" },
+    ], [communities]);
+
     return (
         <DashboardLayout>
-            <PageHeader 
+            <PageSummaryHeader 
                 title="Communities Management" 
                 subtitle="View and manage all registered communities."
+                icon={DomainIcon}
+                metadata={headerMetadata}
             />
 
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
@@ -349,7 +356,7 @@ const CommunitiesPage = () => {
                                 Community Statistics
                             </Typography>
                             <Grid container spacing={2} sx={{ mb: 3 }}>
-                                <Grid item xs={6} sm={3}>
+                                <Grid size={{ xs: 6, sm: 3 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                                         <SupervisorAccountIcon color="info" fontSize="small" />
                                         <Typography variant="h6" fontWeight={700} color="text.primary">
@@ -358,7 +365,7 @@ const CommunitiesPage = () => {
                                         <Typography variant="caption" color="text.secondary">Admins</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={6} sm={3}>
+                                <Grid size={{ xs: 6, sm: 3 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                                         <PeopleIcon color="success" fontSize="small" />
                                         <Typography variant="h6" fontWeight={700} color="text.primary">
@@ -367,7 +374,7 @@ const CommunitiesPage = () => {
                                         <Typography variant="caption" color="text.secondary">Residents</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={6} sm={3}>
+                                <Grid size={{ xs: 6, sm: 3 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                                         <DomainIcon color="primary" fontSize="small" />
                                         <Typography variant="h6" fontWeight={700} color="text.primary">
@@ -376,7 +383,7 @@ const CommunitiesPage = () => {
                                         <Typography variant="caption" color="text.secondary">Blocks</Typography>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={6} sm={3}>
+                                <Grid size={{ xs: 6, sm: 3 }}>
                                     <Paper variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
                                         <HomeWorkIcon color="secondary" fontSize="small" />
                                         <Typography variant="h6" fontWeight={700} color="text.primary">
@@ -445,19 +452,19 @@ const CommunitiesPage = () => {
                             {/* Soft Activity Metadata Section */}
                             <Divider sx={{ my: 2 }} />
                             <Grid container spacing={2}>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Created On</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewCommunity.createdAt ? new Date(viewCommunity.createdAt).toLocaleDateString() : "N/A"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Last Updated</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewCommunity.updatedAt ? new Date(viewCommunity.updatedAt).toLocaleDateString() : "N/A"}
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={4}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Typography variant="caption" color="text.secondary" display="block">Current Status</Typography>
                                     <Typography variant="body2" fontWeight={500}>
                                         {viewCommunity.active ? "Active Community" : "Inactive Community"}
@@ -480,22 +487,22 @@ const CommunitiesPage = () => {
                 <DialogTitle>{editMode ? "Edit Community" : "Add Community"}</DialogTitle>
                 <DialogContent dividers>
                     <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                        <Grid item xs={12} sm={8}>
+                        <Grid size={{ xs: 12, sm: 8 }}>
                             <TextField fullWidth label="Community Name" name="communityName" value={formData.communityName} onChange={handleFormChange} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField fullWidth label="Code" name="communityCode" value={formData.communityCode} onChange={handleFormChange} />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid size={{ xs: 12 }}>
                             <TextField fullWidth label="Address" name="address" value={formData.address} onChange={handleFormChange} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField fullWidth label="City" name="city" value={formData.city} onChange={handleFormChange} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField fullWidth label="State" name="state" value={formData.state} onChange={handleFormChange} />
                         </Grid>
-                        <Grid item xs={12} sm={4}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
                             <TextField fullWidth label="Pincode" name="pincode" value={formData.pincode} onChange={handleFormChange} />
                         </Grid>
                     </Grid>

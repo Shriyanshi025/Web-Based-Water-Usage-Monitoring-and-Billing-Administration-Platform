@@ -3,15 +3,6 @@ import { Box, Card, CardContent, Stack, Typography } from "@mui/material";
 
 /**
  * AdminStatCard — Standardized KPI Summary Card for Community Admin Design System.
- * 
- * @param {Object} props
- * @param {string} props.title - Card title/label
- * @param {string|number} props.value - Metric value display
- * @param {React.ReactNode} props.icon - MUI Icon component
- * @param {string} [props.color="primary"] - Palette color key ('primary', 'success', 'warning', 'error', 'info', 'secondary')
- * @param {string|number} [props.badge] - Optional badge tag
- * @param {string} [props.subtitle] - Optional subtitle note
- * @param {function} [props.onClick] - Optional click handler
  */
 const AdminStatCard = ({
     title,
@@ -56,7 +47,7 @@ const AdminStatCard = ({
             }}
         >
             <CardContent sx={{ p: "20px", "&:last-child": { pb: "20px" } }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                <Stack direction="row" spacing={1.5} sx={{ justifyContent: "space-between", alignItems: "flex-start" }}>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                         <Typography
                             variant="subtitle2"

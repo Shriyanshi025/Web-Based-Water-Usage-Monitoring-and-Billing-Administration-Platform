@@ -30,7 +30,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import DataGrid from "../../components/common/DataGrid";
 import TableToolbar from "../../components/common/TableToolbar";
 import StatCard from "../../components/widgets/StatCard";
@@ -246,49 +246,31 @@ const InvitationsPage = () => {
         }
     ], [handleMenuClick, copySuccess]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Invitations", value: stats.total },
+        { label: "Pending Active", value: stats.active, color: "warning" },
+        { label: "Accepted", value: stats.accepted, color: "success" },
+    ], [stats]);
+
     return (
         <DashboardLayout>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2} sx={{ mb: 3 }}>
-                <PageHeader 
-                    title="Invitation Management" 
-                    subtitle="Invite residents to join your community."
-                />
-                <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<RefreshIcon />}
-                    onClick={fetchInvitations}
-                    sx={{ textTransform: "none", borderRadius: 2, flexShrink: 0, height: 36 }}
-                >
-                    Refresh
-                </Button>
-            </Stack>
-
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-                <Grid item xs={12} sm={4}>
-                    <StatCard 
-                        title="Total Invitations" 
-                        value={stats.total} 
-                        icon={<MailOutlinedIcon />}
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                    <StatCard 
-                        title="Active Pending" 
-                        value={stats.active} 
-                        icon={<HourglassBottomIcon />}
-                        color="warning.main"
-                    />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                    <StatCard 
-                        title="Accepted" 
-                        value={stats.accepted} 
-                        icon={<PeopleIcon />}
-                        color="success.main"
-                    />
-                </Grid>
-            </Grid>
+            <PageSummaryHeader
+                title="Invitation Management" 
+                subtitle="Invite residents to join your community."
+                icon={MailOutlinedIcon}
+                metadata={headerMetadata}
+                action={
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<RefreshIcon />}
+                        onClick={fetchInvitations}
+                        sx={{ textTransform: "none", borderRadius: 2, flexShrink: 0, height: 36 }}
+                    >
+                        Refresh
+                    </Button>
+                }
+            />
 
             <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, border: '1px solid', borderColor: 'divider', mb: 3, overflow: 'hidden' }}>
                 <TableToolbar 

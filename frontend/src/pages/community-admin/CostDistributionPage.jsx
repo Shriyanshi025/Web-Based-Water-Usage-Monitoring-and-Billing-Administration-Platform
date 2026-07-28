@@ -31,7 +31,7 @@ import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import CalculateIcon from "@mui/icons-material/Calculate";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import SearchBar from "../../components/common/SearchBar";
 import CommunityOpsService from "../../services/CommunityOpsService";
 
@@ -152,111 +152,54 @@ function CostDistributionPage() {
         );
     }
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Bulk Cost", value: distributionData ? `₹ ${distributionData.totalBulkCost?.toLocaleString()}` : "—", color: "primary" },
+        { label: "Community Consumption", value: distributionData ? `${distributionData.totalCommunityConsumption?.toLocaleString()} kL` : "—", color: "warning" },
+        { label: "Cost Per kL", value: distributionData ? `₹ ${distributionData.costPerKl?.toLocaleString()}` : "—", color: "success" },
+    ], [distributionData]);
+
     return (
         <DashboardLayout>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-                <PageHeader
-                    title="Consumption-Based Cost Distribution"
-                    subtitle="Engine to distribute bulk water purchase costs to residents based on consumption."
-                />
-                <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
-                    <FormControl variant="outlined" size="small" sx={{ minWidth: 200, height: 36 }}>
-                        <InputLabel id="select-billing-cycle-label">Billing Cycle</InputLabel>
-                        <Select
-                            labelId="select-billing-cycle-label"
-                            value={selectedCycleId}
-                            onChange={handleCycleChange}
-                            label="Billing Cycle"
-                            sx={{ borderRadius: 2 }}
+            <PageSummaryHeader
+                title="Consumption-Based Cost Distribution"
+                subtitle="Engine to distribute bulk water purchase costs to residents based on consumption."
+                icon={CalculateIcon}
+                metadata={headerMetadata}
+                action={
+                    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+                        <FormControl variant="outlined" size="small" sx={{ minWidth: 200, height: 36 }}>
+                            <InputLabel id="select-billing-cycle-label">Billing Cycle</InputLabel>
+                            <Select
+                                labelId="select-billing-cycle-label"
+                                value={selectedCycleId}
+                                onChange={handleCycleChange}
+                                label="Billing Cycle"
+                                sx={{ borderRadius: 2 }}
+                            >
+                                {billingCycles.map((c) => (
+                                    <MenuItem key={c.id} value={c.id}>
+                                        {c.name} {c.active ? "(Active)" : ""}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                        <Button
+                            variant="outlined"
+                            size="small"
+                            startIcon={<RefreshIcon />}
+                            onClick={handleRefresh}
+                            sx={{ textTransform: "none", borderRadius: 2, height: 36 }}
                         >
-                            {billingCycles.map((c) => (
-                                <MenuItem key={c.id} value={c.id}>
-                                    {c.name} {c.active ? "(Active)" : ""}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<RefreshIcon />}
-                        onClick={handleRefresh}
-                        sx={{ textTransform: "none", borderRadius: 2, height: 36 }}
-                    >
-                        Recalculate
-                    </Button>
-                </Stack>
-            </Stack>
+                            Recalculate
+                        </Button>
+                    </Stack>
+                }
+            />
 
             {error && (
                 <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
                     {error}
                 </Alert>
-            )}
-
-            {/* Summary Cards */}
-            {distributionData && (
-                <Grid container spacing={3} sx={{ mb: 4 }}>
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", height: "100%" }}>
-                            <CardContent>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Box>
-                                        <Typography variant="caption" color="text.secondary" fontWeight="bold">
-                                            TOTAL BULK WATER COST
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="bold" sx={{ mt: 1, color: "primary.main" }}>
-                                            ₹ {distributionData.totalBulkCost?.toLocaleString()}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "primary.lighter" }}>
-                                        <LocalShippingIcon color="primary" />
-                                    </Box>
-                                </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", height: "100%" }}>
-                            <CardContent>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Box>
-                                        <Typography variant="caption" color="text.secondary" fontWeight="bold">
-                                            TOTAL COMMUNITY CONSUMPTION
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="bold" sx={{ mt: 1, color: "warning.main" }}>
-                                            {distributionData.totalCommunityConsumption?.toLocaleString()} kL
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "warning.lighter" }}>
-                                        <WaterDropIcon color="warning" />
-                                    </Box>
-                                </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-
-                    <Grid item xs={12} sm={4}>
-                        <Card sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", boxShadow: "0 4px 20px rgba(0,0,0,0.05)", height: "100%" }}>
-                            <CardContent>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                    <Box>
-                                        <Typography variant="caption" color="text.secondary" fontWeight="bold">
-                                            COST PER KL
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="bold" sx={{ mt: 1, color: "success.main" }}>
-                                            ₹ {distributionData.costPerKl?.toLocaleString()}
-                                        </Typography>
-                                    </Box>
-                                    <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "success.lighter" }}>
-                                        <CalculateIcon color="success" />
-                                    </Box>
-                                </Stack>
-                            </CardContent>
-                        </Card>
-                    </Grid>
-                </Grid>
             )}
 
             {/* Distribution Table */}

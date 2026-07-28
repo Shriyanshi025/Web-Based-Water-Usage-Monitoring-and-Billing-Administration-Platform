@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import TableToolbar from "../../components/common/TableToolbar";
 import DataGrid from "../../components/common/DataGrid";
@@ -163,11 +164,19 @@ function ComplaintsPage() {
         }
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "My Complaints", value: complaints.length },
+        { label: "Active", value: complaints.filter(c => c.status === "OPEN" || c.status === "IN_PROGRESS").length, color: "warning" },
+        { label: "Resolved", value: complaints.filter(c => c.status === "RESOLVED").length, color: "success" },
+    ], [complaints]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Complaints & Support"
                 subtitle="Raise new complaints, track issues, and view resolution remarks."
+                icon={SupportAgentIcon}
+                metadata={headerMetadata}
             />
 
             <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
@@ -256,21 +265,21 @@ function ComplaintsPage() {
                     {selectedComplaint && (
                         <Stack spacing={2.5}>
                             <Grid container spacing={2}>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Ticket Number</Typography>
                                     <Typography variant="body1" fontWeight="bold">{selectedComplaint.ticketNumber}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Category</Typography>
                                     <Typography variant="body1">{selectedComplaint.category}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Priority</Typography>
                                     <Typography variant="body1">
                                         <Chip label={selectedComplaint.priority} color={getPriorityColor(selectedComplaint.priority)} size="small" />
                                     </Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Created On</Typography>
                                     <Typography variant="body2">{new Date(selectedComplaint.createdAt).toLocaleString()}</Typography>
                                 </Grid>
@@ -282,11 +291,11 @@ function ComplaintsPage() {
                             </Box>
                             <Divider />
                             <Grid container spacing={2}>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Assigned To</Typography>
                                     <Typography variant="body2" fontWeight="medium">{selectedComplaint.assignedToName || "Unassigned"}</Typography>
                                 </Grid>
-                                <Grid item xs={6}>
+                                <Grid size={{ xs: 6 }}>
                                     <Typography variant="caption" color="text.secondary">Resolved On</Typography>
                                     <Typography variant="body2">{selectedComplaint.resolvedAt ? new Date(selectedComplaint.resolvedAt).toLocaleString() : "Pending"}</Typography>
                                 </Grid>

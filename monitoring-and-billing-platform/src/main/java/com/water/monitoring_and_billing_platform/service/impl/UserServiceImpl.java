@@ -15,6 +15,7 @@ import com.water.monitoring_and_billing_platform.repository.ResidentProfileRepos
 import com.water.monitoring_and_billing_platform.repository.UserRepository;
 import com.water.monitoring_and_billing_platform.security.JwtService;
 import com.water.monitoring_and_billing_platform.service.UserService;
+import com.water.monitoring_and_billing_platform.util.UserStatusUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -126,7 +127,7 @@ public class UserServiceImpl implements UserService {
                 .email(user.getEmail())
                 .role(user.getRole().name())
                 .approvalStatus(user.getApprovalStatus().name())
-                .active(user.isActive())
+                .active(UserStatusUtil.calculateActiveStatus(user))
                 .lastLogin(user.getLastLogin())
                 .communityId(communityId)
                 .build();

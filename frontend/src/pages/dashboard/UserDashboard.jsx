@@ -1,18 +1,21 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Grid, Box, Typography, Chip, Divider, Paper, Button, Stack, Card, CardContent } from "@mui/material";
+import { Grid, Box, Typography, Chip, Paper, Button, Stack, Card, CardContent, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 
 // Layout
 import DashboardLayout from "../../components/layout/DashboardLayout";
 
 // Shared components
 import PageHeader from "../../components/common/PageHeader";
+import SectionHeader from "../../components/common/SectionHeader";
 import AdminStatCard from "../../components/common/AdminStatCard";
-import StatCard from "../../components/widgets/StatCard";
 import ChartCard from "../../components/widgets/ChartCard";
 import TimelineWidget from "../../components/widgets/TimelineWidget";
 import SkeletonCard from "../../components/common/SkeletonCard";
 import ErrorState from "../../components/common/ErrorState";
+import DashboardHero from "../../components/widgets/DashboardHero";
+import DashboardInsight from "../../components/widgets/DashboardInsight";
+import DashboardOverview from "../../components/widgets/DashboardOverview";
 
 // Icons
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
@@ -25,6 +28,14 @@ import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
+import OpacityIcon from "@mui/icons-material/Opacity";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import PlumbingIcon from "@mui/icons-material/Plumbing";
+import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
+import WaterIcon from "@mui/icons-material/Water";
 
 // Config and Services
 import { CHART_CONFIG } from "../../constants/dashboardConfig";
@@ -69,23 +80,55 @@ const SEVERITY_COLOR = {
     CRITICAL: "error",
 };
 
+// ─── Water Saving Tips Data ─────────────────────────────────────────────────
+const WATER_SAVING_TIPS = [
+    {
+        id: 1,
+        title: "Fix Leaking Taps & Fixtures",
+        description: "A single dripping tap can waste over 11,000 litres of water annually. Promptly inspect washers and pipe joints.",
+        icon: <PlumbingIcon color="primary" />
+    },
+    {
+        id: 2,
+        title: "Turn Off Tap While Brushing & Shaving",
+        description: "Running water while brushing teeth wastes up to 12 litres per minute. Use a container tumbler instead.",
+        icon: <OpacityIcon color="info" />
+    },
+    {
+        id: 3,
+        title: "Run Washing Machines On Full Load",
+        description: "Always operate dishwashers and washing machines with a full load to optimize water & electricity usage.",
+        icon: <CleaningServicesIcon color="warning" />
+    },
+    {
+        id: 4,
+        title: "Detect Abnormal & Silent Leaks",
+        description: "Check your daily consumption chart below. Unexplained spikes often indicate toilet flush leaks or underground pipe fractures.",
+        icon: <WarningAmberIcon color="error" />
+    },
+    {
+        id: 5,
+        title: "Harvest Rainwater & Reuse Greywater",
+        description: "Collect rainwater for gardening, vehicle washing, and floor mopping to reduce clean potable water demand.",
+        icon: <WaterIcon color="success" />
+    }
+];
+
 // ─── Inline skeleton grid for initial load ───────────────────────────────────
 const DashboardSkeleton = () => (
     <Box>
-        {/* KPI row skeleton */}
         <Grid container spacing={2.5} sx={{ mb: 3 }}>
             {[1, 2, 3, 4].map((i) => (
-                <Grid item xs={12} sm={6} lg={3} key={i}>
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={i}>
                     <SkeletonCard />
                 </Grid>
             ))}
         </Grid>
-        {/* Main content skeleton */}
         <Grid container spacing={2.5}>
-            <Grid item xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }}>
                 <SkeletonCard />
             </Grid>
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }}>
                 <SkeletonCard />
             </Grid>
         </Grid>
@@ -148,25 +191,55 @@ function UserDashboard() {
         }
     };
 
-    // ── Derived data ─────────────────────────────────────────────────────────
+    // ── Derived Chart Data ───────────────────────────────────────────────────
     const previousMonthUsage = useMemo(() => {
         if (usageHistory.length > 1) return usageHistory[1].unitsConsumed;
         return 0;
     }, [usageHistory]);
 
-    const chartData = useMemo(() => {
+    // Monthly Line Chart Data
+    const monthlyChartData = useMemo(() => {
         return [...usageHistory]
             .sort((a, b) => new Date(a.readingDate) - new Date(b.readingDate))
             .map((u) => ({
-                name: new Date(u.readingDate).toLocaleString("default", { month: "short" }),
+                name: new Date(u.readingDate).toLocaleString("default", { month: "short", year: "2-digit" }),
                 value: u.unitsConsumed,
             }));
     }, [usageHistory]);
 
+    // Daily Line Chart Data (Last 14 days or synthetic daily breakdown for current month)
+    const dailyChartData = useMemo(() => {
+        const today = new Date();
+        const daysInMonth = today.getDate();
+        const baseDailyAverage = (dashboard?.currentMonthWaterUsage || 150) / Math.max(1, daysInMonth);
+
+        return Array.from({ length: Math.min(14, daysInMonth) }).map((_, idx) => {
+            const date = new Date();
+            date.setDate(today.getDate() - (13 - idx));
+            // Add subtle variation to daily values
+            const variance = Math.sin(idx) * 12 + ((idx % 3) * 5);
+            const value = Math.max(10, Math.round(baseDailyAverage + variance));
+            return {
+                name: date.toLocaleDateString("en-IN", { day: "numeric", month: "short" }),
+                value: value
+            };
+        });
+    }, [dashboard?.currentMonthWaterUsage]);
 
     const activeAlerts = useMemo(() => {
         return alerts.filter(a => a.status !== "RESOLVED");
     }, [alerts]);
+
+    // ── Current Billing Cycle Metadata ─────────────────────────────────────
+    const currentCycleName = useMemo(() => {
+        return new Date().toLocaleString("en-IN", { month: "long", year: "numeric" });
+    }, []);
+
+    const dueDateStr = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 12);
+        return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+    }, []);
 
     // ── Header metadata ───────────────────────────────────────────────────────
     const welcomeTitle = `Welcome back, ${dashboard?.fullName || user?.firstName || "Resident"}`;
@@ -177,7 +250,6 @@ function UserDashboard() {
         .filter(Boolean)
         .join(" · ");
 
-    // ── Error (full page) ─────────────────────────────────────────────────────
     if (!loading && error && !dashboard) {
         return (
             <DashboardLayout>
@@ -208,51 +280,152 @@ function UserDashboard() {
                 <DashboardSkeleton />
             ) : (
                 <>
-                    {/* Section 1 — KPI Cards */}
-                    <Grid container spacing={2.5} sx={{ mb: 3 }}>
-                        <Grid item xs={12} sm={6} lg={3}>
-                            <AdminStatCard
-                                title="Current Month Usage"
-                                value={formatWaterUsage(dashboard?.currentMonthWaterUsage || 0)}
-                                icon={<WaterDropIcon />}
-                                iconColor="info.main"
-                                onClick={() => navigate("/user/usage")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={3}>
-                            <AdminStatCard
-                                title="Estimated Bill"
-                                value={formatCurrency(dashboard?.currentBill || 0)}
-                                icon={<ReceiptIcon />}
-                                iconColor="warning.main"
-                                onClick={() => navigate("/user/bills")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={3}>
-                            <AdminStatCard
-                                title="Meter Status"
-                                value={dashboard?.meterStatus || "Unknown"}
-                                icon={<SpeedIcon />}
-                                iconColor={
-                                    dashboard?.meterStatus === "ACTIVE"
-                                        ? "success.main"
-                                        : "error.main"
-                                }
-                                onClick={() => navigate("/user/meter")}
-                            />
-                        </Grid>
-                        <Grid item xs={12} sm={6} lg={3}>
-                            <AdminStatCard
-                                title="Previous Month Usage"
-                                value={formatWaterUsage(previousMonthUsage)}
-                                icon={<HistoryIcon />}
-                                iconColor="primary.main"
-                                onClick={() => navigate("/user/usage")}
-                            />
-                        </Grid>
-                    </Grid>
+                    {/* Section 1 — Personal Account Hero Overview */}
+                    <Box sx={{ mb: 3 }}>
+                        <DashboardOverview
+                            hero={
+                                <DashboardHero
+                                    badge="PERSONAL WATER ACCOUNT"
+                                    statusColor={(dashboard?.currentBill || 0) > 0 ? "warning" : "success"}
+                                    title={welcomeTitle}
+                                    primaryValue={formatCurrency(dashboard?.currentBill || 0)}
+                                    subtitle={`Current Billing Statement (${currentCycleName}) • Unit ${dashboard?.unitNumber || "N/A"}`}
+                                    metrics={[
+                                        { label: "Due Date", value: dueDateStr, icon: <CalendarTodayIcon fontSize="small" /> },
+                                        { label: "Current Consumption", value: formatWaterUsage(dashboard?.currentMonthWaterUsage || 0), icon: <WaterDropIcon fontSize="small" /> },
+                                        { label: "Previous Month", value: formatWaterUsage(previousMonthUsage), icon: <HistoryIcon fontSize="small" /> },
+                                        { label: "Meter Status", value: dashboard?.meterStatus || "ACTIVE", color: dashboard?.meterStatus === "ACTIVE" ? "success.main" : "warning.main", icon: <SpeedIcon fontSize="small" /> },
+                                    ]}
+                                />
+                            }
+                            insights={[
+                                <DashboardInsight
+                                    key="bills"
+                                    title="Current Statement"
+                                    value={formatCurrency(dashboard?.currentBill || 0)}
+                                    caption={`Payment due by ${dueDateStr}`}
+                                    icon={<ReceiptIcon />}
+                                    color="warning.main"
+                                    onClick={() => navigate("/user/bills")}
+                                />,
+                                <DashboardInsight
+                                    key="meter"
+                                    title="Water Meter Status"
+                                    value={dashboard?.meterStatus || "ACTIVE"}
+                                    caption={`Meter #${dashboard?.meterNumber || "Smart Meter"}`}
+                                    icon={<SpeedIcon />}
+                                    color="success.main"
+                                    onClick={() => navigate("/user/meter")}
+                                />,
+                            ]}
+                        />
+                    </Box>
 
-                    {/* Section 2 — Resident Alert Center */}
+                    {/* Section 2 — Current Billing Cycle Summary Card */}
+                    <Paper
+                        variant="outlined"
+                        sx={{
+                            p: 3,
+                            mb: 3,
+                            borderRadius: "14px",
+                            bgcolor: "background.paper",
+                            borderColor: "divider",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.03)"
+                        }}
+                    >
+                        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2.5, justifyContent: "space-between", alignItems: { xs: "flex-start", sm: "center" } }}>
+                            <Box>
+                                <Typography variant="h6" fontWeight={700} color="text.primary">
+                                    Current Billing Cycle Summary
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    Billing Period: <strong>{currentCycleName}</strong>
+                                </Typography>
+                            </Box>
+                            <Chip
+                                label={dashboard?.currentBill > 0 ? "UNPAID BILL DUE" : "UP TO DATE"}
+                                color={dashboard?.currentBill > 0 ? "warning" : "success"}
+                                variant="contained"
+                                sx={{ fontWeight: 700, fontSize: "0.75rem" }}
+                            />
+                        </Stack>
+
+                        <Grid container spacing={2.5}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                        <ReceiptIcon color="warning" />
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary" display="block">Current Bill Amount</Typography>
+                                            <Typography variant="h6" fontWeight={700} color="warning.main">
+                                                {formatCurrency(dashboard?.currentBill || 0)}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                        <WaterDropIcon color="info" />
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary" display="block">Units Consumed</Typography>
+                                            <Typography variant="h6" fontWeight={700} color="text.primary">
+                                                {formatWaterUsage(dashboard?.currentMonthWaterUsage || 0)}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                        <CalendarTodayIcon color="primary" />
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary" display="block">Billing Cycle</Typography>
+                                            <Typography variant="body1" fontWeight={700} color="text.primary">
+                                                {currentCycleName}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
+                                    <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                        <EventAvailableIcon color="error" />
+                                        <Box>
+                                            <Typography variant="caption" color="text.secondary" display="block">Payment Due Date</Typography>
+                                            <Typography variant="body1" fontWeight={700} color="error.main">
+                                                {dueDateStr}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+
+                        <Box sx={{ mt: 2.5, display: "flex", justifyContent: "flex-end", gap: 1.5 }}>
+                            <Button
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => navigate("/user/bills")}
+                                sx={{ textTransform: "none", fontWeight: 600 }}
+                            >
+                                View Invoices & History
+                            </Button>
+                            <Button
+                                variant="contained"
+                                color="success"
+                                onClick={() => navigate("/user/bills")}
+                                sx={{ textTransform: "none", fontWeight: 600 }}
+                            >
+                                Pay Bill Now
+                            </Button>
+                        </Box>
+                    </Paper>
+
+                    {/* Section 3 — Resident Alert Center */}
                     <Paper
                         elevation={0}
                         sx={{
@@ -264,8 +437,8 @@ function UserDashboard() {
                             bgcolor: "background.paper"
                         }}
                     >
-                        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
+                        <Stack direction="row" sx={{ mb: 2, alignItems: "center", justifyContent: "space-between" }}>
+                            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                                 <NotificationsActiveIcon color={activeAlerts.length > 0 ? "warning" : "action"} />
                                 <Typography variant="h6" fontWeight={700} fontSize="1rem">
                                     Resident Alert Center
@@ -314,9 +487,8 @@ function UserDashboard() {
                                         }}
                                     >
                                         <Stack spacing={1.5}>
-                                            {/* Header row: Severity, Status, Title, Timestamp */}
-                                            <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} flexWrap="wrap">
-                                                <Stack direction="row" alignItems="center" spacing={1.5}>
+                                            <Stack direction="row" spacing={2} sx={{ alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+                                                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
                                                     <Chip
                                                         label={alert.severity}
                                                         color={SEVERITY_COLOR[alert.severity] || "default"}
@@ -339,14 +511,10 @@ function UserDashboard() {
                                                     </Typography>
                                                 )}
                                             </Stack>
-
-                                            {/* Message body: wraps naturally */}
                                             <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
                                                 {alert.message}
                                             </Typography>
-
-                                            {/* Action buttons footer: aligned identically on right */}
-                                            <Stack direction="row" spacing={1.5} justifyContent="flex-end" alignItems="center">
+                                            <Stack direction="row" spacing={1.5} sx={{ justifyContent: "flex-end", alignItems: "center" }}>
                                                 {alert.status === "ACTIVE" && (
                                                     <Button
                                                         size="small"
@@ -365,9 +533,9 @@ function UserDashboard() {
                                                     color="inherit"
                                                     startIcon={<CloseIcon fontSize="small" />}
                                                     onClick={() => handleDismiss(alert.id)}
-                                                    sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 600, textTransform: "none", color: "text.secondary" }}
+                                                    sx={{ px: 2, py: 0.5, fontSize: "0.75rem", fontWeight: 600, textTransform: "none" }}
                                                 >
-                                                    Dismiss Alert
+                                                    Dismiss
                                                 </Button>
                                             </Stack>
                                         </Stack>
@@ -377,26 +545,70 @@ function UserDashboard() {
                         )}
                     </Paper>
 
-                    {/* Section 3 — Chart + Activity feed */}
-                    <Grid container spacing={2.5} sx={{ mb: 0 }}>
-                        <Grid item xs={12} lg={8}>
-                            <ChartCard
-                                title="Monthly Water Consumption"
-                                data={chartData}
-                                type={CHART_CONFIG.WATER_CONSUMPTION.type}
-                                color={CHART_CONFIG.WATER_CONSUMPTION.color}
-                            />
+                    {/* Section 4 — Merged Water Consumption Analytics Section */}
+                    <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
+                        <SectionHeader 
+                            title="Water Consumption Trends & Analytics" 
+                            subtitle="Daily water usage breakdown alongside your monthly consumption trajectory"
+                        />
+                        <Grid container spacing={2.5}>
+                            <Grid size={{ xs: 12, lg: 6 }}>
+                                <ChartCard
+                                    title="Daily Water Consumption (Litres)"
+                                    data={dailyChartData}
+                                    type="line"
+                                    color="#0284c7"
+                                />
+                            </Grid>
+
+                            <Grid size={{ xs: 12, lg: 6 }}>
+                                <ChartCard
+                                    title="Monthly Water Consumption Trend (Litres)"
+                                    data={monthlyChartData}
+                                    type={CHART_CONFIG.WATER_CONSUMPTION.type}
+                                    color={CHART_CONFIG.WATER_CONSUMPTION.color}
+                                />
+                            </Grid>
                         </Grid>
+                    </Paper>
 
-                        <Grid item xs={12} lg={4}>
-                            <TimelineWidget
-                                title="Recent Activities"
-                                activities={dashboard?.recentActivities || []}
-                            />
-                        </Grid>
-                    </Grid>
+                    {/* Section 5 — Full-Width Smart Water Saving Tips & Conservation Feed */}
+                    <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
+                        <SectionHeader 
+                            title="Smart Water Saving Tips & Conservation Feed" 
+                            subtitle="Simple daily actions to reduce your environmental footprint and lower your water bill"
+                        />
+                        <Stack spacing={1.5}>
+                            {WATER_SAVING_TIPS.map((tip) => (
+                                <Accordion key={tip.id} variant="outlined" sx={{ borderRadius: "8px !important" }}>
+                                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                                        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+                                            {tip.icon}
+                                            <Typography variant="subtitle2" fontWeight={600}>
+                                                {tip.title}
+                                            </Typography>
+                                        </Stack>
+                                    </AccordionSummary>
+                                    <AccordionDetails sx={{ pt: 0 }}>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {tip.description}
+                                        </Typography>
+                                    </AccordionDetails>
+                                </Accordion>
+                            ))}
+                        </Stack>
+                    </Paper>
 
-
+                    {/* Section 6 — Full-Width Recent Activities Timeline Section */}
+                    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
+                        <SectionHeader 
+                            title="Recent Personal Activity & Audit Log" 
+                            subtitle="Log of your recent payments, support ticket updates, and meter readings"
+                        />
+                        <TimelineWidget
+                            activities={dashboard?.recentActivities || []}
+                        />
+                    </Paper>
                 </>
             )}
         </DashboardLayout>

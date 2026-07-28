@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import DashboardLayout from "../../components/layout/DashboardLayout";
-import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import TableToolbar from "../../components/common/TableToolbar";
 import DataGrid from "../../components/common/DataGrid";
@@ -184,11 +185,20 @@ function ComplaintsPage() {
         }
     ], []);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Complaints", value: complaints.length },
+        { label: "Open", value: complaints.filter(c => c.status === "OPEN").length, color: "info" },
+        { label: "In Progress", value: complaints.filter(c => c.status === "IN_PROGRESS").length, color: "warning" },
+        { label: "Resolved", value: complaints.filter(c => c.status === "RESOLVED").length, color: "success" },
+    ], [complaints]);
+
     return (
         <DashboardLayout>
-            <PageHeader
+            <PageSummaryHeader
                 title="Resident Complaints"
                 subtitle="Review, search, filter, assign, and update community complaints."
+                icon={ReportProblemIcon}
+                metadata={headerMetadata}
             />
 
             <WidgetContainer bodyPadding={0}>
