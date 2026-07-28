@@ -38,6 +38,9 @@ public class CommunityServiceImpl implements CommunityService {
     private final AlertService alertService;
     private final com.water.monitoring_and_billing_platform.service.TariffPlanService tariffPlanService;
 
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
     @Override
     @Transactional
     public CommunityResponse createCommunity(CommunityRequest request) {
@@ -175,21 +178,123 @@ public class CommunityServiceImpl implements CommunityService {
         Community community = communityRepository.findById(id)
                 .orElseThrow(() -> new CommunityNotFoundException());
 
-        if (blockRepository.countByCommunityId(id) > 0 ||
-            unitRepository.countByCommunityId(id) > 0 ||
-            waterMeterRepository.countByResidentProfileCommunityId(id) > 0 ||
-            residentProfileRepository.countByCommunityId(id) > 0 ||
-            communityAdminProfileRepository.countByCommunityId(id) > 0) {
-            throw new IllegalStateException("Community cannot be deleted because it still contains dependent records.");
+        // 1. Cascade delete all Residents in this Community
+        List<com.water.monitoring_and_billing_platform.entity.ResidentProfile> residents = residentProfileRepository.findByCommunityId(id);
+        for (com.water.monitoring_and_billing_platform.entity.ResidentProfile resident : residents) {
+            com.water.monitoring_and_billing_platform.entity.User residentUser = resident.getUser();
+
+            entityManager.createQuery("DELETE FROM Payment p WHERE p.resident.id = :rId")
+                    .setParameter("rId", resident.getId()).executeUpdate();
+
+            List<com.water.monitoring_and_billing_platform.entity.Bill> bills = entityManager.createQuery(
+                    "SELECT b FROM Bill b WHERE b.residentProfile.id = :rId", com.water.monitoring_and_billing_platform.entity.Bill.class)
+                    .setParameter("rId", resident.getId()).getResultList();
+            for (com.water.monitoring_and_billing_platform.entity.Bill b : bills) {
+                entityManager.createQuery("DELETE FROM Invoice i WHERE i.bill.id = :bId")
+                        .setParameter("bId", b.getId()).executeUpdate();
+            }
+            entityManager.createQuery("DELETE FROM Bill b WHERE b.residentProfile.id = :rId")
+                    .setParameter("rId", resident.getId()).executeUpdate();
+
+            List<com.water.monitoring_and_billing_platform.entity.WaterMeter> meters = entityManager.createQuery(
+                    "SELECT wm FROM WaterMeter wm WHERE wm.residentProfile.id = :rId", com.water.monitoring_and_billing_platform.entity.WaterMeter.class)
+                    .setParameter("rId", resident.getId()).getResultList();
+            for (com.water.monitoring_and_billing_platform.entity.WaterMeter wm : meters) {
+                entityManager.createQuery("DELETE FROM WaterUsage wu WHERE wu.waterMeter.id = :wmId")
+                        .setParameter("wmId", wm.getId()).executeUpdate();
+                entityManager.remove(wm);
+            }
+
+            entityManager.createQuery("DELETE FROM Complaint c WHERE c.resident.id = :rId")
+                    .setParameter("rId", resident.getId()).executeUpdate();
+            if (residentUser != null) {
+                entityManager.createQuery("UPDATE Complaint c SET c.assignedTo = null WHERE c.assignedTo.id = :uId")
+                        .setParameter("uId", residentUser.getId()).executeUpdate();
+                entityManager.createQuery("UPDATE Complaint c SET c.lastUpdatedBy = null WHERE c.lastUpdatedBy.id = :uId")
+                        .setParameter("uId", residentUser.getId()).executeUpdate();
+                entityManager.createQuery("DELETE FROM Alert a WHERE a.recipient.id = :uId")
+                        .setParameter("uId", residentUser.getId()).executeUpdate();
+                if (residentUser.getEmail() != null) {
+                    entityManager.createQuery("DELETE FROM Notification n WHERE n.recipient = :email")
+                            .setParameter("email", residentUser.getEmail()).executeUpdate();
+                    entityManager.createQuery("DELETE FROM Invitation inv WHERE inv.email = :email")
+                            .setParameter("email", residentUser.getEmail()).executeUpdate();
+                }
+                entityManager.createQuery("DELETE FROM ActivityLog al WHERE al.user.id = :uId")
+                        .setParameter("uId", residentUser.getId()).executeUpdate();
+            }
+            entityManager.createQuery("DELETE FROM Alert a WHERE a.resident.id = :rId")
+                    .setParameter("rId", resident.getId()).executeUpdate();
+
+            entityManager.remove(resident);
+            if (residentUser != null) {
+                entityManager.remove(residentUser);
+            }
         }
 
-        alertRepository.deleteByCommunityId(id);
-        tariffPlanRepository.deleteByCommunityId(id);
-        activityLogRepository.deleteByCommunityId(id);
+        // 2. Cascade delete all Community Admins in this Community
+        List<com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile> adminProfiles = communityAdminProfileRepository.findByCommunityId(id);
+        for (com.water.monitoring_and_billing_platform.entity.CommunityAdminProfile adminProfile : adminProfiles) {
+            com.water.monitoring_and_billing_platform.entity.User adminUser = adminProfile.getUser();
+
+            entityManager.createQuery("DELETE FROM Invitation inv WHERE inv.admin.id = :aId")
+                    .setParameter("aId", adminProfile.getId()).executeUpdate();
+
+            if (adminUser != null) {
+                entityManager.createQuery("UPDATE Complaint c SET c.assignedTo = null WHERE c.assignedTo.id = :uId")
+                        .setParameter("uId", adminUser.getId()).executeUpdate();
+                entityManager.createQuery("UPDATE Complaint c SET c.lastUpdatedBy = null WHERE c.lastUpdatedBy.id = :uId")
+                        .setParameter("uId", adminUser.getId()).executeUpdate();
+                entityManager.createQuery("DELETE FROM Alert a WHERE a.recipient.id = :uId")
+                        .setParameter("uId", adminUser.getId()).executeUpdate();
+                if (adminUser.getEmail() != null) {
+                    entityManager.createQuery("DELETE FROM Notification n WHERE n.recipient = :email")
+                            .setParameter("email", adminUser.getEmail()).executeUpdate();
+                }
+                entityManager.createQuery("DELETE FROM ActivityLog al WHERE al.user.id = :uId")
+                        .setParameter("uId", adminUser.getId()).executeUpdate();
+            }
+
+            entityManager.remove(adminProfile);
+            if (adminUser != null) {
+                entityManager.remove(adminUser);
+            }
+        }
+
+        // 3. Delete remaining Community structural entities
+        entityManager.createQuery("DELETE FROM BulkWaterPurchase bwp WHERE bwp.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+
+        List<com.water.monitoring_and_billing_platform.entity.TariffPlan> plans = entityManager.createQuery(
+                "SELECT tp FROM TariffPlan tp WHERE tp.community.id = :cId", com.water.monitoring_and_billing_platform.entity.TariffPlan.class)
+                .setParameter("cId", id).getResultList();
+        for (com.water.monitoring_and_billing_platform.entity.TariffPlan tp : plans) {
+            entityManager.remove(tp);
+        }
+
+        entityManager.createQuery("DELETE FROM Complaint c WHERE c.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+        entityManager.createQuery("DELETE FROM Invitation inv WHERE inv.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+        entityManager.createQuery("DELETE FROM Alert a WHERE a.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+        entityManager.createQuery("DELETE FROM ActivityLog al WHERE al.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+
+        entityManager.createQuery("DELETE FROM Unit u WHERE u.block.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+        entityManager.createQuery("DELETE FROM Block b WHERE b.community.id = :cId")
+                .setParameter("cId", id).executeUpdate();
+
         communityRepository.delete(community);
     }
 
     private CommunityResponse mapToResponse(Community community) {
+        long adminCount = communityAdminProfileRepository.countByCommunityId(community.getId());
+        long residentCount = residentProfileRepository.countByCommunityId(community.getId());
+        long blockCount = blockRepository.countByCommunityId(community.getId());
+        long unitCount = unitRepository.countByCommunityId(community.getId());
+
         return CommunityResponse.builder()
                 .id(community.getId())
                 .communityName(community.getCommunityName())
@@ -201,6 +306,10 @@ public class CommunityServiceImpl implements CommunityService {
                 .active(community.isActive())
                 .createdAt(community.getCreatedAt())
                 .updatedAt(community.getUpdatedAt())
+                .totalCommunityAdmins(adminCount)
+                .totalResidents(residentCount)
+                .totalBlocks(blockCount)
+                .totalUnits(unitCount)
                 .build();
     }
 }

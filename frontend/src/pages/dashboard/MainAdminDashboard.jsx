@@ -17,7 +17,7 @@ import { Button } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
 import PeopleIcon from "@mui/icons-material/People";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
 import AddIcon from "@mui/icons-material/Add";
@@ -107,7 +107,7 @@ function MainAdminDashboard() {
             key="revenue-summary"
             title="Revenue Summary" 
             value={formatCurrency(dashboard?.totalRevenue || 0)}
-            icon={<AttachMoneyIcon />} 
+            icon={<CurrencyRupeeIcon />} 
             iconColor="success.main"
             onClick={() => navigate("/main-admin/communities")}
         />
@@ -173,7 +173,7 @@ function MainAdminDashboard() {
                 kpiCards={memoizedKpiCards}
                 leftColumn={memoizedLeftColumn}
                 rightColumn={memoizedRightColumn}
-                quickActions={memoizedQuickActions}
+                quickActions={null}
             />
         </DashboardLayout>
     );

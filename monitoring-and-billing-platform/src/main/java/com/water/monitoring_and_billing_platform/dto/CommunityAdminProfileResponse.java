@@ -22,5 +22,8 @@ public class CommunityAdminProfileResponse {
     private String communityName;
     private boolean verified;
     private boolean active;
+    private java.time.LocalDateTime createdAt;
+    private String communityAddress;
+    private Long totalResidents;
 
 }

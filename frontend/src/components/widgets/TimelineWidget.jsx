@@ -9,7 +9,7 @@ import SpeedIcon from "@mui/icons-material/Speed";
 import HistoryIcon from "@mui/icons-material/History";
 import BuildIcon from "@mui/icons-material/Build";
 import PendingActionsIcon from "@mui/icons-material/PendingActions";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import CurrencyRupeeIcon from "@mui/icons-material/CurrencyRupee";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import HistoryToggleOffIcon from "@mui/icons-material/HistoryToggleOff";
 
@@ -22,7 +22,8 @@ const renderIcon = (iconName) => {
         case "HistoryIcon":         return <HistoryIcon />;
         case "BuildIcon":           return <BuildIcon />;
         case "PendingActionsIcon":  return <PendingActionsIcon />;
-        case "AttachMoneyIcon":     return <AttachMoneyIcon />;
+        case "AttachMoneyIcon":     
+        case "CurrencyRupeeIcon":   return <CurrencyRupeeIcon />;
         default:                    return <NotificationsIcon />;
     }
 };

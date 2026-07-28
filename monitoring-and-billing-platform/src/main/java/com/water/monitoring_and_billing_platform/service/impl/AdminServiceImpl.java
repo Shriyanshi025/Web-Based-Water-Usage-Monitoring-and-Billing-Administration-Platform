@@ -233,9 +233,18 @@ public class AdminServiceImpl implements AdminService {
             CommunityAdminProfile profile = communityAdminProfileRepository.findByUserId(userId).orElse(null);
             if (profile != null) {
                 // Invitations are strongly tied to the Community Admin who created them (nullable = false).
-                // Existing business logic requires their deletion to prevent foreign key constraint violations.
                 entityManager.createQuery("DELETE FROM Invitation i WHERE i.admin.id = :adminId")
                         .setParameter("adminId", profile.getId())
+                        .executeUpdate();
+
+                entityManager.createQuery("UPDATE Complaint c SET c.assignedTo = null WHERE c.assignedTo.id = :userId")
+                        .setParameter("userId", userId)
+                        .executeUpdate();
+                entityManager.createQuery("UPDATE Complaint c SET c.lastUpdatedBy = null WHERE c.lastUpdatedBy.id = :userId")
+                        .setParameter("userId", userId)
+                        .executeUpdate();
+                entityManager.createQuery("DELETE FROM Alert a WHERE a.recipient.id = :userId")
+                        .setParameter("userId", userId)
                         .executeUpdate();
                 
                 communityAdminProfileRepository.delete(profile);

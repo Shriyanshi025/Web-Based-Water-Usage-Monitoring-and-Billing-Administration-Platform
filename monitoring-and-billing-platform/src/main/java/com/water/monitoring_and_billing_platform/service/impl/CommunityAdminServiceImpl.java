@@ -22,6 +22,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
     private final UserRepository userRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final com.water.monitoring_and_billing_platform.repository.CommunityRepository communityRepository;
+    private final com.water.monitoring_and_billing_platform.repository.ResidentProfileRepository residentProfileRepository;
     private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     @Override
@@ -159,6 +160,17 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
     }
 
     private CommunityAdminProfileResponse mapToResponse(CommunityAdminProfile profile) {
+        String commAddr = null;
+        Long totalRes = 0L;
+        if (profile.getCommunity() != null) {
+            var c = profile.getCommunity();
+            commAddr = (c.getAddress() != null ? c.getAddress() : "") + 
+                (c.getCity() != null ? ", " + c.getCity() : "") + 
+                (c.getState() != null ? ", " + c.getState() : "") + 
+                (c.getPincode() != null ? " - " + c.getPincode() : "");
+            totalRes = residentProfileRepository.countByCommunityId(c.getId());
+        }
+
         return CommunityAdminProfileResponse.builder()
                 .id(profile.getId())
                 .userId(profile.getUser().getId())
@@ -171,6 +183,9 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
                 .communityName(profile.getCommunity() != null ? profile.getCommunity().getCommunityName() : null)
                 .verified(profile.isVerified())
                 .active(profile.isActive())
+                .createdAt(profile.getCreatedAt())
+                .communityAddress(commAddr)
+                .totalResidents(totalRes)
                 .build();
     }
 }

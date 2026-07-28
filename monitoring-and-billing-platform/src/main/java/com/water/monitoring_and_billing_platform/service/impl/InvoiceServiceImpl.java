@@ -308,7 +308,7 @@ public class InvoiceServiceImpl implements InvoiceService {
         
         // Fixed base charge
         costTable.addCell(createStyledCell("Fixed Charges (Base connection fee)", bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + (invoice.getFixedCharge() != null ? invoice.getFixedCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
+        costTable.addCell(createStyledCell("₹ " + (invoice.getFixedCharge() != null ? invoice.getFixedCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
         
         // Tiered slab breakdown
         String slabJson = (invoice.getBill() != null) ? invoice.getBill().getSlabBreakdown() : null;
@@ -326,11 +326,11 @@ public class InvoiceServiceImpl implements InvoiceService {
                     Number rate = (Number) map.get("rate");
                     Number amount = (Number) map.get("amount");
                     
-                    String label = String.format("Water Charge (Slab %s: %.2f units @ INR %.2f)", range, units.doubleValue(), rate.doubleValue());
+                    String label = String.format("Water Charge (Slab %s: %.2f units @ ₹ %.2f)", range, units.doubleValue(), rate.doubleValue());
                     BigDecimal val = BigDecimal.valueOf(amount.doubleValue()).setScale(2, java.math.RoundingMode.HALF_UP);
                     
                     costTable.addCell(createStyledCell(label, bodyFont, false));
-                    costTable.addCell(createStyledCell("INR " + val.toString(), bodyFont, false));
+                    costTable.addCell(createStyledCell("₹ " + val.toString(), bodyFont, false));
                 }
                 hasSlabs = true;
             } catch (Exception e) {
@@ -340,12 +340,12 @@ public class InvoiceServiceImpl implements InvoiceService {
         
         if (!hasSlabs) {
             costTable.addCell(createStyledCell("Variable Charges (Water consumption fee)", bodyFont, false));
-            costTable.addCell(createStyledCell("INR " + (invoice.getVariableCharge() != null ? invoice.getVariableCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
+            costTable.addCell(createStyledCell("₹ " + (invoice.getVariableCharge() != null ? invoice.getVariableCharge().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
         }
         
         // Shared bulk purchase allocation cost
         costTable.addCell(createStyledCell("Shared Cost (" + (invoice.getDistributionStrategy() != null ? invoice.getDistributionStrategy() : "EQUAL") + " distribution strategy)", bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + (invoice.getSharedWaterCost() != null ? invoice.getSharedWaterCost().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
+        costTable.addCell(createStyledCell("₹ " + (invoice.getSharedWaterCost() != null ? invoice.getSharedWaterCost().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), bodyFont, false));
         
         // Tax
         BigDecimal taxVal = (invoice.getBill() != null && invoice.getBill().getTax() != null) ? invoice.getBill().getTax() : BigDecimal.ZERO;
@@ -356,11 +356,11 @@ public class InvoiceServiceImpl implements InvoiceService {
             pdfTaxLabel = "Taxes (GST @ " + pct.toString() + "%)";
         }
         costTable.addCell(createStyledCell(pdfTaxLabel, bodyFont, false));
-        costTable.addCell(createStyledCell("INR " + taxVal.setScale(2, java.math.RoundingMode.HALF_UP).toString(), bodyFont, false));
+        costTable.addCell(createStyledCell("₹ " + taxVal.setScale(2, java.math.RoundingMode.HALF_UP).toString(), bodyFont, false));
 
         PdfPCell totalLabelCell = createStyledCell("GRAND TOTAL AMOUNT DUE", boldBodyFont, true);
         totalLabelCell.setBackgroundColor(new java.awt.Color(230, 242, 255));
-        PdfPCell totalValCell = createStyledCell("INR " + (invoice.getTotalAmount() != null ? invoice.getTotalAmount().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), boldBodyFont, false);
+        PdfPCell totalValCell = createStyledCell("₹ " + (invoice.getTotalAmount() != null ? invoice.getTotalAmount().setScale(2, java.math.RoundingMode.HALF_UP).toString() : "0.00"), boldBodyFont, false);
         totalValCell.setBackgroundColor(new java.awt.Color(230, 242, 255));
         
         costTable.addCell(totalLabelCell);

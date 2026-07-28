@@ -23,5 +23,9 @@ public class CommunityResponse {
     private boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long totalCommunityAdmins;
+    private Long totalResidents;
+    private Long totalBlocks;
+    private Long totalUnits;
 
 }
