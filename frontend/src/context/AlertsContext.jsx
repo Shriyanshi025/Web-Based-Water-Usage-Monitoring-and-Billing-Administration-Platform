@@ -3,6 +3,7 @@ import React, {
     useCallback,
     useContext,
     useEffect,
+    useMemo,
     useRef,
     useState,
 } from "react";
@@ -70,13 +71,13 @@ export function AlertsProvider({ children }) {
         };
     }, [fetchAlerts]);
 
-    const value = {
+    const value = useMemo(() => ({
         alerts,
         unreadCount,
         loading,
         error,
         refresh: fetchAlerts,
-    };
+    }), [alerts, unreadCount, loading, error, fetchAlerts]);
 
     return (
         <AlertsContext.Provider value={value}>

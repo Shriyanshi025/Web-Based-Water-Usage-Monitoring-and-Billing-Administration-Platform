@@ -130,7 +130,7 @@ public class BillingServiceImpl implements BillingService {
                 Double previousReading = 0.0;
                 Double currentReading = 0.0;
 
-                var meterOpt = waterMeterRepository.findByResidentProfileId(resident.getId());
+                var meterOpt = waterMeterRepository.findFirstByResidentProfileIdOrderByIdDesc(resident.getId());
                 if (meterOpt.isPresent()) {
                     WaterMeter meter = meterOpt.get();
                     List<WaterUsage> usages = waterUsageRepository.findByWaterMeterIdAndReadingDateBetween(
