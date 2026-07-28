@@ -119,7 +119,7 @@ public class WaterMeterServiceImpl implements WaterMeterService {
         ResidentProfile profile = residentProfileRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Resident profile not found"));
 
-        return waterMeterRepository.findByResidentProfileId(profile.getId())
+        return waterMeterRepository.findFirstByResidentProfileIdOrderByIdDesc(profile.getId())
                 .map(this::mapToResponse)
                 .orElseThrow(() -> new IllegalArgumentException("Water meter not found for this resident"));
     }

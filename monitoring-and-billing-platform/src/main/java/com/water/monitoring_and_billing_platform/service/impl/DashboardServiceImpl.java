@@ -98,7 +98,7 @@ public class DashboardServiceImpl implements DashboardService {
         ResidentProfile profile = residentProfileRepository.findByUserId(user.getId())
                 .orElseThrow(ResidentProfileNotFoundException::new);
 
-        Optional<WaterMeter> meterOpt = waterMeterRepository.findByResidentProfileId(profile.getId());
+        Optional<WaterMeter> meterOpt = waterMeterRepository.findFirstByResidentProfileIdOrderByIdDesc(profile.getId());
 
         double currentMonthUsage = 0.0;
         double currentBill = 0.0;

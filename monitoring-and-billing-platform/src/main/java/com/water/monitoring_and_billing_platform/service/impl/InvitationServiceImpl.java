@@ -109,9 +109,9 @@ public class InvitationServiceImpl implements InvitationService {
                 invitation.setStatus(InvitationStatus.SENT);
                 invitation = invitationRepository.save(invitation);
             } catch (Exception e) {
-                invitation.setStatus(InvitationStatus.FAILED);
-                invitationRepository.save(invitation);
-                throw e;
+                log.warn("Could not send email invitation to {}: {}. Marking status as CREATED.", request.getEmail(), e.getMessage());
+                invitation.setStatus(InvitationStatus.CREATED);
+                invitation = invitationRepository.save(invitation);
             }
         }
 
