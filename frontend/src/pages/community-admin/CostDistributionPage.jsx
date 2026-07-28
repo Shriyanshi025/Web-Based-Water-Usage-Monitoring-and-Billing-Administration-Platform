@@ -142,6 +142,12 @@ function CostDistributionPage() {
         return sortedRows.slice(start, start + rowsPerPage);
     }, [sortedRows, page, rowsPerPage]);
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Bulk Cost", value: distributionData ? `₹ ${distributionData.totalBulkCost?.toLocaleString()}` : "—", color: "primary" },
+        { label: "Community Consumption", value: distributionData ? `${distributionData.totalCommunityConsumption?.toLocaleString()} kL` : "—", color: "warning" },
+        { label: "Cost Per kL", value: distributionData ? `₹ ${distributionData.costPerKl?.toLocaleString()}` : "—", color: "success" },
+    ], [distributionData]);
+
     if (loadingCycles) {
         return (
             <DashboardLayout>
@@ -151,12 +157,6 @@ function CostDistributionPage() {
             </DashboardLayout>
         );
     }
-
-    const headerMetadata = useMemo(() => [
-        { label: "Total Bulk Cost", value: distributionData ? `₹ ${distributionData.totalBulkCost?.toLocaleString()}` : "—", color: "primary" },
-        { label: "Community Consumption", value: distributionData ? `${distributionData.totalCommunityConsumption?.toLocaleString()} kL` : "—", color: "warning" },
-        { label: "Cost Per kL", value: distributionData ? `₹ ${distributionData.costPerKl?.toLocaleString()}` : "—", color: "success" },
-    ], [distributionData]);
 
     return (
         <DashboardLayout>

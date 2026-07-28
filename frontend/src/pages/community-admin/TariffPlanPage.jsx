@@ -432,6 +432,13 @@ function TariffPlanPage() {
         }
     };
 
+    const headerMetadata = useMemo(() => [
+        { label: "Total Policies", value: summary.total },
+        { label: "Active", value: summary.active, color: "success" },
+        { label: "Draft", value: summary.draft, color: "warning" },
+        { label: "Archived", value: summary.archived, color: "primary" },
+    ], [summary]);
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -441,13 +448,6 @@ function TariffPlanPage() {
             </DashboardLayout>
         );
     }
-
-    const headerMetadata = useMemo(() => [
-        { label: "Total Policies", value: summary.total },
-        { label: "Active", value: summary.active, color: "success" },
-        { label: "Draft", value: summary.draft, color: "warning" },
-        { label: "Archived", value: summary.archived, color: "primary" },
-    ], [summary]);
 
     return (
         <DashboardLayout>

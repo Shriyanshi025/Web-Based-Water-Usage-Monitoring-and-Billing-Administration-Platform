@@ -259,6 +259,15 @@ function BulkWaterPurchasePage() {
         setDetailOpen(true);
     };
 
+    const totalVolume = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.purchasedVolume) || 0), 0), [purchases]);
+    const totalCostSum = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.totalCost) || 0), 0), [purchases]);
+
+    const headerMetadata = useMemo(() => [
+        { label: "Total Purchases", value: purchases.length },
+        { label: "Volume Purchased", value: `${totalVolume.toLocaleString()} kL`, color: "info" },
+        { label: "Total Expenditure", value: `₹${totalCostSum.toLocaleString()}`, color: "primary" },
+    ], [purchases.length, totalVolume, totalCostSum]);
+
     if (loading) {
         return (
             <DashboardLayout>
@@ -268,15 +277,6 @@ function BulkWaterPurchasePage() {
             </DashboardLayout>
         );
     }
-
-    const totalVolume = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.purchasedVolume) || 0), 0), [purchases]);
-    const totalCostSum = useMemo(() => purchases.reduce((sum, p) => sum + (Number(p.totalCost) || 0), 0), [purchases]);
-
-    const headerMetadata = useMemo(() => [
-        { label: "Total Purchases", value: purchases.length },
-        { label: "Volume Purchased", value: `${totalVolume.toLocaleString()} kL`, color: "info" },
-        { label: "Total Expenditure", value: `₹${totalCostSum.toLocaleString()}`, color: "primary" },
-    ], [purchases.length, totalVolume, totalCostSum]);
 
     return (
         <DashboardLayout>
