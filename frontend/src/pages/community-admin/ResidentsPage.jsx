@@ -115,12 +115,8 @@ const ResidentsPage = () => {
         setLoading(true);
         setError(null);
         try {
-            const [data, billsRes] = await Promise.all([
-                CommunityOpsService.getAllResidents(),
-                CommunityOpsService.getBills().catch(() => ({ data: [] })),
-            ]);
+            const data = await CommunityOpsService.getAllResidents();
             setResidents(data || []);
-            setBills(billsRes?.data || []);
         } catch (err) {
             setError(err?.response?.data?.message || err.message || "Failed to load residents.");
         } finally {
@@ -131,15 +127,22 @@ const ResidentsPage = () => {
     useEffect(() => { fetchResidents(); }, [fetchResidents]);
 
     // ── Action Handlers ───────────────────────────────────────────────────────
-    const handleOpenView = (resident) => {
+    const handleOpenView = useCallback(async (resident) => {
         setSelectedRow(resident);
         setViewOpen(true);
         setViewLoading(true);
-        // Simulate minor async details load for smooth UX
-        setTimeout(() => setViewLoading(false), 300);
-    };
+        try {
+            const billsRes = await CommunityOpsService.getBills();
+            const list = Array.isArray(billsRes) ? billsRes : (billsRes?.data || []);
+            setBills(list);
+        } catch {
+            setBills([]);
+        } finally {
+            setViewLoading(false);
+        }
+    }, []);
 
-    const handleOpenEdit = (resident) => {
+    const handleOpenEdit = useCallback((resident) => {
         setSelectedRow(resident);
         setEditForm({
             phoneNumber: resident?.phoneNumber || "",
@@ -148,9 +151,9 @@ const ResidentsPage = () => {
             active: resident?.active ?? true,
         });
         setEditOpen(true);
-    };
+    }, []);
 
-    const handleGenerateBill = async (resident) => {
+    const handleGenerateBill = useCallback(async (resident) => {
         try {
             await CommunityOpsService.generateBillForResident(resident.id);
             showNotification(`Bill generated successfully for ${resident.fullName}.`, "success");
@@ -158,9 +161,9 @@ const ResidentsPage = () => {
         } catch (err) {
             showNotification(err?.response?.data?.message || err.message || "Failed to generate bill.", "error");
         }
-    };
+    }, [fetchResidents, showNotification]);
 
-    const handleToggleStatus = (resident) => {
+    const handleToggleStatus = useCallback((resident) => {
         const newStatus = resident.active !== false ? "INACTIVE" : "ACTIVE";
         setDialogConfig({
             open: true,
@@ -180,9 +183,9 @@ const ResidentsPage = () => {
                 }
             }
         });
-    };
+    }, [fetchResidents, showNotification]);
 
-    const handleDelete = (resident) => {
+    const handleDelete = useCallback((resident) => {
         setDialogConfig({
             open: true,
             title: "Delete Resident Account",
@@ -201,7 +204,7 @@ const ResidentsPage = () => {
                 }
             }
         });
-    };
+    }, [fetchResidents, showNotification]);
 
     const handleEditSave = async () => {
         try {
@@ -348,7 +351,7 @@ const ResidentsPage = () => {
                 );
             }
         }
-    ], [handleGenerateBill]);
+    ], [handleOpenView, handleOpenEdit, handleGenerateBill, handleToggleStatus, handleDelete]);
 
     const headerMetadata = useMemo(() => [
         { label: "Total Residents", value: residents.length },

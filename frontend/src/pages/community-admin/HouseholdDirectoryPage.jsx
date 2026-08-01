@@ -176,7 +176,7 @@ function HouseholdDirectoryPage() {
 
     const headerMetadata = useMemo(() => [
         { label: "Total Households", value: households.length },
-        { label: "Assigned Meters", value: households.filter(h => h.meterSerialNumber || h.meterNumber).length, color: "success" },
+        { label: "Assigned Meters", value: households.filter(h => h.meterNumber && h.meterNumber !== "No Meter").length, color: "success" },
     ], [households]);
 
     return (

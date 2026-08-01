@@ -24,8 +24,12 @@ export function AlertsProvider({ children }) {
 
     const intervalRef = useRef(null);
 
+    const userId = user?.id;
+    const userRole = user?.role;
+    const communityId = user?.communityId;
+
     const fetchAlerts = useCallback(async () => {
-        if (!user) return;
+        if (!userId) return;
 
         try {
             setLoading(true);
@@ -33,21 +37,15 @@ export function AlertsProvider({ children }) {
 
             let data = [];
 
-            if (user.role === "COMMUNITY_ADMIN") {
-                // Community admins see community-wide alerts
-                const targetCid = user.communityId || "me";
+            if (userRole === "COMMUNITY_ADMIN") {
+                const targetCid = communityId || "me";
                 const res = await api.get(`/alerts/community/${targetCid}`);
                 const raw = res.data;
-                data = Array.isArray(raw)
-                    ? raw
-                    : raw?.content ?? raw?.data ?? [];
+                data = Array.isArray(raw) ? raw : raw?.content ?? raw?.data ?? [];
             } else {
-                // Residents / Main Admin see personal alerts
                 const res = await api.get("/alerts/my");
                 const raw = res.data;
-                data = Array.isArray(raw)
-                    ? raw
-                    : raw?.content ?? raw?.data ?? [];
+                data = Array.isArray(raw) ? raw : raw?.content ?? raw?.data ?? [];
             }
 
             setAlerts(data);
@@ -58,7 +56,7 @@ export function AlertsProvider({ children }) {
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, [userId, userRole, communityId]);
 
     // Initial fetch + polling
     useEffect(() => {

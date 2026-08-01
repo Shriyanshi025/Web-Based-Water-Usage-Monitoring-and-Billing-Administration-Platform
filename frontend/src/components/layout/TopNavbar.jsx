@@ -32,8 +32,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import api from "../../services/api";
-import { AlertService } from "../../services/AlertService";
+
 
 function TopNavbar({ onMobileNavOpen }) {
     const theme = useTheme();
@@ -56,28 +55,10 @@ function TopNavbar({ onMobileNavOpen }) {
         logout();
     };
 
-    // Notifications state
+    // Notifications state — sourced from AlertsContext (already polling every 30s)
+    const { unreadCount } = useAlerts();
     const [anchorElNotifications, setAnchorElNotifications] = React.useState(null);
     const [notifications, setNotifications] = React.useState([]);
-    const [unreadCount, setUnreadCount] = React.useState(0);
-
-    const fetchUnreadNotificationsCount = React.useCallback(async () => {
-        if (!user) return;
-        try {
-            const data = await AlertService.getMyAlerts();
-            const list = Array.isArray(data) ? data : (data?.content ?? data?.data ?? []);
-            const count = list.filter((n) => n.status === "ACTIVE").length;
-            setUnreadCount(count);
-        } catch (err) {
-            // silent catch
-        }
-    }, [user]);
-
-    React.useEffect(() => {
-        fetchUnreadNotificationsCount();
-        const interval = setInterval(fetchUnreadNotificationsCount, 15000);
-        return () => clearInterval(interval);
-    }, [fetchUnreadNotificationsCount, location.pathname]);
 
     const handleNotificationsClick = () => {
         if (user?.role === "COMMUNITY_ADMIN") {

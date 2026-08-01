@@ -17,22 +17,20 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-    <React.StrictMode>
-        <QueryClientProvider client={queryClient}>
-            <ThemeProvider theme={theme}>
-                <CssBaseline />
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                    <NotificationProvider>
-                        <AuthProvider>
-                            <BrowserRouter>
-                                <AlertsProvider>
-                                    <App />
-                                </AlertsProvider>
-                            </BrowserRouter>
-                        </AuthProvider>
-                    </NotificationProvider>
-                </LocalizationProvider>
-            </ThemeProvider>
-        </QueryClientProvider>
-    </React.StrictMode>
+    <QueryClientProvider client={queryClient}>
+        <ThemeProvider theme={theme}>
+            <CssBaseline />
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+                <NotificationProvider>
+                    <AuthProvider>
+                        <BrowserRouter>
+                            <AlertsProvider>
+                                <App />
+                            </AlertsProvider>
+                        </BrowserRouter>
+                    </AuthProvider>
+                </NotificationProvider>
+            </LocalizationProvider>
+        </ThemeProvider>
+    </QueryClientProvider>
 );
