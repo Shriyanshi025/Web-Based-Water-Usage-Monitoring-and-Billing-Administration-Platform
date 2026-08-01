@@ -21,4 +21,5 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
     boolean existsByResidentProfileIdAndBillingCycleId(Long residentProfileId, Long billingCycleId);
     Optional<Bill> findByResidentProfileIdAndBillingCycleId(Long residentProfileId, Long billingCycleId);
     List<Bill> findByResidentProfileCommunityIdAndBillingCycleId(Long communityId, Long billingCycleId);
+    List<Bill> findByResidentProfileIdInAndStatus(java.util.Collection<Long> residentProfileIds, com.water.monitoring_and_billing_platform.enums.BillStatus status);
 }

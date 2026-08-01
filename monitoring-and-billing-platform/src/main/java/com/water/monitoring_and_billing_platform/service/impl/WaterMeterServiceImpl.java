@@ -125,12 +125,17 @@ public class WaterMeterServiceImpl implements WaterMeterService {
     }
 
     private WaterMeterResponse mapToResponse(WaterMeter meter) {
+        ResidentProfile profile = meter.getResidentProfile();
+        String officialUserId = profile != null ? profile.getOfficialUserId() : null;
+        Long residentProfileId = profile != null ? profile.getId() : null;
+        String residentName = (profile != null && profile.getUser() != null) ? profile.getUser().getFullName() : null;
+
         return WaterMeterResponse.builder()
                 .id(meter.getId())
                 .meterNumber(meter.getMeterNumber())
-                .officialUserId(meter.getResidentProfile().getOfficialUserId())
-                .residentProfileId(meter.getResidentProfile().getId())
-                .residentName(meter.getResidentProfile().getUser().getFullName())
+                .officialUserId(officialUserId)
+                .residentProfileId(residentProfileId)
+                .residentName(residentName)
                 .initialReading(meter.getInitialReading())
                 .currentReading(meter.getCurrentReading())
                 .meterStatus(meter.getMeterStatus().name())

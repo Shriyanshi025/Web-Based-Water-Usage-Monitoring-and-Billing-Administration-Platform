@@ -12,6 +12,7 @@ public interface CommunityAdminProfileRepository
 
     boolean existsByUserId(Long userId);
 
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"community", "user"})
     Optional<CommunityAdminProfile> findByUserId(Long userId);
 
     boolean existsByCommunity_IdAndActiveTrue(Long communityId);
@@ -21,5 +22,6 @@ public interface CommunityAdminProfileRepository
     List<CommunityAdminProfile> findByVerifiedFalseAndUserApprovalStatus(ApprovalStatus approvalStatus);
     long countByCommunityId(Long communityId);
     List<CommunityAdminProfile> findByCommunityIdAndActiveTrue(Long communityId);
+    List<CommunityAdminProfile> findByUserRoleAndUserApprovalStatus(com.water.monitoring_and_billing_platform.enums.Role role, ApprovalStatus approvalStatus);
     List<CommunityAdminProfile> findByCommunityId(Long communityId);
 }

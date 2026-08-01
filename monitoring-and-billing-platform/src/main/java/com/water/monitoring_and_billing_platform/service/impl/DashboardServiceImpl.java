@@ -68,15 +68,10 @@ public class DashboardServiceImpl implements DashboardService {
         ResidentProfile resident = residentProfileRepository.findById(residentId)
                 .orElseThrow(ResidentProfileNotFoundException::new);
 
-        WaterMeter meter = waterMeterRepository.findAll()
-                .stream()
-                .filter(m -> m.getResidentProfile().getId().equals(residentId))
-                .findFirst()
+        WaterMeter meter = waterMeterRepository.findFirstByResidentProfileIdOrderByIdDesc(residentId)
                 .orElseThrow(WaterMeterNotFoundException::new);
 
-        Double lastUnits = waterUsageRepository.findByWaterMeterId(meter.getId())
-                .stream()
-                .reduce((first, second) -> second)
+        Double lastUnits = waterUsageRepository.findFirstByWaterMeterIdOrderByReadingDateDescIdDesc(meter.getId())
                 .map(WaterUsage::getUnitsConsumed)
                 .orElse(0.0);
 
@@ -187,8 +182,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .build()
             ).collect(Collectors.toList());
 
-        List<WaterMeter> meters = waterMeterRepository.findAll().stream()
-            .filter(m -> m.getResidentProfile().getCommunity().getId().equals(community.getId())).toList();
+        List<WaterMeter> meters = waterMeterRepository.findByResidentProfileCommunityId(community.getId());
 
         Map<String, Long> meterCounts = meters.stream().collect(Collectors.groupingBy(m -> m.getMeterStatus().name(), Collectors.counting()));
         List<ChartDataDto> meterStatusData = meterCounts.entrySet().stream()
@@ -219,8 +213,8 @@ public class DashboardServiceImpl implements DashboardService {
         long totalResidents = residentProfileRepository.count();
 
         List<WaterUsage> allUsages = waterUsageRepository.findAll();
-        double totalWaterConsumption = allUsages.stream().mapToDouble(WaterUsage::getUnitsConsumed).sum();
-        double totalRevenue = allUsages.stream().filter(WaterUsage::isBilled).mapToDouble(WaterUsage::getUnitsConsumed).sum() * 15.0;
+        double totalWaterConsumption = waterUsageRepository.sumTotalUnitsConsumed();
+        double totalRevenue = waterUsageRepository.sumBilledUnitsConsumed() * 15.0;
 
         List<MonthlyUsageDto> monthlyWaterConsumptionChart = allUsages.stream()
             .collect(Collectors.groupingBy(
@@ -245,8 +239,7 @@ public class DashboardServiceImpl implements DashboardService {
             .map(e -> new ChartDataDto(e.getKey(), e.getValue()))
             .collect(Collectors.toList());
 
-        List<CommunityAdminProfileResponse> pendingApprovals = communityAdminProfileRepository.findAll().stream()
-            .filter(p -> p.getUser().getRole() == Role.COMMUNITY_ADMIN && p.getUser().getApprovalStatus() == ApprovalStatus.PENDING)
+        List<CommunityAdminProfileResponse> pendingApprovals = communityAdminProfileRepository.findByUserRoleAndUserApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.PENDING).stream()
             .map(p -> CommunityAdminProfileResponse.builder()
                 .id(p.getId())
                 .userId(p.getUser().getId())

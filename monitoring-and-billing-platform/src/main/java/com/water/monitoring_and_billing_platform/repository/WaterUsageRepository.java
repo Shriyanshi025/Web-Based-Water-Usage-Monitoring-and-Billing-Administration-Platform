@@ -35,4 +35,18 @@ public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
     java.util.Optional<WaterUsage> findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(Long waterMeterId, LocalDate readingDate);
     java.util.Optional<WaterUsage> findFirstByWaterMeterIdAndReadingDateGreaterThanOrderByReadingDateAscIdAsc(Long waterMeterId, LocalDate readingDate);
     List<WaterUsage> findByWaterMeterIdAndReadingDateBetween(Long waterMeterId, LocalDate start, LocalDate end);
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(wu.unitsConsumed), 0.0) FROM WaterUsage wu")
+    Double sumTotalUnitsConsumed();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(wu.unitsConsumed), 0.0) FROM WaterUsage wu WHERE wu.billed = true")
+    Double sumBilledUnitsConsumed();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(wu.unitsConsumed), 0.0) FROM WaterUsage wu WHERE wu.waterMeter.residentProfile.community.id = :communityId")
+    Double sumTotalUnitsConsumedByCommunityId(@org.springframework.data.repository.query.Param("communityId") Long communityId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(wu.unitsConsumed), 0.0) FROM WaterUsage wu WHERE wu.waterMeter.residentProfile.community.id = :communityId AND wu.billed = false")
+    Double sumUnbilledUnitsConsumedByCommunityId(@org.springframework.data.repository.query.Param("communityId") Long communityId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(wu.unitsConsumed), 0.0) FROM WaterUsage wu WHERE wu.waterMeter.residentProfile.community.id = :communityId AND wu.billed = true")
+    Double sumBilledUnitsConsumedByCommunityId(@org.springframework.data.repository.query.Param("communityId") Long communityId);
 }

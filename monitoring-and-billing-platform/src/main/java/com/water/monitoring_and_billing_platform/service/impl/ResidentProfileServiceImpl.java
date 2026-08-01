@@ -332,16 +332,35 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<com.water.monitoring_and_billing_platform.dto.HouseholdDirectoryResponse> getHouseholdDirectory(String adminEmail) {
         CommunityAdminProfile adminProfile = getAdminProfile(adminEmail);
-        
-        return residentProfileRepository.findByCommunityIdAndActiveTrue(adminProfile.getCommunity().getId()).stream()
+        Long communityId = adminProfile.getCommunity().getId();
+
+        List<ResidentProfile> residents = residentProfileRepository.findByCommunityIdAndActiveTrue(communityId);
+        if (residents.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+
+        List<Long> residentIds = residents.stream().map(ResidentProfile::getId).toList();
+
+        java.util.Map<Long, com.water.monitoring_and_billing_platform.entity.WaterMeter> meterMap =
+                waterMeterRepository.findByResidentProfileIdIn(residentIds).stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                m -> m.getResidentProfile().getId(),
+                                java.util.function.Function.identity(),
+                                (existing, replacement) -> existing
+                        ));
+
+        java.util.Map<Long, List<com.water.monitoring_and_billing_platform.entity.Bill>> billsMap =
+                billRepository.findByResidentProfileIdInAndStatus(residentIds, com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID).stream()
+                        .collect(java.util.stream.Collectors.groupingBy(b -> b.getResidentProfile().getId()));
+
+        return residents.stream()
                 .map(resident -> {
-                    com.water.monitoring_and_billing_platform.entity.WaterMeter meter = waterMeterRepository.findByResidentProfileId(resident.getId()).orElse(null);
-                    List<com.water.monitoring_and_billing_platform.entity.Bill> bills = billRepository.findByResidentProfileId(resident.getId()).stream()
-                            .filter(b -> b.getStatus() == com.water.monitoring_and_billing_platform.enums.BillStatus.UNPAID)
-                            .toList();
-                    
+                    com.water.monitoring_and_billing_platform.entity.WaterMeter meter = meterMap.get(resident.getId());
+                    List<com.water.monitoring_and_billing_platform.entity.Bill> bills = billsMap.getOrDefault(resident.getId(), java.util.Collections.emptyList());
+
                     int pendingCount = bills.size();
                     java.math.BigDecimal pendingAmount = bills.stream()
                             .map(com.water.monitoring_and_billing_platform.entity.Bill::getAmount)

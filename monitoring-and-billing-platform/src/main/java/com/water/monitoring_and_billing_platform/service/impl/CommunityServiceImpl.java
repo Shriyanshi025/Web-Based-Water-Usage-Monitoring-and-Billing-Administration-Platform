@@ -155,9 +155,37 @@ public class CommunityServiceImpl implements CommunityService {
     @Override
     @Transactional(readOnly = true)
     public List<CommunityResponse> getAllCommunities() {
-        return communityRepository.findAll().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+        List<Community> communities = communityRepository.findAll();
+        List<Object[]> statsList = communityRepository.fetchCommunityStats();
+        java.util.Map<Long, long[]> statsMap = new java.util.HashMap<>();
+        for (Object[] row : statsList) {
+            Long cId = (Long) row[0];
+            long adminCount = (Long) row[1];
+            long residentCount = (Long) row[2];
+            long blockCount = (Long) row[3];
+            long unitCount = (Long) row[4];
+            statsMap.put(cId, new long[]{adminCount, residentCount, blockCount, unitCount});
+        }
+
+        return communities.stream().map(c -> {
+            long[] stats = statsMap.getOrDefault(c.getId(), new long[]{0, 0, 0, 0});
+            return CommunityResponse.builder()
+                    .id(c.getId())
+                    .communityName(c.getCommunityName())
+                    .communityCode(c.getCommunityCode())
+                    .address(c.getAddress())
+                    .city(c.getCity())
+                    .state(c.getState())
+                    .pincode(c.getPincode())
+                    .active(c.isActive())
+                    .createdAt(c.getCreatedAt())
+                    .updatedAt(c.getUpdatedAt())
+                    .totalCommunityAdmins(stats[0])
+                    .totalResidents(stats[1])
+                    .totalBlocks(stats[2])
+                    .totalUnits(stats[3])
+                    .build();
+        }).collect(Collectors.toList());
     }
 
     @Override

@@ -14,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import com.water.monitoring_and_billing_platform.enums.MeterStatus;
 
 @Component
+@Profile("!prod")
 @RequiredArgsConstructor
 public class DatabaseSeeder implements CommandLineRunner {
 
@@ -45,23 +46,12 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        int updatedResidentCount = 0;
-        List<User> allUsers = userRepository.findAll();
-        for (User u : allUsers) {
-            if (u.getRole() == com.water.monitoring_and_billing_platform.enums.Role.USER) {
-                u.setPassword(passwordEncoder.encode("user12345"));
-                userRepository.save(u);
-                updatedResidentCount++;
-            } else if (u.getRole() == com.water.monitoring_and_billing_platform.enums.Role.COMMUNITY_ADMIN) {
-                u.setPassword(passwordEncoder.encode("admin12345"));
-                userRepository.save(u);
-            } else if ("admin@gmail.com".equalsIgnoreCase(u.getEmail())) {
-                u.setPassword(passwordEncoder.encode("admin12345"));
-                userRepository.save(u);
-                System.out.println("Admin Password Updated for admin@gmail.com to admin12345.");
-            }
+        if (userRepository.count() == 0) {
+            // Seed initial data if DB is completely empty
+        } else {
+            // Do not re-hash passwords on every boot
+            System.out.println("Database already populated. Skipping user password re-encoding seeder.");
         }
-        System.out.println("Resident Passwords Updated: " + updatedResidentCount + " users updated to user12345.");
 
         if (activityLogRepository.count() == 0) {
             System.out.println("Seeding Activity Logs...");

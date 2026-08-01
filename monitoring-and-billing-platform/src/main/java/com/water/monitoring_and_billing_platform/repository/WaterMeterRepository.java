@@ -31,4 +31,7 @@ public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
     java.util.List<WaterMeter> findByResidentProfileCommunityId(Long communityId);
+
+    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile"})
+    java.util.List<WaterMeter> findByResidentProfileIdIn(java.util.Collection<Long> residentProfileIds);
 }

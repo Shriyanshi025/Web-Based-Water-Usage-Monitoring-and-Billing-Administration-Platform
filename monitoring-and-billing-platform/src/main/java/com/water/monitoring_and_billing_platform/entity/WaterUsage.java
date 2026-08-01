@@ -7,7 +7,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "water_usage")
+@Table(name = "water_usage", indexes = {
+    @Index(name = "idx_wu_meter", columnList = "water_meter_id"),
+    @Index(name = "idx_wu_date", columnList = "reading_date"),
+    @Index(name = "idx_wu_billed", columnList = "billed")
+})
 @Getter
 @Setter
 @NoArgsConstructor
