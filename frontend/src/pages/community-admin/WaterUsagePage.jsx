@@ -519,7 +519,7 @@ function WaterUsagePage() {
                 <TableToolbar
                     title="Meter Readings Management"
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap" }}>
                             <ToggleButtonGroup
                                 size="small"
                                 value={viewMode}

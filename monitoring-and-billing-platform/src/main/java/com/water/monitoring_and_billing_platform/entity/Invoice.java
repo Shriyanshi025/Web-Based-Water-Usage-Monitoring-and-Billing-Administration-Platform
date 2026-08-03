@@ -58,6 +58,9 @@ public class Invoice {
     @Column(precision = 10, scale = 2)
     private BigDecimal sharedWaterCost;
 
+    @Column(precision = 10, scale = 2)
+    private BigDecimal tax;
+
     private String distributionStrategy;
 
     @Column(nullable = false, precision = 10, scale = 2)

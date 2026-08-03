@@ -75,7 +75,7 @@ const StatusSummaryBar = ({ dashboard, loading }) => {
             }}
         >
             {/* Left Metrics Cluster */}
-            <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 3 }} flexWrap="wrap" sx={{ gap: 1.5 }}>
+            <Stack direction="row" alignItems="center" spacing={{ xs: 1.5, sm: 3 }} sx={{ gap: 1.5, flexWrap: "wrap" }}>
                 {/* 1. System Operational Live Pulse */}
                 <Stack direction="row" alignItems="center" spacing={1.25}>
                     <Box

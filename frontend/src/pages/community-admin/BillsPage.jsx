@@ -13,6 +13,7 @@ import {
     Grid,
     InputLabel,
     MenuItem,
+    Paper,
     Select,
     Stack,
     Typography,
@@ -412,11 +413,14 @@ function BillsPage() {
         },
         {
             field: "amount", headerName: "Amount", width: 140,
-            renderCell: (params) => (
-                <Typography variant="body2" fontWeight={700} color={params.row.status === "PAID" ? "success.main" : params.row.status === "OVERDUE" ? "error.main" : "text.primary"}>
-                    {params.row.amount != null ? formatCurrency(params.row.amount) : "—"}
-                </Typography>
-            )
+            renderCell: (params) => {
+                const displayVal = params.row.totalAmount != null ? params.row.totalAmount : params.row.amount;
+                return (
+                    <Typography variant="body2" fontWeight={700} color={params.row.status === "PAID" ? "success.main" : params.row.status === "OVERDUE" ? "error.main" : "text.primary"}>
+                        {displayVal != null ? formatCurrency(displayVal) : "—"}
+                    </Typography>
+                );
+            }
         },
         {
             field: "status", headerName: "Status", width: 120,
@@ -526,7 +530,7 @@ function BillsPage() {
                 <TableToolbar
                     title="Resident Bills List"
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap" }}>
                             <SearchBar
                                 value={searchTerm}
                                 onChange={setSearchTerm}
@@ -819,7 +823,7 @@ function BillsPage() {
                                     <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 1, textTransform: "uppercase" }}>
                                         Quick Navigation Shortcuts
                                     </Typography>
-                                    <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                                    <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
                                         {selectedBill.residentName && (
                                             <Button 
                                                 variant="outlined" 

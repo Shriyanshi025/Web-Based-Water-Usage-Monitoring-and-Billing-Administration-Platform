@@ -139,7 +139,7 @@ public class BillCalculationService {
             first = false;
 
             String rangeLabel;
-            int minVal = (int) slab.getMinUnits().doubleValue();
+            int minVal = (int) start + (i > 0 ? 1 : 0);
             if (max == null) {
                 rangeLabel = "Above " + (int)start + " kL";
             } else {

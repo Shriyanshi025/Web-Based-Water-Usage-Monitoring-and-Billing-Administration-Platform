@@ -556,7 +556,7 @@ function TariffPlanPage() {
                                         {/* 1. Header: Policy Name + Status Badge & Version Subtext */}
                                         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ mb: 2 }}>
                                             <Box sx={{ minWidth: 0, flex: 1 }}>
-                                                <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
+                                                <Stack direction="row" alignItems="center" spacing={1.5} sx={{ flexWrap: "wrap" }}>
                                                     <Typography variant="h6" fontWeight={700} sx={{ fontSize: "1.2rem", color: "text.primary" }}>
                                                         {plan.name}
                                                     </Typography>
@@ -643,7 +643,7 @@ function TariffPlanPage() {
                                                     View Full Schedule →
                                                 </Button>
                                             </Stack>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap" gap={1}>
+                                            <Stack direction="row" spacing={1} gap={1} sx={{ flexWrap: "wrap" }}>
                                                 {(plan.slabs || []).map((slab, i) => (
                                                     <Chip
                                                         key={i}
@@ -660,8 +660,8 @@ function TariffPlanPage() {
                                         <Divider sx={{ mb: 2 }} />
 
                                         {/* 4. Single Horizontal Action Footer Row */}
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={1.5}>
-                                            <Stack direction="row" spacing={1} flexWrap="wrap">
+                                        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1.5} sx={{ flexWrap: "wrap" }}>
+                                            <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
                                                 <Button
                                                     variant="outlined"
                                                     color="info"

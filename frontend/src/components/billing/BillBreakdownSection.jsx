@@ -130,15 +130,7 @@ export default function BillBreakdownSection({ bill, defaultExpanded = true, tit
                         {hasSlabs ? (
                             <>
                                 {slabsList.map((item, idx) => {
-                                    // Fix overlapping boundary in range label for non-first slabs:
-                                    // e.g. "10–20 kL" becomes "11–20 kL" so slabs don't coincide.
-                                    let displayRange = item.range;
-                                    if (idx > 0) {
-                                        displayRange = displayRange.replace(
-                                            /^(\d+)(–|\u2013|-)/,
-                                            (_, lower, sep) => `${parseInt(lower, 10) + 1}${sep}`
-                                        );
-                                    }
+                                    const displayRange = item.range;
                                     return (
                                     <TableRow key={idx}>
                                         <TableCell sx={{ fontSize: "0.8125rem", py: 0.75, pl: 3, fontStyle: "italic", color: "text.secondary" }}>

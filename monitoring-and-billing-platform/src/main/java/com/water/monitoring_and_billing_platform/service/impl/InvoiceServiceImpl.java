@@ -27,6 +27,7 @@ import java.util.Random;
 public class InvoiceServiceImpl implements InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
+    private final BillRepository billRepository;
     private final UserRepository userRepository;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final ResidentProfileRepository residentProfileRepository;
@@ -85,6 +86,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .fixedCharge(bill.getFixedCharge())
                 .variableCharge(bill.getSubtotal() != null ? bill.getSubtotal() : BigDecimal.ZERO) // Variable portion is represented by subtotal in billing engine
                 .sharedWaterCost(bill.getSharedWaterCost() != null ? bill.getSharedWaterCost() : BigDecimal.ZERO)
+                .tax(bill.getTax() != null ? bill.getTax() : BigDecimal.ZERO)
                 .distributionStrategy(bill.getDistributionStrategy() != null ? bill.getDistributionStrategy() : "EQUAL")
                 .totalAmount(bill.getTotalAmount() != null ? bill.getTotalAmount() : BigDecimal.ZERO)
                 .billStatus(bill.getBillStatus() != null ? bill.getBillStatus() : "UNPAID")
@@ -134,11 +136,53 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional
     public InvoiceResponse getInvoiceByBillId(String email, Long billId) {
         User user = getUserOrThrow(email);
         Invoice invoice = invoiceRepository.findByBillId(billId)
-                .orElseThrow(() -> new IllegalArgumentException("Invoice not found with bill id: " + billId));
+                .orElseGet(() -> {
+                    Bill bill = billRepository.findById(billId)
+                            .orElseThrow(() -> new IllegalArgumentException("Bill not found with id: " + billId));
+                    ResidentProfile resident = bill.getResidentProfile();
+                    String blockName = (resident.getBlock() != null) ? resident.getBlock().getBlockName() : "N/A";
+                    String communityName = (resident.getCommunity() != null) ? resident.getCommunity().getCommunityName() : "N/A";
+                    String cycleName = (bill.getBillingCycle() != null) ? bill.getBillingCycle().getName() : "N/A";
+                    LocalDate periodStart = (bill.getBillingCycle() != null) ? bill.getBillingCycle().getPeriodStart() : null;
+                    LocalDate periodEnd = (bill.getBillingCycle() != null) ? bill.getBillingCycle().getPeriodEnd() : null;
+
+                    String suffix = (bill.getBillNumber() != null && bill.getBillNumber().contains("-")) ?
+                            bill.getBillNumber().substring(bill.getBillNumber().lastIndexOf("-") + 1) : 
+                            String.format("%06d", bill.getId() != null ? bill.getId() : new Random().nextInt(1000000));
+                    String invoiceNumber = "INV-" + bill.getBillingYear() + 
+                            String.format("%02d", bill.getBillingMonth()) + "-" + suffix;
+
+                    Invoice newInv = Invoice.builder()
+                            .invoiceNumber(invoiceNumber)
+                            .bill(bill)
+                            .residentName(resident.getUser().getFullName())
+                            .unitNumber(resident.getUnit().getUnitNumber())
+                            .blockName(blockName)
+                            .communityName(communityName)
+                            .billingCycleName(cycleName)
+                            .periodStart(periodStart)
+                            .periodEnd(periodEnd)
+                            .previousReading(bill.getPreviousReading())
+                            .currentReading(bill.getCurrentReading())
+                            .unitsConsumed(bill.getUnitsConsumed())
+                            .fixedCharge(bill.getFixedCharge())
+                            .variableCharge(bill.getSubtotal() != null ? bill.getSubtotal() : BigDecimal.ZERO)
+                            .sharedWaterCost(bill.getSharedWaterCost() != null ? bill.getSharedWaterCost() : BigDecimal.ZERO)
+                            .tax(bill.getTax() != null ? bill.getTax() : BigDecimal.ZERO)
+                            .distributionStrategy(bill.getDistributionStrategy() != null ? bill.getDistributionStrategy() : "EQUAL")
+                            .totalAmount(bill.getTotalAmount() != null ? bill.getTotalAmount() : BigDecimal.ZERO)
+                            .billStatus(bill.getBillStatus() != null ? bill.getBillStatus() : "UNPAID")
+                            .paymentStatus(bill.getPaymentStatus() != null ? bill.getPaymentStatus() : "UNPAID")
+                            .generatedDate(bill.getGeneratedDate() != null ? bill.getGeneratedDate() : LocalDate.now())
+                            .dueDate(bill.getDueDate() != null ? bill.getDueDate() : LocalDate.now().plusDays(15))
+                            .build();
+
+                    return invoiceRepository.save(newInv);
+                });
 
         validateAccess(user, invoice);
         return mapToResponse(invoice);
@@ -426,6 +470,7 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .fixedCharge(invoice.getFixedCharge())
                 .variableCharge(invoice.getVariableCharge())
                 .sharedWaterCost(invoice.getSharedWaterCost())
+                .tax(invoice.getTax() != null ? invoice.getTax() : (invoice.getBill() != null ? invoice.getBill().getTax() : BigDecimal.ZERO))
                 .distributionStrategy(invoice.getDistributionStrategy())
                 .totalAmount(invoice.getTotalAmount())
                 .billStatus(invoice.getBillStatus())

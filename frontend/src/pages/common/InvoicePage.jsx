@@ -161,12 +161,14 @@ function InvoicePage() {
                             value={searchNumber}
                             onChange={(e) => setSearchNumber(e.target.value)}
                             sx={{ minWidth: 200 }}
-                            InputProps={{
-                                endAdornment: (
-                                    <Button type="submit" size="small" sx={{ p: 0, minWidth: 32 }}>
-                                        <SearchIcon size="small" />
-                                    </Button>
-                                )
+                            slotProps={{
+                                input: {
+                                    endAdornment: (
+                                        <Button type="submit" size="small" sx={{ p: 0, minWidth: 32 }}>
+                                            <SearchIcon size="small" />
+                                        </Button>
+                                    )
+                                }
                             }}
                         />
                     </form>
@@ -331,29 +333,56 @@ function InvoicePage() {
                                 </Typography>
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                                <Stack spacing={1.5} align="right">
-                                    <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
-                                        <Typography variant="body2" color="text.secondary">Subtotal</Typography>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            {formatCurrency(
-                                                (Number(invoice.totalAmount || 0) - (Number(invoice.tax) || (invoice.bill && Number(invoice.bill.tax)) || 0))
-                                            )}
-                                        </Typography>
-                                    </Stack>
-                                    <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
-                                        <Typography variant="body2" color="text.secondary">Taxes (GST)</Typography>
-                                        <Typography variant="body2" fontWeight="medium">
-                                            {formatCurrency(Number(invoice.tax) || (invoice.bill && Number(invoice.bill.tax)) || 0)}
-                                        </Typography>
-                                    </Stack>
-                                    <Divider sx={{ width: "100%", maxWidth: 300, ml: "auto" }} />
-                                    <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
-                                        <Typography variant="subtitle1" fontWeight="bold">Grand Total</Typography>
-                                        <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
-                                            {formatCurrency(invoice.totalAmount || 0)}
-                                        </Typography>
-                                    </Stack>
-                                </Stack>
+                                {(() => {
+                                    // Parse slabs if present
+                                    let slabsList = [];
+                                    if (invoice.slabBreakdown || (invoice.bill && invoice.bill.slabBreakdown)) {
+                                        try {
+                                            const sb = invoice.slabBreakdown || invoice.bill.slabBreakdown;
+                                            slabsList = typeof sb === "string" ? JSON.parse(sb) : sb;
+                                        } catch (e) {}
+                                    }
+                                    const fixed = Number(invoice.fixedCharge) || (invoice.bill && Number(invoice.bill.fixedCharge)) || 0;
+                                    const shared = Number(invoice.sharedWaterCost) || (invoice.bill && Number(invoice.bill.sharedWaterCost)) || 0;
+                                    const total = Number(invoice.totalAmount) || 0;
+
+                                    let variableSubtotal = 0;
+                                    if (slabsList && Array.isArray(slabsList) && slabsList.length > 0) {
+                                        variableSubtotal = slabsList.reduce((sum, s) => sum + (Number(s.amount) || 0), 0);
+                                    } else {
+                                        variableSubtotal = Number(invoice.variableCharge) || (invoice.bill && Number(invoice.bill.variableCharge)) || 0;
+                                    }
+
+                                    const computedSubtotal = variableSubtotal + fixed + shared;
+                                    let taxVal = Number(invoice.tax) || (invoice.bill && Number(invoice.bill.tax)) || 0;
+                                    if (!taxVal && total > computedSubtotal) {
+                                        taxVal = total - computedSubtotal;
+                                    }
+
+                                    return (
+                                        <Stack spacing={1.5} align="right">
+                                            <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
+                                                <Typography variant="body2" color="text.secondary">Subtotal</Typography>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {formatCurrency(computedSubtotal)}
+                                                </Typography>
+                                            </Stack>
+                                            <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
+                                                <Typography variant="body2" color="text.secondary">Taxes (GST)</Typography>
+                                                <Typography variant="body2" fontWeight="medium">
+                                                    {formatCurrency(taxVal)}
+                                                </Typography>
+                                            </Stack>
+                                            <Divider sx={{ width: "100%", maxWidth: 300, ml: "auto" }} />
+                                            <Stack direction="row" justifyContent="space-between" sx={{ width: "100%", maxWidth: 300, ml: "auto" }}>
+                                                <Typography variant="subtitle1" fontWeight="bold">Grand Total</Typography>
+                                                <Typography variant="subtitle1" fontWeight="bold" color="primary.main">
+                                                    {formatCurrency(total)}
+                                                </Typography>
+                                            </Stack>
+                                        </Stack>
+                                    );
+                                })()}
                             </Grid>
                         </Grid>
                     </Box>

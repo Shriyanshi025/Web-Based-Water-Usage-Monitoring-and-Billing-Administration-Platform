@@ -316,7 +316,7 @@ const WaterMetersPage = () => {
                     title="Smart Meter Directory"
                     count={filteredRows.length}
                     action={
-                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap" }}>
                             <SearchBar
                                 value={searchTerm}
                                 onChange={setSearchTerm}
@@ -452,7 +452,7 @@ const WaterMetersPage = () => {
                                         <Typography variant="caption" fontWeight={700} color="text.secondary" display="block" sx={{ mb: 1, textTransform: "uppercase" }}>
                                             Quick Navigation Shortcuts
                                         </Typography>
-                                        <Stack direction="row" spacing={1.5} flexWrap="wrap">
+                                        <Stack direction="row" spacing={1.5} sx={{ flexWrap: "wrap" }}>
                                             {selectedRow.residentName && (
                                                 <Button 
                                                     variant="outlined" 

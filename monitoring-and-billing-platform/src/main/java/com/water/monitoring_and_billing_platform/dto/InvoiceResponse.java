@@ -25,6 +25,7 @@ public class InvoiceResponse {
     private BigDecimal fixedCharge;
     private BigDecimal variableCharge;
     private BigDecimal sharedWaterCost;
+    private BigDecimal tax;
     private String distributionStrategy;
     private BigDecimal totalAmount;
     private String billStatus;
