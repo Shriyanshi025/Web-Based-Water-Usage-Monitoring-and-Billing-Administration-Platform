@@ -6,6 +6,8 @@ import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import SpeedOutlinedIcon from '@mui/icons-material/SpeedOutlined';
 import InsightsOutlinedIcon from '@mui/icons-material/InsightsOutlined';
 
+import LanguageSelector from '../common/LanguageSelector';
+
 const FeatureItem = ({ icon, title, description }) => (
     <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', mb: 4 }}>
         <Box sx={{
@@ -36,6 +38,11 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
     return (
         <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default', position: 'relative', overflow: 'hidden' }}>
             
+            {/* Language selector for auth pages */}
+            <Box sx={{ position: 'absolute', top: 20, right: 24, zIndex: 10 }}>
+                <LanguageSelector />
+            </Box>
+
             <Box sx={{ flex: 1, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
                 {/* Left Side: Branding & Features (Hidden on mobile) */}
                 {!isMobile && (

@@ -11,6 +11,7 @@ import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import StatsSection from '../../components/landing/StatsSection';
 import TechStackSection from '../../components/landing/TechStackSection';
 import Footer from '../../components/landing/Footer';
+import LanguageSelector from '../../components/common/LanguageSelector';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -143,6 +144,7 @@ export default function LandingPage() {
 
                     {/* Right: Action Buttons Pushed to Top Right Corner */}
                     <Stack direction="row" spacing={1.5} alignItems="center">
+                        <LanguageSelector />
                         <Button
                             variant="text"
                             startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important' }} />}

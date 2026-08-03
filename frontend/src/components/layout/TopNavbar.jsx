@@ -32,6 +32,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import LanguageSelector from "../common/LanguageSelector";
 
 
 function TopNavbar({ onMobileNavOpen }) {
@@ -228,6 +229,11 @@ function TopNavbar({ onMobileNavOpen }) {
                                 "& input::placeholder": { color: "text.disabled", opacity: 1 },
                             }}
                         />
+                    </Box>
+
+                    {/* Language Selector */}
+                    <Box sx={{ mr: 1 }}>
+                        <LanguageSelector />
                     </Box>
 
                     {/* Notifications */}

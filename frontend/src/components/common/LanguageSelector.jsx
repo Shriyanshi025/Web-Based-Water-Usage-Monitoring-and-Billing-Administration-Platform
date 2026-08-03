@@ -1,0 +1,335 @@
+import React, { useState, useEffect, useRef } from "react";
+import {
+    Box,
+    Button,
+    Menu,
+    MenuItem,
+    Typography,
+    Divider,
+    TextField,
+    InputAdornment,
+    ListSubheader,
+    ListItemIcon,
+    Tooltip,
+    useTheme,
+    alpha
+} from "@mui/material";
+import LanguageIcon from "@mui/icons-material/Language";
+import SearchIcon from "@mui/icons-material/Search";
+import CheckIcon from "@mui/icons-material/Check";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+
+// Language Data with ISO codes and flag emojis
+export const LANGUAGES = [
+    // ⭐ Recommended
+    { code: "en", name: "English (Recommended)", group: "RECOMMENDED", flag: "🇺🇸" },
+
+    // 🇮🇳 Indian Languages
+    { code: "hi", name: "Hindi (हिन्दी)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "bn", name: "Bengali (বাংলা)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "te", name: "Telugu (తెలుగు)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "mr", name: "Marathi (मराठी)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "ta", name: "Tamil (தமிழ்)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "ur", name: "Urdu (اردو)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "gu", name: "Gujarati (ગુજરાતી)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "kn", name: "Kannada (கன்னட)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "ml", name: "Malayalam (മലയാളം)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "pa", name: "Punjabi (ਪੰਜਾਬੀ)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "or", name: "Odia (ଓଡ଼ିଆ)", group: "INDIAN", flag: "🇮🇳" },
+    { code: "as", name: "Assamese (অসমীয়া)", group: "INDIAN", flag: "🇮🇳" },
+
+    // 🌍 Global Languages
+    { code: "es", name: "Spanish (Español)", group: "GLOBAL", flag: "🇪🇸" },
+    { code: "fr", name: "French (Français)", group: "GLOBAL", flag: "🇫🇷" },
+    { code: "de", name: "German (Deutsch)", group: "GLOBAL", flag: "🇩🇪" },
+    { code: "it", name: "Italian (Italiano)", group: "GLOBAL", flag: "🇮🇹" },
+    { code: "pt", name: "Portuguese (Português)", group: "GLOBAL", flag: "🇵🇹" },
+    { code: "ru", name: "Russian (Русский)", group: "GLOBAL", flag: "🇷🇺" },
+    { code: "ja", name: "Japanese (日本語)", group: "GLOBAL", flag: "🇯🇵" },
+    { code: "ko", name: "Korean (한국어)", group: "GLOBAL", flag: "🇰🇷" },
+    { code: "zh-CN", name: "Chinese (Simplified)", group: "GLOBAL", flag: "🇨🇳" },
+    { code: "ar", name: "Arabic (العربية)", group: "GLOBAL", flag: "🇸🇦" },
+    { code: "tr", name: "Turkish (Türkçe)", group: "GLOBAL", flag: "🇹🇷" },
+    { code: "nl", name: "Dutch (Nederlands)", group: "GLOBAL", flag: "🇳🇱" },
+    { code: "pl", name: "Polish (Polski)", group: "GLOBAL", flag: "🇵🇱" },
+    { code: "id", name: "Indonesian (Bahasa)", group: "GLOBAL", flag: "🇮🇩" },
+    { code: "vi", name: "Vietnamese (Tiếng Việt)", group: "GLOBAL", flag: "🇻🇳" },
+    { code: "th", name: "Thai (ไทย)", group: "GLOBAL", flag: "🇹🇭" },
+];
+
+const STORAGE_KEY = "hydrosync_selected_lang";
+
+export function setGoogleTranslateLanguage(langCode) {
+    localStorage.setItem(STORAGE_KEY, langCode);
+
+    // Set googtrans cookie
+    const hostname = window.location.hostname;
+    document.cookie = `googtrans=/en/${langCode}; path=/; domain=${hostname}`;
+    document.cookie = `googtrans=/en/${langCode}; path=/;`;
+
+    // 1. Check if simple combo element exists
+    const selectElem = document.querySelector(".goog-te-combo");
+    if (selectElem) {
+        selectElem.value = langCode;
+        selectElem.dispatchEvent(new Event("change"));
+        return;
+    }
+
+    // 2. Target Google Translate iframe popup options
+    const iframe = document.querySelector("iframe.VIpgJd-ZVi9od-xl07Ob-OEVmcd") || document.querySelector("iframe.goog-te-menu-frame");
+    if (iframe) {
+        try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            const targetLangObj = LANGUAGES.find(l => l.code === langCode);
+            if (targetLangObj) {
+                const searchName = targetLangObj.name.split(" ")[0]; // e.g. "Hindi", "Spanish"
+                const spanList = Array.from(doc.querySelectorAll("span, a"));
+                const match = spanList.find(s => s.innerText.trim().toLowerCase() === searchName.toLowerCase());
+                if (match) {
+                    match.click();
+                    return;
+                }
+            }
+        } catch (e) {}
+    }
+
+    // 3. Fallback: reload page so Google Translate reads the updated googtrans cookie
+    window.location.reload();
+}
+
+function getActiveLanguageCode() {
+    // Priority: 1. googtrans cookie, 2. localStorage, 3. fallback "en"
+    try {
+        const cookies = document.cookie.split(";");
+        const googtransCookie = cookies.find(c => c.trim().startsWith("googtrans="));
+        if (googtransCookie) {
+            const val = googtransCookie.split("=")[1]; // e.g. /en/hi
+            if (val) {
+                const parts = val.split("/");
+                const code = parts[parts.length - 1];
+                if (code && code !== "null" && code !== "undefined") {
+                    return code;
+                }
+            }
+        }
+    } catch (e) {}
+
+    return localStorage.getItem(STORAGE_KEY) || "en";
+}
+
+export default function LanguageSelector({ variant = "navbar" }) {
+    const theme = useTheme();
+    const [anchorEl, setAnchorEl] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [selectedCode, setSelectedCode] = useState(() => getActiveLanguageCode());
+
+    // Keep selectedCode strictly synced with cookie / localStorage on mount & focus
+    useEffect(() => {
+        const syncActiveLang = () => {
+            const activeCode = getActiveLanguageCode();
+            setSelectedCode(activeCode);
+        };
+
+        syncActiveLang();
+        window.addEventListener("focus", syncActiveLang);
+        return () => window.removeEventListener("focus", syncActiveLang);
+    }, []);
+
+    const handleOpen = (e) => {
+        setAnchorEl(e.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+        setSearchQuery("");
+    };
+
+    const handleSelectLanguage = (langCode) => {
+        setSelectedCode(langCode);
+        setGoogleTranslateLanguage(langCode);
+        handleClose();
+    };
+
+    const selectedLangObj = LANGUAGES.find((l) => l.code === selectedCode) || LANGUAGES[0];
+
+    const filteredLanguages = LANGUAGES.filter(
+        (l) =>
+            l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            l.code.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const recommendedLangs = filteredLanguages.filter((l) => l.group === "RECOMMENDED");
+    const indianLangs = filteredLanguages.filter((l) => l.group === "INDIAN");
+    const globalLangs = filteredLanguages.filter((l) => l.group === "GLOBAL");
+
+    const renderMenuItem = (lang) => {
+        const isSelected = selectedCode === lang.code;
+        return (
+            <MenuItem
+                key={lang.code}
+                onClick={() => handleSelectLanguage(lang.code)}
+                selected={isSelected}
+                sx={{
+                    borderRadius: 2,
+                    py: 1,
+                    px: 1.5,
+                    fontSize: "0.8125rem",
+                    fontWeight: isSelected ? 700 : 500,
+                    bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : "transparent",
+                    color: isSelected ? "primary.main" : "text.primary",
+                    transition: "all 0.15s ease",
+                    "&:hover": {
+                        bgcolor: isSelected
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.primary.main, 0.05),
+                    },
+                }}
+            >
+                <ListItemIcon sx={{ minWidth: 32, fontSize: "1.1rem" }}>{lang.flag}</ListItemIcon>
+                <Box sx={{ flexGrow: 1 }}>{lang.name}</Box>
+                {isSelected && <CheckIcon color="primary" sx={{ fontSize: "1.1rem", ml: 1 }} />}
+            </MenuItem>
+        );
+    };
+
+    return (
+        <>
+            <Tooltip title="Select Language" arrow>
+                <Button
+                    onClick={handleOpen}
+                    variant="outlined"
+                    size="small"
+                    startIcon={<LanguageIcon sx={{ fontSize: "1.25rem !important", color: "primary.main" }} />}
+                    endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", color: "text.secondary" }} />}
+                    sx={{
+                        textTransform: "none",
+                        fontWeight: 600,
+                        fontSize: "0.8125rem",
+                        color: "text.primary",
+                        borderColor: "divider",
+                        borderRadius: "8px",
+                        px: 1.5,
+                        py: 0.6,
+                        minWidth: 130,
+                        bgcolor: "background.paper",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.04),
+                            borderColor: "primary.main",
+                        },
+                    }}
+                >
+                    <Box component="span" sx={{ mr: 0.75, fontSize: "1rem" }}>
+                        {selectedLangObj.flag}
+                    </Box>
+                    {selectedLangObj.code === "en" ? "English" : selectedLangObj.name.split(" ")[0]}
+                </Button>
+            </Tooltip>
+
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                slotProps={{
+                    paper: {
+                        sx: {
+                            width: 290,
+                            maxHeight: 420,
+                            borderRadius: 3,
+                            boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                            mt: 1,
+                            p: 1,
+                        },
+                    },
+                }}
+            >
+                {/* Search Header */}
+                <Box sx={{ p: 1, pb: 1.5 }}>
+                    <TextField
+                        size="small"
+                        fullWidth
+                        placeholder="Search language..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        autoFocus
+                        slotProps={{
+                            input: {
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ fontSize: "1.1rem", color: "text.disabled" }} />
+                                    </InputAdornment>
+                                ),
+                            },
+                        }}
+                        sx={{
+                            "& .MuiOutlinedInput-root": {
+                                borderRadius: 2,
+                                bgcolor: alpha(theme.palette.background.default, 0.6),
+                                fontSize: "0.8125rem",
+                            },
+                        }}
+                    />
+                </Box>
+
+                <Divider sx={{ mb: 1 }} />
+
+                {/* Recommended Section */}
+                {recommendedLangs.length > 0 && (
+                    <ListSubheader
+                        sx={{
+                            bgcolor: "transparent",
+                            fontWeight: 700,
+                            fontSize: "0.7rem",
+                            letterSpacing: 0.8,
+                            color: "text.secondary",
+                            lineHeight: "28px",
+                        }}
+                    >
+                        ⭐ RECOMMENDED
+                    </ListSubheader>
+                )}
+                {recommendedLangs.map(renderMenuItem)}
+
+                {/* Indian Languages Section */}
+                {indianLangs.length > 0 && (
+                    <>
+                        <ListSubheader
+                            sx={{
+                                bgcolor: "transparent",
+                                fontWeight: 700,
+                                fontSize: "0.7rem",
+                                letterSpacing: 0.8,
+                                color: "text.secondary",
+                                lineHeight: "28px",
+                                mt: 1,
+                            }}
+                        >
+                            🇮🇳 INDIAN LANGUAGES
+                        </ListSubheader>
+                        {indianLangs.map(renderMenuItem)}
+                    </>
+                )}
+
+                {/* Global Languages Section */}
+                {globalLangs.length > 0 && (
+                    <>
+                        <ListSubheader
+                            sx={{
+                                bgcolor: "transparent",
+                                fontWeight: 700,
+                                fontSize: "0.7rem",
+                                letterSpacing: 0.8,
+                                color: "text.secondary",
+                                lineHeight: "28px",
+                                mt: 1,
+                            }}
+                        >
+                            🌍 GLOBAL LANGUAGES
+                        </ListSubheader>
+                        {globalLangs.map(renderMenuItem)}
+                    </>
+                )}
+            </Menu>
+        </>
+    );
+}
