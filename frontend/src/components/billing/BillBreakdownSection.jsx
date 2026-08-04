@@ -32,9 +32,18 @@ export default function BillBreakdownSection({ bill, defaultExpanded = true, tit
         }
     }
 
-    const prevReading = bill.previousReading !== undefined && bill.previousReading !== null ? bill.previousReading : "—";
-    const currReading = bill.currentReading !== undefined && bill.currentReading !== null ? bill.currentReading : "—";
+    let prevReading = bill.previousReading !== undefined && bill.previousReading !== null ? bill.previousReading : (bill.bill && bill.bill.previousReading !== undefined && bill.bill.previousReading !== null ? bill.bill.previousReading : null);
+    let currReading = bill.currentReading !== undefined && bill.currentReading !== null ? bill.currentReading : (bill.bill && bill.bill.currentReading !== undefined && bill.currentReading !== null ? bill.bill.currentReading : null);
     const units = bill.unitsConsumed !== undefined && bill.unitsConsumed !== null ? bill.unitsConsumed : 0;
+
+    // Fallback: If previousReading and currentReading are missing, compute logical baseline readings from net consumption units
+    if ((prevReading === null || prevReading === "—") && (currReading === null || currReading === "—") && units > 0) {
+        prevReading = 0;
+        currReading = units;
+    } else {
+        if (prevReading === null) prevReading = "—";
+        if (currReading === null) currReading = "—";
+    }
     const fixed = Number(bill.fixedCharge) || 0;
     const additional = Number(bill.additionalCharge) || 0;
     const sharedCost = Number(bill.sharedWaterCost) || 0;

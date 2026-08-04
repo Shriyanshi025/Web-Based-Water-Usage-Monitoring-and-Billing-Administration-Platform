@@ -31,12 +31,14 @@ const BulkWaterPurchasePage = lazy(() => import("../pages/community-admin/BulkWa
 const CostDistributionPage = lazy(() => import("../pages/community-admin/CostDistributionPage"));
 const AlertsManagementPage = lazy(() => import("../pages/community-admin/AlertsManagementPage"));
 const EmailHistoryPage = lazy(() => import("../pages/community-admin/EmailHistoryPage"));
+const ReportsAnalyticsPage = lazy(() => import("../pages/community-admin/ReportsAnalyticsPage"));
 const CommunityAdminSupportPage = lazy(() => import("../pages/community-admin/CommunityAdminSupportPage"));
 const InvoicePage = lazy(() => import("../pages/common/InvoicePage"));
 
 // Resident Pages
 const ResidentBillsPage = lazy(() => import("../pages/resident/BillsPage"));
 const UsagePage = lazy(() => import("../pages/resident/UsagePage"));
+const PeerBenchmarkingPage = lazy(() => import("../pages/resident/PeerBenchmarkingPage"));
 const MeterDetailsPage = lazy(() => import("../pages/resident/MeterDetailsPage"));
 const ProfilePage = lazy(() => import("../pages/resident/ProfilePage"));
 const ResidentComplaintsPage = lazy(() => import("../pages/resident/ComplaintsPage"));
@@ -212,6 +214,11 @@ function AppRoutes() {
                         <EmailHistoryPage />
                     </ProtectedRoute>
                 } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_REPORTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <ReportsAnalyticsPage />
+                    </ProtectedRoute>
+                } />
                 <Route path="/community-admin/payments" element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <PaymentHistoryPage />
@@ -282,6 +289,16 @@ function AppRoutes() {
                 <Route path={ROUTES.RESIDENT_USAGE} element={
                     <ProtectedRoute allowedRoles={[ROLES.USER]}>
                         <UsagePage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.RESIDENT_BENCHMARKING} element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <PeerBenchmarkingPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/resident/peer-benchmarking" element={
+                    <ProtectedRoute allowedRoles={[ROLES.USER]}>
+                        <PeerBenchmarkingPage />
                     </ProtectedRoute>
                 } />
                 <Route path="/resident/usage" element={

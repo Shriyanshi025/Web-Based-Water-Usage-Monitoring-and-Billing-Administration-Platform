@@ -37,7 +37,7 @@ import PlumbingIcon from "@mui/icons-material/Plumbing";
 import CleaningServicesIcon from "@mui/icons-material/CleaningServices";
 import WaterIcon from "@mui/icons-material/Water";
 
-// Config and Services
+import BenchmarkSummaryWidget from "../../components/resident/BenchmarkSummaryWidget";
 import { CHART_CONFIG } from "../../constants/dashboardConfig";
 import { getResidentDashboard } from "../../services/DashboardService";
 import { getMyUsageHistory } from "../../services/ResidentOpsService";
@@ -545,7 +545,10 @@ function UserDashboard() {
                         )}
                     </Paper>
 
-                    {/* Section 4 — Merged Water Consumption Analytics Section */}
+                    {/* Section 4 — Peer Benchmarking Summary Widget */}
+                    <BenchmarkSummaryWidget />
+
+                    {/* Section 5 — Merged Water Consumption Analytics Section */}
                     <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
                         <SectionHeader 
                             title="Water Consumption Trends & Analytics" 

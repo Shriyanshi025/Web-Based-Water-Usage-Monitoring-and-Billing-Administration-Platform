@@ -33,6 +33,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import ReceiptIcon from "@mui/icons-material/Receipt";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import PriceChangeIcon from "@mui/icons-material/PriceChange";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
@@ -53,6 +54,7 @@ const iconMap = {
     ReceiptIcon: <ReceiptIcon fontSize="small" />,
     CalendarMonthIcon: <CalendarMonthIcon fontSize="small" />,
     PriceChangeIcon: <PriceChangeIcon fontSize="small" />,
+    EmojiEventsIcon: <EmojiEventsIcon fontSize="small" />,
 };
 
 const DRAWER_WIDTH = 264;

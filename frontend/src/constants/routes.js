@@ -9,6 +9,7 @@ export const ROUTES = {
     RESIDENT_PROFILE: "/user/profile",
     RESIDENT_BILLS: "/user/bills",
     RESIDENT_USAGE: "/user/usage",
+    RESIDENT_BENCHMARKING: "/user/peer-benchmarking",
     RESIDENT_METER: "/user/meter",
     RESIDENT_COMPLAINTS: "/user/complaints",
     
@@ -29,6 +30,7 @@ export const ROUTES = {
     COMMUNITY_ADMIN_COST_DISTRIBUTION: "/community-admin/cost-distribution",
     COMMUNITY_ADMIN_ALERTS: "/community-admin/alerts",
     COMMUNITY_ADMIN_EMAIL_HISTORY: "/community-admin/email-history",
+    COMMUNITY_ADMIN_REPORTS: "/community-admin/reports",
     INVOICE_DETAILS: "/invoices/:invoiceId",
     BILL_INVOICE: "/invoices/bill/:billId",
     

@@ -67,8 +67,15 @@ public class InvoiceServiceImpl implements InvoiceService {
         String suffix = (bill.getBillNumber() != null && bill.getBillNumber().contains("-")) ?
                 bill.getBillNumber().substring(bill.getBillNumber().lastIndexOf("-") + 1) : 
                 String.format("%06d", bill.getId() != null ? bill.getId() : new Random().nextInt(1000000));
-        String invoiceNumber = "INV-" + bill.getBillingYear() + 
-                String.format("%02d", bill.getBillingMonth()) + "-" + suffix;
+        
+        String baseInvoiceNumber = "INV-" + (bill.getBillingYear() > 0 ? bill.getBillingYear() : LocalDate.now().getYear()) + 
+                String.format("%02d", bill.getBillingMonth() > 0 ? bill.getBillingMonth() : LocalDate.now().getMonthValue()) + "-" + suffix;
+        
+        String invoiceNumber = baseInvoiceNumber;
+        int seq = 1;
+        while (invoiceRepository.findByInvoiceNumber(invoiceNumber).isPresent()) {
+            invoiceNumber = baseInvoiceNumber + "-" + seq++;
+        }
 
         Invoice invoice = Invoice.builder()
                 .invoiceNumber(invoiceNumber)
@@ -464,8 +471,8 @@ public class InvoiceServiceImpl implements InvoiceService {
                 .billingCycleName(invoice.getBillingCycleName())
                 .periodStart(invoice.getPeriodStart())
                 .periodEnd(invoice.getPeriodEnd())
-                .previousReading(invoice.getPreviousReading())
-                .currentReading(invoice.getCurrentReading())
+                .previousReading(invoice.getPreviousReading() != null ? invoice.getPreviousReading() : (invoice.getBill() != null ? invoice.getBill().getPreviousReading() : null))
+                .currentReading(invoice.getCurrentReading() != null ? invoice.getCurrentReading() : (invoice.getBill() != null ? invoice.getBill().getCurrentReading() : null))
                 .unitsConsumed(invoice.getUnitsConsumed())
                 .fixedCharge(invoice.getFixedCharge())
                 .variableCharge(invoice.getVariableCharge())

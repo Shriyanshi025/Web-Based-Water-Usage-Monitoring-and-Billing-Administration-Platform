@@ -30,6 +30,7 @@ public interface WaterUsageRepository extends JpaRepository<WaterUsage, Long> {
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"waterMeter", "waterMeter.residentProfile", "waterMeter.residentProfile.user"})
     List<WaterUsage> findByWaterMeterResidentProfileCommunityIdAndReadingDateBetween(Long communityId, LocalDate start, LocalDate end);
 
+    java.util.Optional<WaterUsage> findFirstByWaterMeterResidentProfileCommunityIdOrderByReadingDateDescIdDesc(Long communityId);
     java.util.Optional<WaterUsage> findFirstByWaterMeterResidentProfileIdOrderByReadingDateDescIdDesc(Long residentProfileId);
     java.util.Optional<WaterUsage> findFirstByWaterMeterIdOrderByReadingDateDescIdDesc(Long waterMeterId);
     java.util.Optional<WaterUsage> findFirstByWaterMeterIdAndReadingDateLessThanOrderByReadingDateDescIdDesc(Long waterMeterId, LocalDate readingDate);

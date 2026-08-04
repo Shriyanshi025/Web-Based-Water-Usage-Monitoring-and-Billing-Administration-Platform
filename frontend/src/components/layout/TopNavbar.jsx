@@ -356,34 +356,36 @@ function TopNavbar({ onMobileNavOpen }) {
                         open={open}
                         onClose={handleMenuClose}
                         onClick={handleMenuClose}
-                        PaperProps={{
-                            elevation: 0,
-                            sx: {
-                                overflow: "visible",
-                                mt: 1,
-                                minWidth: 200,
-                                borderRadius: "10px",
-                                border: "1px solid",
-                                borderColor: "divider",
-                                boxShadow: "0 8px 24px rgba(12, 25, 41, 0.10)",
-                                backgroundImage: "none",
-                                // Caret arrow
-                                "&::before": {
-                                    content: '""',
-                                    display: "block",
-                                    position: "absolute",
-                                    top: 0,
-                                    right: 16,
-                                    width: 10,
-                                    height: 10,
-                                    bgcolor: "background.paper",
-                                    borderTop: "1px solid",
-                                    borderLeft: "1px solid",
+                        slotProps={{
+                            paper: {
+                                elevation: 0,
+                                sx: {
+                                    overflow: "visible",
+                                    mt: 1,
+                                    minWidth: 200,
+                                    borderRadius: "10px",
+                                    border: "1px solid",
                                     borderColor: "divider",
-                                    transform: "translateY(-50%) rotate(45deg)",
-                                    zIndex: 0,
+                                    boxShadow: "0 8px 24px rgba(12, 25, 41, 0.10)",
+                                    backgroundImage: "none",
+                                    // Caret arrow
+                                    "&::before": {
+                                        content: '""',
+                                        display: "block",
+                                        position: "absolute",
+                                        top: 0,
+                                        right: 16,
+                                        width: 10,
+                                        height: 10,
+                                        bgcolor: "background.paper",
+                                        borderTop: "1px solid",
+                                        borderLeft: "1px solid",
+                                        borderColor: "divider",
+                                        transform: "translateY(-50%) rotate(45deg)",
+                                        zIndex: 0,
+                                    },
                                 },
-                            },
+                            }
                         }}
                         transformOrigin={{ horizontal: "right", vertical: "top" }}
                         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}

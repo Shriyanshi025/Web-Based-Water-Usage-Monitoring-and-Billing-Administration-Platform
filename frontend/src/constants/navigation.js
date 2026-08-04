@@ -107,6 +107,11 @@ export const NAVIGATION_CONFIG = {
             path: ROUTES.COMMUNITY_ADMIN_EMAIL_HISTORY,
             icon: "MarkEmailReadIcon"
         },
+        {
+            label: "Reports & Analytics",
+            path: ROUTES.COMMUNITY_ADMIN_REPORTS,
+            icon: "AssessmentIcon"
+        },
         { 
             label: "Invitations", 
             path: ROUTES.COMMUNITY_ADMIN_INVITATIONS, 
@@ -153,6 +158,11 @@ export const NAVIGATION_CONFIG = {
             label: "Usage History", 
             path: ROUTES.RESIDENT_USAGE, 
             icon: "TimelineIcon" 
+        },
+        { 
+            label: "Peer Benchmarking", 
+            path: ROUTES.RESIDENT_BENCHMARKING, 
+            icon: "EmojiEventsIcon" 
         },
         { 
             label: "Meter Details", 

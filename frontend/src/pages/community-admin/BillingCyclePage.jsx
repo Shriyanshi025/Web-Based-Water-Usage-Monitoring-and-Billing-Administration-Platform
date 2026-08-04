@@ -160,12 +160,6 @@ function BillingCyclePage() {
             width: 100, 
             renderCell: (params) => (params.row.active ? "Yes" : "No") 
         },
-        { 
-            field: "generatedAt", 
-            headerName: "Generated At", 
-            width: 150,
-            renderCell: (params) => params.value || "—" 
-        },
         {
             field: "actions",
             headerName: "Actions",

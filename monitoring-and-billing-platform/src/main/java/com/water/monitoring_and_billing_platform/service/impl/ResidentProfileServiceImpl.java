@@ -411,19 +411,7 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         }
 
         if (request.getApprovalStatus() == ApprovalStatus.REJECTED) {
-            user.setApprovalStatus(ApprovalStatus.REJECTED);
-            userRepository.save(user);
-            
-            activityLogRepository.save(ActivityLog.builder()
-                .title("Resident Rejected")
-                .description("Resident profile rejected for " + user.getFullName())
-                .timestamp(java.time.LocalDateTime.now())
-                .icon("Cancel")
-                .color("error.main")
-                .community(profile.getCommunity())
-                .user(user)
-                .build());
-                
+            deleteResident(adminEmail, profile.getId());
             return;
         }
 

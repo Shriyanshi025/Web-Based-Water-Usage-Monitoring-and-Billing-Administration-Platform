@@ -103,7 +103,11 @@ public class WaterUsageServiceImpl implements WaterUsageService {
 
         recalculateMeterReadings(meter);
 
-        billingService.generateBillForReading(usage);
+        try {
+            billingService.generateBillForReading(usage);
+        } catch (Exception e) {
+            System.err.println("Bill auto-generation skipped for reading ID " + usage.getId() + ": " + e.getMessage());
+        }
 
         activityLogRepository.save(com.water.monitoring_and_billing_platform.entity.ActivityLog.builder()
                 .title("Water Usage Recorded")

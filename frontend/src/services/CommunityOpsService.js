@@ -357,6 +357,11 @@ class CommunityOpsService {
         const response = await api.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
         return response;
     }
+
+    async getReportAnalytics(params) {
+        const response = await api.get("/reports/analytics", { params });
+        return response.data;
+    }
 }
 
 export default new CommunityOpsService();
