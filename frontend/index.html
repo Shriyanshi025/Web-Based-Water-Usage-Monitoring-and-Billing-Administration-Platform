@@ -48,6 +48,39 @@
         background: none !important;
         box-shadow: none !important;
       }
+      @media print {
+        header, footer, nav, aside, .MuiDrawer-root, .MuiAppBar-root, .TopNavbar-root, .Sidebar-root,
+        button, .MuiButton-root, .MuiInputBase-root, .MuiFormControl-root, .no-print {
+          display: none !important;
+        }
+        main, #root, body, html, .MuiBox-root {
+          width: 100% !important;
+          max-width: 100% !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          background: #fff !important;
+          overflow: visible !important;
+        }
+        .MuiPaper-root {
+          border: none !important;
+          box-shadow: none !important;
+          page-break-inside: avoid;
+        }
+        /* Ensure tables print nicely */
+        table {
+          width: 100% !important;
+          border-collapse: collapse !important;
+          page-break-inside: auto;
+        }
+        tr {
+          page-break-inside: avoid;
+          page-break-after: auto;
+        }
+        thead {
+          display: table-header-group;
+        }
+      }
     </style>
     <script type="text/javascript">
       // MutationObserver to continuously clean up Google Translate top iframe and body top style

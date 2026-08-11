@@ -70,6 +70,9 @@ class HouseholdManagementServiceImplTest {
     @Mock
     private InvitationRepository invitationRepository;
 
+    @Mock
+    private MeterResetLogRepository meterResetLogRepository;
+
     @InjectMocks
     private ResidentProfileServiceImpl residentProfileService;
 

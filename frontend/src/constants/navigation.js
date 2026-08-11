@@ -26,6 +26,11 @@ export const NAVIGATION_CONFIG = {
             icon: "DomainVerificationIcon" 
         },
         { 
+            label: "Reports & Analytics", 
+            path: ROUTES.MAIN_ADMIN_REPORTS, 
+            icon: "AssessmentIcon" 
+        },
+        { 
             label: "Notifications", 
             path: ROUTES.MAIN_ADMIN_NOTIFICATIONS, 
             icon: "MailIcon" 

@@ -1,29 +1,28 @@
 package com.water.monitoring_and_billing_platform.repository;
 
-import com.water.monitoring_and_billing_platform.entity.WaterMeter;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.water.monitoring_and_billing_platform.entity.WaterMeter;
 
+@Repository
 public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
 
     boolean existsByMeterNumber(String meterNumber);
+
+    boolean existsByResidentProfileId(Long residentProfileId);
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
     @org.springframework.lang.NonNull
     java.util.List<WaterMeter> findAll();
 
-    boolean existsByResidentProfileId(Long residentProfileId);
+    java.util.Optional<WaterMeter> findByMeterNumber(String meterNumber);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
-    Optional<WaterMeter> findByResidentProfileId(Long residentProfileId);
+    java.util.Optional<WaterMeter> findByResidentProfileId(Long residentProfileId);
 
-    @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile", "residentProfile.user"})
-    Optional<WaterMeter> findFirstByResidentProfileIdOrderByIdDesc(Long residentProfileId);
+    java.util.List<WaterMeter> findByResidentProfileIdIn(java.util.Collection<Long> residentProfileIds);
 
-    Optional<WaterMeter> findByMeterNumber(String meterNumber);
-
-    long count();
+    java.util.Optional<WaterMeter> findFirstByResidentProfileIdOrderByIdDesc(Long residentProfileId);
 
     long countByResidentProfileCommunityId(Long communityId);
 
@@ -33,5 +32,5 @@ public interface WaterMeterRepository extends JpaRepository<WaterMeter, Long> {
     java.util.List<WaterMeter> findByResidentProfileCommunityId(Long communityId);
 
     @org.springframework.data.jpa.repository.EntityGraph(attributePaths = {"residentProfile"})
-    java.util.List<WaterMeter> findByResidentProfileIdIn(java.util.Collection<Long> residentProfileIds);
+    java.util.List<WaterMeter> findByActiveTrue();
 }

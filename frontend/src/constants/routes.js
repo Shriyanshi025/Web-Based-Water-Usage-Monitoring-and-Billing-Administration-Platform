@@ -31,6 +31,7 @@ export const ROUTES = {
     COMMUNITY_ADMIN_ALERTS: "/community-admin/alerts",
     COMMUNITY_ADMIN_EMAIL_HISTORY: "/community-admin/email-history",
     COMMUNITY_ADMIN_REPORTS: "/community-admin/reports",
+    COMMUNITY_ADMIN_BENCHMARKING: "/community-admin/benchmarking",
     INVOICE_DETAILS: "/invoices/:invoiceId",
     BILL_INVOICE: "/invoices/bill/:billId",
     
@@ -41,6 +42,7 @@ export const ROUTES = {
     MAIN_ADMIN_APPROVALS: "/main-admin/approvals",
     MAIN_ADMIN_PROFILE: "/main-admin/profile",
     MAIN_ADMIN_NOTIFICATIONS: "/main-admin/notifications",
+    MAIN_ADMIN_REPORTS: "/main-admin/reports",
     
     // Additional Resident Routes
     RESIDENT_NOTIFICATIONS: "/user/notifications",

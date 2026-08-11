@@ -9,7 +9,6 @@ import HeroSection from '../../components/landing/HeroSection';
 import FeaturesSection from '../../components/landing/FeaturesSection';
 import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import StatsSection from '../../components/landing/StatsSection';
-import TechStackSection from '../../components/landing/TechStackSection';
 import Footer from '../../components/landing/Footer';
 import LanguageSelector from '../../components/common/LanguageSelector';
 
@@ -115,8 +114,7 @@ export default function LandingPage() {
                         {[
                             { id: 'features', label: 'Features' },
                             { id: 'workflow', label: 'How It Works' },
-                            { id: 'stats', label: 'Why Choose Us' },
-                            { id: 'techstack', label: 'Tech Stack' }
+                            { id: 'stats', label: 'Why Choose Us' }
                         ].map((nav) => (
                             <Button
                                 key={nav.id}
@@ -200,9 +198,6 @@ export default function LandingPage() {
             {/* Statistics Section */}
             <StatsSection />
 
-            {/* Tech Stack Section */}
-            <TechStackSection />
-
             {/* CTA Banner */}
             <Box
                 sx={{
@@ -230,66 +225,67 @@ export default function LandingPage() {
                     <Typography
                         variant="h6"
                         sx={{
-                            color: 'rgba(255, 255, 255, 0.85)',
+                            color: '#e0f2fe',
                             fontWeight: 400,
-                            mb: 6,
-                            maxWidth: 660,
-                            mx: 'auto',
-                            fontSize: { xs: '1.05rem', md: '1.2rem' },
-                            lineHeight: 1.65
+                            fontSize: { xs: '1rem', md: '1.25rem' },
+                            lineHeight: 1.6,
+                            mb: 5,
+                            maxWidth: 700,
+                            mx: 'auto'
                         }}
                     >
-                        Join HydroSync today to gain real-time water monitoring, automated billing, leak protection, and complete administrative transparency.
+                        Join hundreds of communities saving thousands of liters daily with automated monitoring, leak prevention, and zero-effort billing.
                     </Typography>
-
-                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center" alignItems="center">
+                    <Stack
+                        direction={{ xs: 'column', sm: 'row' }}
+                        spacing={2.5}
+                        justifyContent="center"
+                        alignItems="center"
+                    >
                         <Button
                             variant="contained"
                             size="large"
                             endIcon={<ArrowForwardIcon />}
                             sx={{
-                                bgcolor: '#ffffff',
-                                color: '#0284c7',
-                                px: 4.5,
+                                bgcolor: '#38bdf8',
+                                color: '#0f172a',
+                                fontWeight: 700,
+                                px: 4,
                                 py: 1.8,
                                 borderRadius: 3,
-                                fontWeight: 700,
-                                fontSize: '1.1rem',
+                                fontSize: '1.05rem',
                                 textTransform: 'none',
-                                boxShadow: '0 12px 28px rgba(0,0,0,0.2)',
-                                transition: 'all 0.3s ease',
+                                boxShadow: '0 10px 25px -5px rgba(56, 189, 248, 0.4)',
                                 '&:hover': {
-                                    bgcolor: '#f8fafc',
+                                    bgcolor: '#7dd3fc',
                                     transform: 'translateY(-2px)'
                                 }
                             }}
                             onClick={() => navigate('/register')}
                         >
-                            Get Started Now
+                            Register Your Community
                         </Button>
-
                         <Button
                             variant="outlined"
                             size="large"
                             sx={{
-                                borderColor: 'rgba(255, 255, 255, 0.4)',
+                                borderColor: 'rgba(255, 255, 255, 0.3)',
                                 color: 'white',
-                                px: 4.5,
+                                fontWeight: 600,
+                                px: 3.5,
                                 py: 1.8,
                                 borderRadius: 3,
-                                fontWeight: 600,
-                                fontSize: '1.1rem',
+                                fontSize: '1.05rem',
                                 textTransform: 'none',
-                                transition: 'all 0.3s ease',
+                                backdropFilter: 'blur(8px)',
                                 '&:hover': {
                                     borderColor: 'white',
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                    transform: 'translateY(-2px)'
+                                    bgcolor: 'rgba(255, 255, 255, 0.1)'
                                 }
                             }}
                             onClick={() => navigate('/login')}
                         >
-                            Sign In to Account
+                            Sign In to Dashboard
                         </Button>
                     </Stack>
                 </Container>

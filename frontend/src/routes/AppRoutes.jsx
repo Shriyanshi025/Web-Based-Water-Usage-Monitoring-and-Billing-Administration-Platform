@@ -16,6 +16,7 @@ const CommunitiesPage = lazy(() => import("../pages/main-admin/CommunitiesPage")
 const CommunityAdminsPage = lazy(() => import("../pages/main-admin/CommunityAdminsPage"));
 const MainAdminApprovalsPage = lazy(() => import("../pages/main-admin/MainAdminApprovalsPage"));
 const MainAdminSupportPage = lazy(() => import("../pages/main-admin/MainAdminSupportPage"));
+const MainAdminReportsPage = lazy(() => import("../pages/main-admin/MainAdminReportsPage"));
 
 // Community Admin Pages
 const ResidentsPage = lazy(() => import("../pages/community-admin/ResidentsPage"));
@@ -117,6 +118,11 @@ function AppRoutes() {
                         <ProfilePage />
                     </ProtectedRoute>
                 } />
+                <Route path={ROUTES.MAIN_ADMIN_REPORTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.MAIN_ADMIN]}>
+                        <MainAdminReportsPage />
+                    </ProtectedRoute>
+                } />
 
                 {/* Community Admin Routes */}
                 <Route path={ROUTES.COMMUNITY_ADMIN_DASHBOARD} element={
@@ -215,6 +221,16 @@ function AppRoutes() {
                     </ProtectedRoute>
                 } />
                 <Route path={ROUTES.COMMUNITY_ADMIN_REPORTS} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <ReportsAnalyticsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path={ROUTES.COMMUNITY_ADMIN_BENCHMARKING} element={
+                    <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
+                        <ReportsAnalyticsPage />
+                    </ProtectedRoute>
+                } />
+                <Route path="/community-admin/benchmarking" element={
                     <ProtectedRoute allowedRoles={[ROLES.COMMUNITY_ADMIN]}>
                         <ReportsAnalyticsPage />
                     </ProtectedRoute>

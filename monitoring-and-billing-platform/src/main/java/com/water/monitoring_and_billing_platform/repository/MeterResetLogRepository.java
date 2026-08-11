@@ -10,4 +10,8 @@ import java.util.List;
 public interface MeterResetLogRepository extends JpaRepository<MeterResetLog, Long> {
     List<MeterResetLog> findByCommunityIdOrderByResetDateDesc(Long communityId);
     List<MeterResetLog> findByResidentProfileIdOrderByResetDateDesc(Long residentProfileId);
+    void deleteByResidentProfileId(Long residentProfileId);
+    void deleteByWaterMeterId(Long waterMeterId);
+    void deleteByResetById(Long resetById);
 }
+

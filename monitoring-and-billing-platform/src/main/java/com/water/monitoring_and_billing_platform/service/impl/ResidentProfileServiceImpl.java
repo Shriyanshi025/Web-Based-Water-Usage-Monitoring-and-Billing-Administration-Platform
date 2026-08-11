@@ -54,6 +54,8 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
 
     private final InvitationRepository invitationRepository;
 
+    private final MeterResetLogRepository meterResetLogRepository;
+
     private CommunityAdminProfile getAdminProfile(String adminEmail) {
         User user = userRepository.findByEmail(adminEmail)
                 .orElseThrow(UserNotFoundException::new);
@@ -282,10 +284,15 @@ public class ResidentProfileServiceImpl implements ResidentProfileService {
         // 4. Delete Bills
         billRepository.deleteAll(bills);
         
-        // 5. Delete WaterUsage and WaterMeter
+        // 5. Delete WaterUsage, MeterResetLog and WaterMeter
+        meterResetLogRepository.deleteByResidentProfileId(id);
+        if (residentUser != null) {
+            meterResetLogRepository.deleteByResetById(residentUser.getId());
+        }
         java.util.Optional<WaterMeter> waterMeterOpt = waterMeterRepository.findByResidentProfileId(id);
         if (waterMeterOpt.isPresent()) {
             WaterMeter meter = waterMeterOpt.get();
+            meterResetLogRepository.deleteByWaterMeterId(meter.getId());
             List<WaterUsage> usages = waterUsageRepository.findByWaterMeterId(meter.getId());
             waterUsageRepository.deleteAll(usages);
             waterMeterRepository.delete(meter);

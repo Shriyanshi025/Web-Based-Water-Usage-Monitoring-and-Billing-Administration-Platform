@@ -362,6 +362,45 @@ class CommunityOpsService {
         const response = await api.get("/reports/analytics", { params });
         return response.data;
     }
+
+    // ==========================================
+    // COMMUNITY BENCHMARKING & COMPARISON
+    // ==========================================
+
+    async getBenchmarkingDashboard(params) {
+        const response = await api.get("/v1/community-benchmarking/dashboard", { params });
+        return response.data;
+    }
+
+    async getBenchmarkingHouseholdDetails(id, params) {
+        const response = await api.get(`/v1/community-benchmarking/household/${id}`, { params });
+        return response.data;
+    }
+
+    async getBenchmarkingComparison(params) {
+        const response = await api.get("/v1/community-benchmarking/comparison", { params });
+        return response.data;
+    }
+
+    async getBenchmarkingTopConsumers(limit = 10) {
+        const response = await api.get("/v1/community-benchmarking/top-consumers", { params: { limit } });
+        return response.data;
+    }
+
+    async getBenchmarkingLowestConsumers(limit = 10) {
+        const response = await api.get("/v1/community-benchmarking/lowest-consumers", { params: { limit } });
+        return response.data;
+    }
+
+    async getBenchmarkingInsights() {
+        const response = await api.get("/v1/community-benchmarking/insights");
+        return response.data;
+    }
+
+    async getBenchmarkingBlockSummary() {
+        const response = await api.get("/v1/community-benchmarking/block-summary");
+        return response.data;
+    }
 }
 
 export default new CommunityOpsService();
