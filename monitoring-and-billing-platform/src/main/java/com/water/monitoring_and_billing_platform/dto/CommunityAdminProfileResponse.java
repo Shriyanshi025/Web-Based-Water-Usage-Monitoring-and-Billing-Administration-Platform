@@ -25,5 +25,6 @@ public class CommunityAdminProfileResponse {
     private java.time.LocalDateTime createdAt;
     private String communityAddress;
     private Long totalResidents;
+    private String approvalStatus;
 
 }

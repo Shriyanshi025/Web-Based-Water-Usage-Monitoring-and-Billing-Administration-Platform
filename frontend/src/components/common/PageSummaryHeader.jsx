@@ -44,7 +44,7 @@ const PageSummaryHeader = ({
     const theme = useTheme();
 
     return (
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, mt: 0, pt: 0 }}>
             <Stack
                 direction={{ xs: "column", md: "row" }}
                 spacing={2}
@@ -78,11 +78,11 @@ const PageSummaryHeader = ({
                             variant="h4"
                             component="h1"
                             sx={{
-                                fontWeight: 800,
-                                color: "text.primary",
+                                fontWeight: 700,
+                                color: "#0a1d37",
                                 lineHeight: 1.2,
                                 letterSpacing: "-0.5px",
-                                fontSize: { xs: "1.35rem", sm: "1.65rem" },
+                                fontSize: { xs: "1.5rem", sm: "1.75rem", md: "1.875rem" },
                             }}
                         >
                             {title}
@@ -117,10 +117,12 @@ const PageSummaryHeader = ({
                         <Typography
                             variant="body2"
                             sx={{
-                                color: "text.secondary",
-                                fontSize: "0.875rem",
+                                color: "#1e293b",
+                                fontWeight: 600,
+                                fontSize: "0.9rem",
                                 lineHeight: 1.5,
                                 maxWidth: 720,
+                                textShadow: "0 1px 2px rgba(255, 255, 255, 0.8)",
                             }}
                         >
                             {subtitle}
@@ -145,12 +147,13 @@ const PageSummaryHeader = ({
                                             key={idx}
                                             variant="caption"
                                             sx={{
-                                                fontWeight: 600,
-                                                color: "text.secondary",
+                                                fontWeight: 700,
+                                                color: "#334155",
                                                 display: "inline-flex",
                                                 alignItems: "center",
                                                 gap: 0.75,
                                                 fontSize: "0.8125rem",
+                                                textShadow: "0 1px 2px rgba(255, 255, 255, 0.8)",
                                             }}
                                         >
                                             {idx > 0 && (

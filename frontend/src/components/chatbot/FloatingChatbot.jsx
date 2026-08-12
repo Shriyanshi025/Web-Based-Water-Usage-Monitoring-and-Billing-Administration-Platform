@@ -27,7 +27,9 @@ import StopIcon from "@mui/icons-material/Stop";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import RemoveIcon from "@mui/icons-material/Remove";
 import { useAuth } from "../../context/AuthContext";
+import { useLocation } from "react-router-dom";
 import api from "../../services/api";
 
 // Clean and safe Markdown Renderer with visual Table support
@@ -209,6 +211,12 @@ function MarkdownMessage({ content }) {
 
 export default function FloatingChatbot() {
     const { user, isAuthenticated } = useAuth();
+    const location = useLocation();
+    const isDashboardPath = location.pathname.startsWith("/main-admin") ||
+                            location.pathname.startsWith("/community-admin") ||
+                            location.pathname.startsWith("/resident") ||
+                            location.pathname.startsWith("/chatbot");
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
     const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
@@ -232,6 +240,8 @@ export default function FloatingChatbot() {
     const panelRef = useRef(null);
     const fabRef = useRef(null);
 
+    const [customDimensions, setCustomDimensions] = useState({ width: 440, height: 480 });
+
     // Wide Landscape Dimensions
     const getPanelDimensions = () => {
         if (isMobile) {
@@ -250,11 +260,120 @@ export default function FloatingChatbot() {
             return { width: 480, height: 480 };
         }
 
-        // Default Desktop Compact Landscape: Width (440px), Height (480px)
-        return { width: 440, height: 480 };
+        return customDimensions;
     };
 
     const { width: panelWidth, height: panelHeight } = getPanelDimensions();
+
+    // 8-Way Pointer Resize Handler
+    const handleResizeStart = (e, direction) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const rect = panelRef.current.getBoundingClientRect();
+        const initialLeft = rect.left;
+        const initialTop = rect.top;
+        const initialWidth = rect.width;
+        const initialHeight = rect.height;
+
+        setPos({ x: initialLeft, y: initialTop });
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+
+        const isCorner = (direction.includes("left") || direction.includes("right")) &&
+                         (direction.includes("top") || direction.includes("bottom"));
+
+        const startRatio = initialWidth / initialHeight;
+
+        const handlePointerMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const dy = moveEvent.clientY - startY;
+
+            let newWidth = initialWidth;
+            let newHeight = initialHeight;
+            let newLeft = initialLeft;
+            let newTop = initialTop;
+
+            if (isCorner) {
+                if (direction.includes("left")) {
+                    newWidth = initialWidth - dx;
+                } else {
+                    newWidth = initialWidth + dx;
+                }
+
+                // Limits
+                const minW = 340;
+                const maxW = typeof window !== "undefined" ? window.innerWidth - 48 : 800;
+                const minH = 320;
+                const maxH = typeof window !== "undefined" ? window.innerHeight - 100 : 700;
+
+                if (newWidth < minW) newWidth = minW;
+                if (newWidth > maxW) newWidth = maxW;
+
+                newHeight = newWidth / startRatio;
+
+                if (newHeight < minH) {
+                    newHeight = minH;
+                    newWidth = newHeight * startRatio;
+                }
+                if (newHeight > maxH) {
+                    newHeight = maxH;
+                    newWidth = newHeight * startRatio;
+                }
+
+                if (direction.includes("left")) {
+                    newLeft = initialLeft + (initialWidth - newWidth);
+                }
+                if (direction.includes("top")) {
+                    newTop = initialTop + (initialHeight - newHeight);
+                }
+
+                setCustomDimensions({ width: newWidth, height: newHeight });
+                setPos({ x: newLeft, y: newTop });
+            } else {
+                if (direction === "left") {
+                    newWidth = initialWidth - dx;
+                    newLeft = initialLeft + dx;
+                } else if (direction === "right") {
+                    newWidth = initialWidth + dx;
+                }
+
+                if (direction === "top") {
+                    newHeight = initialHeight - dy;
+                    newTop = initialTop + dy;
+                } else if (direction === "bottom") {
+                    newHeight = initialHeight + dy;
+                }
+
+                const minW = 340;
+                const maxW = typeof window !== "undefined" ? window.innerWidth - 48 : 800;
+                const minH = 320;
+                const maxH = typeof window !== "undefined" ? window.innerHeight - 100 : 700;
+
+                if (newWidth >= minW && newWidth <= maxW) {
+                    setCustomDimensions((prev) => ({ ...prev, width: newWidth }));
+                    if (direction === "left") {
+                        setPos((prev) => ({ ...prev, x: newLeft }));
+                    }
+                }
+                if (newHeight >= minH && newHeight <= maxH) {
+                    setCustomDimensions((prev) => ({ ...prev, height: newHeight }));
+                    if (direction === "top") {
+                        setPos((prev) => ({ ...prev, y: newTop }));
+                    }
+                }
+            }
+        };
+
+        const handlePointerUp = () => {
+            window.removeEventListener("pointermove", handlePointerMove);
+            window.removeEventListener("pointerup", handlePointerUp);
+        };
+
+        window.addEventListener("pointermove", handlePointerMove);
+        window.addEventListener("pointerup", handlePointerUp);
+    };
 
     // True Free 2D Dragging State (x = left, y = top in pixels)
     const [pos, setPos] = useState(null);
@@ -556,18 +675,76 @@ export default function FloatingChatbot() {
                         transition: isDragging ? "none" : "width 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1)"
                     }}
                 >
+                    {/* 8-Way Resize Handles (Only on desktop and when not maximized) */}
+                    {!isMobile && !isExpanded && (
+                        <>
+                            {/* Left edge */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "left")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "left")}
+                                sx={{ position: "absolute", left: 0, top: 0, bottom: 0, width: "6px", cursor: "ew-resize", zIndex: 99999 }}
+                            />
+                            {/* Right edge */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "right")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "right")}
+                                sx={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "6px", cursor: "ew-resize", zIndex: 99999 }}
+                            />
+                            {/* Top edge */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "top")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "top")}
+                                sx={{ position: "absolute", left: 0, right: 0, top: 0, height: "6px", cursor: "ns-resize", zIndex: 99999 }}
+                            />
+                            {/* Bottom edge */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "bottom")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "bottom")}
+                                sx={{ position: "absolute", left: 0, right: 0, bottom: 0, height: "6px", cursor: "ns-resize", zIndex: 99999 }}
+                            />
+                            {/* Top-Left corner */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "top-left")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "top-left")}
+                                sx={{ position: "absolute", left: 0, top: 0, width: "12px", height: "12px", cursor: "nwse-resize", zIndex: 100000 }}
+                            />
+                            {/* Top-Right corner */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "top-right")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "top-right")}
+                                sx={{ position: "absolute", right: 0, top: 0, width: "12px", height: "12px", cursor: "nesw-resize", zIndex: 100000 }}
+                            />
+                            {/* Bottom-Left corner */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "bottom-left")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "bottom-left")}
+                                sx={{ position: "absolute", left: 0, bottom: 0, width: "12px", height: "12px", cursor: "nesw-resize", zIndex: 100000 }}
+                            />
+                            {/* Bottom-Right corner */}
+                            <Box
+                                onPointerDown={(e) => handleResizeStart(e, "bottom-right")}
+                                onDoubleClick={(e) => handleResizeDoubleClick(e, "bottom-right")}
+                                sx={{ position: "absolute", right: 0, bottom: 0, width: "12px", height: "12px", cursor: "nwse-resize", zIndex: 100000 }}
+                            />
+                        </>
+                    )}
+
                     {/* Draggable Header */}
                     <Box
                         onPointerDown={handlePointerDownHeader}
                         sx={{
                             p: 1.5,
                             px: 2,
-                            background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                            backgroundImage: "url('/top-nav-bar.webp')",
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                            backgroundRepeat: "no-repeat",
                             color: "white",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "space-between",
-                            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            borderBottom: "1px solid",
+                            borderColor: "rgba(0, 0, 0, 0.4)",
                             cursor: isMobile ? "default" : isDragging ? "grabbing" : "grab",
                             touchAction: "none",
                             userSelect: "none"
@@ -594,7 +771,10 @@ export default function FloatingChatbot() {
                                 <Tooltip title={isExpanded ? "Restore compact size" : "Expand to wide view"}>
                                     <IconButton
                                         size="small"
-                                        onClick={() => setIsExpanded(!isExpanded)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsExpanded(!isExpanded);
+                                        }}
                                         sx={{ color: "white", p: 0.5 }}
                                     >
                                         {isExpanded ? <CloseFullscreenIcon sx={{ fontSize: 18 }} /> : <OpenInFullIcon sx={{ fontSize: 18 }} />}
@@ -778,9 +958,7 @@ export default function FloatingChatbot() {
                             disabled={loading}
                             autoComplete="off"
                             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 4 } }}
-                        />
-
-                        <IconButton
+                        />                          <IconButton
                             type="submit"
                             color="primary"
                             disabled={!message.trim() || loading}
@@ -788,7 +966,15 @@ export default function FloatingChatbot() {
                                 bgcolor: theme.palette.primary.main,
                                 color: "white",
                                 "&:hover": { bgcolor: theme.palette.primary.dark },
-                                "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.3)" }
+                                "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.3)" },
+                                ...(isDashboardPath ? {
+                                    background: "#46CBFC !important",
+                                    backgroundImage: "none !important",
+                                    color: "#0a1d37 !important",
+                                    "&:hover": {
+                                        background: "#0ea5e9 !important",
+                                    }
+                                } : {})
                             }}
                         >
                             <SendIcon sx={{ fontSize: 18 }} />
@@ -815,7 +1001,15 @@ export default function FloatingChatbot() {
                         boxShadow: 4,
                         transition: "transform 0.2s",
                         pointerEvents: "auto",
-                        "&:hover": { transform: "scale(1.08)" }
+                        "&:hover": { transform: "scale(1.08)" },
+                        ...(isDashboardPath ? {
+                            background: "#46CBFC !important",
+                            backgroundImage: "none !important",
+                            color: "#0a1d37 !important",
+                            "&:hover": {
+                                background: "#0ea5e9 !important",
+                            }
+                        } : {})
                     }}
                 >
                     {open ? <CloseIcon /> : <ChatIcon />}

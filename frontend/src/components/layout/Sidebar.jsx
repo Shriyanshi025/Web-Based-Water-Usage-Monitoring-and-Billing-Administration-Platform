@@ -495,7 +495,9 @@ function Sidebar({ mobileOpen, onMobileClose }) {
         boxSizing: "border-box",
         bgcolor: sidebarBg,
         border: "none",
+        borderRight: "1px solid rgba(0, 0, 0, 0.45)",
         backgroundImage: "none",
+        borderRadius: "0px !important",
     };
 
     return (

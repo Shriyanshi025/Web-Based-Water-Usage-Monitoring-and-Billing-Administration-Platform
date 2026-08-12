@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/layout/DashboardLayout";
 import DashboardGrid from "../../components/layout/DashboardGrid";
 import ChartCard from "../../components/widgets/ChartCard";
-import TimelineWidget from "../../components/widgets/TimelineWidget";
 import DataGrid from "../../components/common/DataGrid";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import LoadingScreen from "../../components/common/LoadingScreen";
@@ -138,17 +137,6 @@ function MainAdminDashboard() {
                     autoHeight 
                 />
             </WidgetContainer>
-        </Paper>,
-
-        // Section 3: System Activity & Audit Log
-        <Paper key="activity-section" variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
-            <SectionHeader 
-                title="Recent System Activity & Audit Log" 
-                subtitle="System-wide audit trail of administrative actions, onboarding updates, and platform events"
-            />
-            <TimelineWidget 
-                activities={dashboard?.recentActivities || []} 
-            />
         </Paper>
     ], [dashboard, navigate]);
 

@@ -17,7 +17,7 @@ function DashboardLayout({ children }) {
     };
 
     return (
-        <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
+        <Box className="dashboard-layout" sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
             {/* Sidebar acts as left panel */}
             <Sidebar mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
 
@@ -29,6 +29,7 @@ function DashboardLayout({ children }) {
                     flexDirection: "column",
                     minWidth: 0,
                     overflow: "hidden",
+                    height: "100vh",
                 }}
             >
                 {/* Top Navbar */}

@@ -18,6 +18,18 @@ const ActionButton = ({ variant = "contained", color = "primary", children, sx =
                 borderRadius: "8px",
                 textTransform: "none",
                 fontWeight: 600,
+                ...(variant === "contained" && color === "primary" ? {
+                    background: "#46CBFC !important",
+                    backgroundImage: "none !important",
+                    color: "#0a1d37 !important",
+                    "&:hover": {
+                        background: "#0ea5e9 !important",
+                        boxShadow: "0 6px 16px rgba(70, 203, 252, 0.3) !important",
+                    },
+                    "&:active": {
+                        background: "#0284c7 !important",
+                    }
+                } : {}),
                 boxShadow: variant === "contained" ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
                 "&:hover": {
                     boxShadow: variant === "contained" ? "0 6px 16px rgba(0,0,0,0.15)" : "none",

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Box, Grid, Typography, Paper, Divider, Chip, CircularProgress,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -9,6 +9,9 @@ import {
   CartesianGrid, Tooltip as ReTooltip, Legend, PieChart, Pie, Cell,
 } from "recharts";
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import PageHeader from "../../components/common/PageHeader";
+import PageSummaryHeader from "../../components/common/PageSummaryHeader";
+import AssessmentIcon from "@mui/icons-material/Assessment";
 import { getMainDashboard } from "../../services/DashboardService";
 import MainAdminOpsService from "../../services/MainAdminOpsService";
 import { formatCurrency, formatWaterUsage } from "../../helpers/numberHelper";
@@ -20,20 +23,20 @@ import PrintIcon from "@mui/icons-material/Print";
 
 // ── Design tokens ────────────────────────────────────────────────
 const PALETTE = {
-  primary: "#1565C0",
-  primaryLight: "#42A5F5",
-  success: "#2E7D32",
-  successLight: "#66BB6A",
-  warning: "#E65100",
-  warningLight: "#FFA726",
-  info: "#0277BD",
-  infoLight: "#29B6F6",
-  purple: "#6A1B9A",
-  purpleLight: "#CE93D8",
-  teal: "#00695C",
-  tealLight: "#4DB6AC",
-  bg: "#F0F4F8",
-  cardBg: "#FFFFFF",
+  primary: "#4F46E5",
+  primaryLight: "#818CF8",
+  success: "#16A34A",
+  successLight: "#4ADE80",
+  warning: "#CA8A04",
+  warningLight: "#FDE047",
+  info: "#06B6D4",
+  infoLight: "#67E8F9",
+  purple: "#8B5CF6",
+  purpleLight: "#C084FC",
+  teal: "#0D9488",
+  tealLight: "#2DD4BF",
+  bg: "transparent",
+  cardBg: "rgba(255, 255, 255, 0.9)",
   border: "rgba(0,0,0,0.08)",
 };
 
@@ -112,8 +115,10 @@ export default function MainAdminReportsPage() {
   const [communityAdmins, setCommunityAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [approvalZoom, setApprovalZoom] = useState(1.0);
 
-  useEffect(() => {
+  const fetchData = useCallback((isSilent = false) => {
+    if (!isSilent) setLoading(true);
     Promise.all([
       getMainDashboard().then(r => r.data),
       MainAdminOpsService.getAllCommunities().catch(() => []),
@@ -124,9 +129,21 @@ export default function MainAdminReportsPage() {
         setCommunities(Array.isArray(comms) ? comms : comms?.data ?? []);
         setCommunityAdmins(Array.isArray(admins) ? admins : admins?.data ?? []);
       })
-      .catch(err => setError(err?.response?.data?.message || "Failed to load reports data."))
-      .finally(() => setLoading(false));
+      .catch(err => {
+        if (!isSilent) setError(err?.response?.data?.message || "Failed to load reports data.");
+      })
+      .finally(() => {
+        if (!isSilent) setLoading(false);
+      });
   }, []);
+
+  useEffect(() => {
+    fetchData(false);
+    const interval = setInterval(() => {
+      fetchData(true);
+    }, 15000); // 15 seconds polling interval
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   // ── Derived Metrics ─────────────────────────────────────────
   const totalActiveComm = useMemo(() => communities.filter(c => c.active !== false).length, [communities]);
@@ -162,7 +179,6 @@ export default function MainAdminReportsPage() {
       name: c.name || c.communityName || "—",
       city: c.city || c.location || "—",
       active: c.active !== false,
-      households: c.totalHouseholds ?? c.householdCount ?? "—",
       residents: c.totalResidents ?? c.residentCount ?? "—",
     }));
   }, [communities]);
@@ -218,28 +234,30 @@ export default function MainAdminReportsPage() {
     <DashboardLayout>
       <Box sx={{ p: { xs: 2, md: 3 }, background: PALETTE.bg, minHeight: "100vh" }}>
 
-        {/* ── Page Header ─────────────────────────────────────── */}
-        <Box sx={{ mb: 3, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
-          <Box>
-            <Typography variant="h5" fontWeight={800} color="text.primary" gutterBottom>
-              System-Wide Reports & Analytics
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Platform overview across all registered communities — consumption, revenue, and administration metrics.
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1 }}>
-            <Button variant="outlined" color="primary" startIcon={<PictureAsPdfIcon />} onClick={handleExportPDF} sx={{ borderRadius: "8px", fontWeight: 600 }}>
-              Export PDF
-            </Button>
-            <Button variant="outlined" color="success" startIcon={<TableChartIcon />} onClick={handleExportCSV} sx={{ borderRadius: "8px", fontWeight: 600 }}>
-              Export CSV
-            </Button>
-            <Button variant="contained" color="primary" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderRadius: "8px", fontWeight: 600 }}>
-              Print Report
-            </Button>
-          </Box>
-        </Box>
+        {/* ── Page Summary Header ── */}
+        <PageSummaryHeader
+          title="Reports & Analytics"
+          subtitle="Platform overview across all registered communities — consumption, revenue, and administration metrics."
+          icon={<AssessmentIcon sx={{ fontSize: 32, color: "primary.main" }} />}
+          metadata={[
+            { label: "Total Communities", value: dashData?.totalCommunities ?? 0 },
+            { label: "Active Admins", value: totalActiveAdmins, color: "success" }
+          ]}
+          action={
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+              <Button variant="outlined" color="primary" startIcon={<PictureAsPdfIcon />} onClick={handleExportPDF} sx={{ borderRadius: "8px", fontWeight: 600 }}>
+                Export PDF
+              </Button>
+              <Button variant="outlined" color="success" startIcon={<TableChartIcon />} onClick={handleExportCSV} sx={{ borderRadius: "8px", fontWeight: 600 }}>
+                Export CSV
+              </Button>
+              <Button variant="contained" color="primary" startIcon={<PrintIcon />} onClick={handlePrint} sx={{ borderRadius: "8px", fontWeight: 600 }}>
+                Print Report
+              </Button>
+            </Box>
+          }
+        />
+
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>
@@ -337,11 +355,11 @@ export default function MainAdminReportsPage() {
               <ResponsiveContainer width="99%" height="100%" debounce={50}>
                 <LineChart data={monthlyChart} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
                   <ReTooltip content={<CustomTooltip unit=" kL" />} />
                   <Legend />
-                  <Line type="monotone" dataKey="usage" name="Total Usage (kL)" stroke={LINE_COLOR} strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="usage" name="Total Usage (kL)" stroke={LINE_COLOR} strokeWidth={2.5} dot={{ r: 4, fill: LINE_COLOR, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
                 </LineChart>
               </ResponsiveContainer>
             </Box>
@@ -363,13 +381,13 @@ export default function MainAdminReportsPage() {
               ) : (
                 <Box sx={{ width: "100%", height: 260 }}>
                   <ResponsiveContainer width="99%" height="100%" debounce={50}>
-                    <BarChart data={growthChart} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <LineChart data={growthChart} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.06)" />
-                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <ReTooltip content={<CustomTooltip />} />
-                      <Bar dataKey="count" name="Communities" fill={BAR_COLOR} radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Line type="monotone" dataKey="count" name="Communities" stroke={BAR_COLOR} strokeWidth={2.5} dot={{ r: 4, fill: BAR_COLOR, strokeWidth: 2, stroke: "#fff" }} activeDot={{ r: 6 }} />
+                    </LineChart>
                   </ResponsiveContainer>
                 </Box>
               )}
@@ -379,7 +397,35 @@ export default function MainAdminReportsPage() {
           {/* Admin Approval Status Pie */}
           <Grid size={{ xs: 12, md: 5 }}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: `1px solid ${PALETTE.border}`, height: "100%" }}>
-              <SectionTitle>3b — Admin Approval Status</SectionTitle>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 1, mb: 2 }}>
+                <SectionTitle>3b — Admin Approval Status</SectionTitle>
+                <Box sx={{ display: "flex", gap: 0.5 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setApprovalZoom(z => Math.max(z - 0.15, 0.5))}
+                    sx={{ minWidth: 32, p: 0.5, borderRadius: "6px", fontSize: "0.75rem", fontWeight: 700 }}
+                  >
+                    −
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setApprovalZoom(1.0)}
+                    sx={{ minWidth: 48, p: 0.5, borderRadius: "6px", fontSize: "0.75rem", fontWeight: 700 }}
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => setApprovalZoom(z => Math.min(z + 0.15, 1.5))}
+                    sx={{ minWidth: 32, p: 0.5, borderRadius: "6px", fontSize: "0.75rem", fontWeight: 700 }}
+                  >
+                    +
+                  </Button>
+                </Box>
+              </Box>
               {approvalPie.length === 0 ? (
                 <Box sx={{ py: 4, textAlign: "center" }}>
                   <Typography variant="body2" color="text.secondary">No admin data available.</Typography>
@@ -391,7 +437,8 @@ export default function MainAdminReportsPage() {
                       <Pie
                         data={approvalPie}
                         cx="50%" cy="50%"
-                        innerRadius={55} outerRadius={90}
+                        innerRadius={55 * approvalZoom}
+                        outerRadius={90 * approvalZoom}
                         dataKey="value"
                         paddingAngle={3}
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
@@ -415,68 +462,73 @@ export default function MainAdminReportsPage() {
         ═══════════════════════════════════════════════════════════ */}
         <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: 3, border: `1px solid ${PALETTE.border}` }}>
           <SectionTitle>4 — Platform Health Indicators</SectionTitle>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">Community Activation Rate</Typography>
-                  <Typography variant="caption" fontWeight={700} color={PALETTE.success}>
-                    {dashData?.totalCommunities ? Math.round((totalActiveComm / dashData.totalCommunities) * 100) : 0}%
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5, mt: 1 }}>
+            {[
+              {
+                label: "Community Activation Rate",
+                value: `${dashData?.totalCommunities ? Math.round((totalActiveComm / dashData.totalCommunities) * 100) : 0}%`,
+                progress: dashData?.totalCommunities ? (totalActiveComm / dashData.totalCommunities) * 100 : 0,
+                color: PALETTE.success,
+                desc: `${totalActiveComm} active of ${dashData?.totalCommunities || 0} total`
+              },
+              {
+                label: "Admin Approval Rate",
+                value: `${dashData?.totalCommunityAdmins ? Math.round((totalActiveAdmins / dashData.totalCommunityAdmins) * 100) : 0}%`,
+                progress: dashData?.totalCommunityAdmins ? (totalActiveAdmins / dashData.totalCommunityAdmins) * 100 : 0,
+                color: PALETTE.primary,
+                desc: `${totalActiveAdmins} active approved admins`
+              },
+              {
+                label: "Pending Approval Backlog",
+                value: `${dashData?.pendingCommunityAdmins ?? 0} pending`,
+                progress: dashData?.totalCommunityAdmins ? Math.min(100, ((dashData?.pendingCommunityAdmins || 0) / dashData.totalCommunityAdmins) * 100) : 0,
+                color: dashData?.pendingCommunityAdmins > 0 ? PALETTE.warning : PALETTE.success,
+                desc: "Awaiting MAIN_ADMIN action"
+              },
+              {
+                label: "Platform Revenue Utilisation",
+                value: formatCurrency(dashData?.totalRevenue ?? 0),
+                progress: 100,
+                color: PALETTE.teal,
+                desc: "Aggregated billing across all"
+              }
+            ].map((item, idx) => (
+              <Box key={idx} sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "250px 1fr 120px" }, alignItems: "center", gap: 2 }}>
+                <Box>
+                  <Typography variant="body2" fontWeight={600} color="text.primary">
+                    {item.label}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {item.desc}
                   </Typography>
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={dashData?.totalCommunities ? (totalActiveComm / dashData.totalCommunities) * 100 : 0}
-                  sx={{ height: 8, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.08)", "& .MuiLinearProgress-bar": { backgroundColor: PALETTE.success, borderRadius: 4 } }}
-                />
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">Admin Approval Rate</Typography>
-                  <Typography variant="caption" fontWeight={700} color={PALETTE.primary}>
-                    {dashData?.totalCommunityAdmins ? Math.round((totalActiveAdmins / dashData.totalCommunityAdmins) * 100) : 0}%
-                  </Typography>
+                <Box sx={{ width: "100%" }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={item.progress}
+                    sx={{
+                      height: 8,
+                      borderRadius: 4,
+                      backgroundColor: "rgba(0,0,0,0.06)",
+                      "& .MuiLinearProgress-bar": { backgroundColor: item.color, borderRadius: 4 }
+                    }}
+                  />
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={dashData?.totalCommunityAdmins ? (totalActiveAdmins / dashData.totalCommunityAdmins) * 100 : 0}
-                  sx={{ height: 8, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.08)", "& .MuiLinearProgress-bar": { backgroundColor: PALETTE.primary, borderRadius: 4 } }}
-                />
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">Pending Approval Backlog</Typography>
-                  <Typography variant="caption" fontWeight={700} color={dashData?.pendingCommunityAdmins > 0 ? PALETTE.warning : PALETTE.success}>
-                    {dashData?.pendingCommunityAdmins ?? 0} pending
-                  </Typography>
+                <Box sx={{ textAlign: { xs: "left", md: "right" } }}>
+                  <Chip
+                    label={item.value}
+                    size="small"
+                    sx={{
+                      fontWeight: 700,
+                      bgcolor: `${item.color}15`,
+                      color: item.color,
+                      border: `1px solid ${item.color}30`
+                    }}
+                  />
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={dashData?.totalCommunityAdmins ? Math.min(100, ((dashData?.pendingCommunityAdmins || 0) / dashData.totalCommunityAdmins) * 100) : 0}
-                  sx={{ height: 8, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.08)", "& .MuiLinearProgress-bar": { backgroundColor: PALETTE.warning, borderRadius: 4 } }}
-                />
               </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                  <Typography variant="caption" color="text.secondary">Platform Revenue Utilisation</Typography>
-                  <Typography variant="caption" fontWeight={700} color={PALETTE.teal}>
-                    {formatCurrency(dashData?.totalRevenue ?? 0)}
-                  </Typography>
-                </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={100}
-                  sx={{ height: 8, borderRadius: 4, backgroundColor: "rgba(0,0,0,0.08)", "& .MuiLinearProgress-bar": { backgroundColor: PALETTE.teal, borderRadius: 4 } }}
-                />
-              </Box>
-            </Grid>
-          </Grid>
+            ))}
+          </Box>
         </Paper>
 
         {/* ═══════════════════════════════════════════════════════════
@@ -497,8 +549,7 @@ export default function MainAdminReportsPage() {
                     <TableCell>Community</TableCell>
                     <TableCell>City</TableCell>
                     <TableCell>Status</TableCell>
-                    <TableCell align="right">Households</TableCell>
-                    <TableCell align="right">Residents</TableCell>
+                    <TableCell align="right">Households / Residents</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -522,7 +573,6 @@ export default function MainAdminReportsPage() {
                           }}
                         />
                       </TableCell>
-                      <TableCell align="right">{row.households}</TableCell>
                       <TableCell align="right">{row.residents}</TableCell>
                     </TableRow>
                   ))}

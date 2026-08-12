@@ -33,6 +33,9 @@ import TableToolbar from "../../components/common/TableToolbar";
 import StatusBadge from "../../components/common/StatusBadge";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import MainAdminOpsService from "../../services/MainAdminOpsService";
+import { standardTableStyle, standardTableContainerStyle } from "../../styles/tableStyles";
+
+
 
 const CommunityAdminsPage = () => {
     const location = useLocation();
@@ -224,7 +227,8 @@ const CommunityAdminsPage = () => {
         { 
             field: "officialAdminId", 
             headerName: "Admin ID", 
-            width: 160,
+            flex: 0.9,
+            minWidth: 120,
             renderCell: (params) => (
                 <Typography variant="body2" fontWeight={600} color="primary.main">
                     {params.row.officialAdminId || `ADM-${params.row.id}`}
@@ -234,20 +238,47 @@ const CommunityAdminsPage = () => {
         { 
             field: "fullName", 
             headerName: "Admin Name", 
-            flex: 1, 
-            minWidth: 180,
+            flex: 1.2, 
+            minWidth: 140,
             renderCell: (params) => (
-                <Typography variant="body2" fontWeight={500}>
-                    {params.row.fullName}
-                </Typography>
+                <Tooltip title={params.row.fullName || ""} arrow placement="top">
+                    <Typography variant="body2" fontWeight={500} noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {params.row.fullName}
+                    </Typography>
+                </Tooltip>
             )
         },
-        { field: "email", headerName: "Email", flex: 1, minWidth: 200 },
-        { field: "communityName", headerName: "Community", flex: 1, minWidth: 150 },
+        { 
+            field: "email", 
+            headerName: "Email", 
+            flex: 1.5, 
+            minWidth: 160,
+            renderCell: (params) => (
+                <Tooltip title={params.value || ""} arrow placement="top">
+                    <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {params.value}
+                    </Typography>
+                </Tooltip>
+            )
+        },
+        { 
+            field: "communityName", 
+            headerName: "Community", 
+            flex: 1.1, 
+            minWidth: 120,
+            renderCell: (params) => (
+                <Tooltip title={params.value || "Unassigned"} arrow placement="top">
+                    <Typography variant="body2" noWrap sx={{ width: "100%", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {params.value || "Unassigned"}
+                    </Typography>
+                </Tooltip>
+            )
+        },
         { 
             field: "status", 
             headerName: "Status", 
-            width: 130,
+            flex: 0.8,
+            minWidth: 100,
             renderCell: (params) => (
                 <StatusBadge status={params.row.active !== false ? "ACTIVE" : "INACTIVE"} />
             )
@@ -255,8 +286,10 @@ const CommunityAdminsPage = () => {
         { 
             field: "actions", 
             headerName: "Actions", 
-            width: 180, 
+            flex: 1.1,
+            minWidth: 150,
             sortable: false,
+            disableColumnMenu: true,
             align: "center",
             renderCell: (params) => (
                 <Stack direction="row" spacing={0.5} justifyContent="center">
@@ -299,7 +332,7 @@ const CommunityAdminsPage = () => {
                 metadata={headerMetadata}
             />
 
-            <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
+            <Box sx={standardTableContainerStyle}>
                 <TableToolbar 
                     title="All Community Admins" 
                     onSearch={handleSearch}
@@ -316,16 +349,16 @@ const CommunityAdminsPage = () => {
                     }
                 />
                 
-                <Box sx={{ height: 500 }}>
-                    <DataGrid 
-                        rows={filteredAdmins} 
-                        columns={columns} 
-                        loading={loading}
-                        error={error}
-                        onRetry={fetchAdmins}
-                        disableRowSelectionOnClick
-                    />
-                </Box>
+                <DataGrid 
+                    rows={filteredAdmins} 
+                    columns={columns} 
+                    loading={loading}
+                    error={error}
+                    onRetry={fetchAdmins}
+                    disableRowSelectionOnClick
+                    sx={standardTableStyle}
+                    autoHeight
+                />
             </Box>
 
             {/* Read-Only View Community Admin Dialog */}

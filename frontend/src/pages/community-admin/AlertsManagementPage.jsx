@@ -668,7 +668,7 @@ function AlertsManagementPage() {
                             </Box>
                         ) : (
                             <Table>
-                                <TableHead sx={{ bgcolor: "#F0F4F8" }}>
+                                <TableHead>
                                     <TableRow>
                                         <TableCell padding="checkbox">
                                             <Checkbox

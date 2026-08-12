@@ -186,6 +186,7 @@ public class CommunityAdminServiceImpl implements CommunityAdminService {
                 .createdAt(profile.getCreatedAt())
                 .communityAddress(commAddr)
                 .totalResidents(totalRes)
+                .approvalStatus(profile.getUser() != null && profile.getUser().getApprovalStatus() != null ? profile.getUser().getApprovalStatus().name() : null)
                 .build();
     }
 }

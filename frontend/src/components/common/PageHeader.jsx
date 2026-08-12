@@ -7,7 +7,7 @@ import { Box, Typography, Stack, Divider } from "@mui/material";
  */
 const PageHeader = ({ title, subtitle, action }) => {
     return (
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 3, mt: 0, pt: 0 }}>
             <Stack
                 direction="row"
                 gap={2}
@@ -24,11 +24,11 @@ const PageHeader = ({ title, subtitle, action }) => {
                         variant="h4"
                         component="h1"
                         sx={{
-                            fontWeight: 800,
-                            color: "text.primary",
+                            fontWeight: 700,
+                            color: "#0a1d37",
                             lineHeight: 1.2,
                             letterSpacing: "-0.5px",
-                            fontSize: { xs: "1.35rem", sm: "1.65rem" },
+                            fontSize: { xs: "1.5rem", sm: "1.75rem", md: "1.875rem" },
                             wordBreak: "break-word",
                         }}
                     >
@@ -39,11 +39,13 @@ const PageHeader = ({ title, subtitle, action }) => {
                         <Typography
                             variant="body2"
                             sx={{
-                                mt: 0.5,
+                                mt: 0.75,
                                 lineHeight: 1.5,
-                                color: "text.secondary",
-                                fontSize: "0.875rem",
+                                color: "#1e293b",
+                                fontWeight: 600,
+                                fontSize: "0.9rem",
                                 maxWidth: 700,
+                                textShadow: "0 1px 2px rgba(255, 255, 255, 0.8)",
                             }}
                         >
                             {subtitle}

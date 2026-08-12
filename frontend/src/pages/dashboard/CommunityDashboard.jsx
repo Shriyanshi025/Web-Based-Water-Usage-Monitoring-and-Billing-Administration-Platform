@@ -18,7 +18,6 @@ import DataGrid from "../../components/common/DataGrid";
 import StatCard from "../../components/widgets/StatCard";
 import AdminStatCard from "../../components/common/AdminStatCard";
 import ChartCard from "../../components/widgets/ChartCard";
-import TimelineWidget from "../../components/widgets/TimelineWidget";
 import WidgetContainer from "../../components/widgets/WidgetContainer";
 import DashboardHero from "../../components/widgets/DashboardHero";
 import DashboardInsight from "../../components/widgets/DashboardInsight";
@@ -495,19 +494,6 @@ function CommunityDashboard() {
                             autoHeight
                         />
                     </WidgetContainer>
-                </Paper>
-
-                {/* ── 6. Full-Width Community Activity Log Section ────────────── */}
-                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
-                    <SectionHeader
-                        title="Recent Community Activities & Audit Trail"
-                        subtitle="Real-time log of community management events, meter telemetry alerts, and resident updates"
-                    />
-                    <TimelineWidget
-                        activities={dashboard?.recentActivities || []}
-                        loading={loading}
-                        maxHeight={340}
-                    />
                 </Paper>
             </Box>
         </DashboardLayout>

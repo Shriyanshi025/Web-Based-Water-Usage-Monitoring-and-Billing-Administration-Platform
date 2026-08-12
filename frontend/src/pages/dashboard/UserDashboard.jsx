@@ -10,7 +10,6 @@ import PageHeader from "../../components/common/PageHeader";
 import SectionHeader from "../../components/common/SectionHeader";
 import AdminStatCard from "../../components/common/AdminStatCard";
 import ChartCard from "../../components/widgets/ChartCard";
-import TimelineWidget from "../../components/widgets/TimelineWidget";
 import SkeletonCard from "../../components/common/SkeletonCard";
 import ErrorState from "../../components/common/ErrorState";
 import DashboardHero from "../../components/widgets/DashboardHero";
@@ -576,7 +575,7 @@ function UserDashboard() {
                     </Paper>
 
                     {/* Section 5 — Full-Width Smart Water Saving Tips & Conservation Feed */}
-                    <Paper variant="outlined" sx={{ p: 2.5, mb: 3, borderRadius: "14px", bgcolor: "background.paper" }}>
+                    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
                         <SectionHeader 
                             title="Smart Water Saving Tips & Conservation Feed" 
                             subtitle="Simple daily actions to reduce your environmental footprint and lower your water bill"
@@ -600,17 +599,6 @@ function UserDashboard() {
                                 </Accordion>
                             ))}
                         </Stack>
-                    </Paper>
-
-                    {/* Section 6 — Full-Width Recent Activities Timeline Section */}
-                    <Paper variant="outlined" sx={{ p: 2.5, borderRadius: "14px", bgcolor: "background.paper" }}>
-                        <SectionHeader 
-                            title="Recent Personal Activity & Audit Log" 
-                            subtitle="Log of your recent payments, support ticket updates, and meter readings"
-                        />
-                        <TimelineWidget
-                            activities={dashboard?.recentActivities || []}
-                        />
                     </Paper>
                 </>
             )}

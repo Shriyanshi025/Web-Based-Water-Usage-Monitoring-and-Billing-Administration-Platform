@@ -349,8 +349,31 @@ public class CommunityBenchmarkingServiceImpl implements CommunityBenchmarkingSe
         List<Complaint> complaints = complaintRepository.findByResidentIdOrderByCreatedAtDesc(rp.getId());
         List<ComplaintResponse> recentComplaints = complaints.stream().map(this::mapToComplaintResponse).collect(Collectors.toList());
 
-        // Simple rank estimation
-        int rank = 1; // placeholder rank relative to community
+        // Calculate community rank for the current month using competition ranking
+        Map<Long, Double> communityUsageMap = aggregateUsageByResident(allCommunityUsage);
+        Map<Long, Double> roundedUsages = new HashMap<>();
+        for (ResidentProfile rpItem : approvedResidents) {
+            roundedUsages.put(rpItem.getId(), round(communityUsageMap.getOrDefault(rpItem.getId(), 0.0), 1));
+        }
+
+        List<Map.Entry<Long, Double>> sortedEntries = new ArrayList<>(roundedUsages.entrySet());
+        sortedEntries.sort(Map.Entry.comparingByValue());
+
+        int rank = 1;
+        Double previousUsage = null;
+        int countWithSameOrBetter = 0;
+        for (int i = 0; i < sortedEntries.size(); i++) {
+            Map.Entry<Long, Double> entry = sortedEntries.get(i);
+            Double usageVal = entry.getValue();
+            countWithSameOrBetter++;
+            if (previousUsage == null || !previousUsage.equals(usageVal)) {
+                rank = countWithSameOrBetter;
+                previousUsage = usageVal;
+            }
+            if (entry.getKey().equals(rp.getId())) {
+                break;
+            }
+        }
 
         return HouseholdDetailDrawerDto.builder()
                 .residentProfileId(rp.getId())
@@ -806,7 +829,21 @@ public class CommunityBenchmarkingServiceImpl implements CommunityBenchmarkingSe
         int occupancy = rp.getUnit() != null && rp.getUnit().getOccupancy() != null ? rp.getUnit().getOccupancy() : 1;
         UnitType uType = rp.getUnit() != null ? rp.getUnit().getUnitType() : UnitType.FLAT;
 
-        EfficiencyScoreBreakdownDto score = calculateEfficiencyBreakdown(cUsage, 0.0, commAvg, commAvg, occupancy, false);
+        WaterMeter meter = waterMeterRepository.findByResidentProfileId(rId).orElse(null);
+
+        // Fetch previous month's usage for efficiency calculation
+        YearMonth prevMonth = normalizedPeriod.minusMonths(1);
+        List<WaterUsage> prevMonthUsages = waterUsageRepository.findByWaterMeterIdAndReadingDateBetween(
+                meter != null ? meter.getId() : -1L, prevMonth.atDay(1), prevMonth.atEndOfMonth()
+        );
+        double pUsage = prevMonthUsages.stream().mapToDouble(WaterUsage::getUnitsConsumed).sum();
+
+        // Calculate similar average and leak detection for the comparison period
+        Map<UnitType, Map<Integer, Double>> similarAvgMap = computeSimilarHouseholdAverages(approvedResidents, currentUsageMap);
+        double similarAvg = similarAvgMap.getOrDefault(uType, Collections.emptyMap()).getOrDefault(occupancy, commAvg);
+        boolean leakSuspected = similarAvg > 0 && cUsage > (similarAvg * 2.2) && cUsage > 15.0;
+
+        EfficiencyScoreBreakdownDto score = calculateEfficiencyBreakdown(cUsage, pUsage, commAvg, similarAvg, occupancy, leakSuspected);
 
         // Period-specific bill: find the bill for normalizedPeriod
         List<Bill> rBills = bills.stream()
@@ -831,7 +868,6 @@ public class CommunityBenchmarkingServiceImpl implements CommunityBenchmarkingSe
 
         // 6-month usage trend ending at normalizedPeriod
         List<MonthlyUsageDto> usageTrend = new ArrayList<>();
-        WaterMeter meter = waterMeterRepository.findByResidentProfileId(rId).orElse(null);
         for (int i = 5; i >= 0; i--) {
             YearMonth ym = normalizedPeriod.minusMonths(i);
             LocalDate s = ym.atDay(1);
@@ -840,6 +876,37 @@ public class CommunityBenchmarkingServiceImpl implements CommunityBenchmarkingSe
             double val = uList.stream().mapToDouble(WaterUsage::getUnitsConsumed).sum();
             usageTrend.add(new MonthlyUsageDto(ym.format(MONTH_FMT), round(val, 1)));
         }
+
+        // Calculate average monthly consumption over the 6-month period
+        double avgConsumption = usageTrend.stream().mapToDouble(MonthlyUsageDto::getValue).average().orElse(cUsage);
+
+        // Calculate actual community rank for the comparison period (using competition ranking tie-breaking strategy)
+        Map<Long, Double> residentUsages = new HashMap<>();
+        for (ResidentProfile rpItem : approvedResidents) {
+            residentUsages.put(rpItem.getId(), round(currentUsageMap.getOrDefault(rpItem.getId(), 0.0), 1));
+        }
+
+        List<Map.Entry<Long, Double>> sortedEntries = new ArrayList<>(residentUsages.entrySet());
+        sortedEntries.sort(Map.Entry.comparingByValue()); // Ascending order: lower consumption is better rank
+
+        Map<Long, Integer> competitionRanks = new HashMap<>();
+        int currentRank = 1;
+        Double previousUsage = null;
+        int countWithSameOrBetter = 0;
+
+        for (int i = 0; i < sortedEntries.size(); i++) {
+            Map.Entry<Long, Double> entry = sortedEntries.get(i);
+            Double usageVal = entry.getValue();
+            
+            countWithSameOrBetter++;
+            if (previousUsage == null || !previousUsage.equals(usageVal)) {
+                currentRank = countWithSameOrBetter;
+                previousUsage = usageVal;
+            }
+            competitionRanks.put(entry.getKey(), currentRank);
+        }
+
+        int actualRank = competitionRanks.getOrDefault(rId, sortedEntries.size() + 1);
 
         String periodLabel = normalizedPeriod.format(MONTH_FMT);
 
@@ -851,9 +918,9 @@ public class CommunityBenchmarkingServiceImpl implements CommunityBenchmarkingSe
                 .unitType(uType.name())
                 .occupancy(occupancy)
                 .totalConsumption(round(cUsage, 1))
-                .avgMonthlyConsumption(round(cUsage, 1))
+                .avgMonthlyConsumption(round(avgConsumption, 1))
                 .efficiencyScore(round(score.getTotalScore(), 0))
-                .communityRank(1)
+                .communityRank(actualRank)
                 .totalBilled(totalBilled)
                 .totalPaid(totalPaid)
                 .comparisonPeriodLabel(periodLabel)

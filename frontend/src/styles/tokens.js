@@ -10,27 +10,27 @@
 // COLOR PALETTE — Water Domain (navy / teal axis)
 // ─────────────────────────────────────────────
 export const COLORS = {
-    // Brand Primary — Sky Blue (water, trust, data)
+    // Brand Primary — Indigo/Periwinkle (derived from bg-image.jpg)
     primary: {
-        50:  "#F0F9FF",
-        100: "#E0F2FE",
-        200: "#BAE6FD",
-        300: "#7DD3FC",
-        400: "#38BDF8",
-        500: "#0EA5E9",
-        600: "#0284C7",
-        700: "#0369A1",  // primary.main
-        800: "#075985",  // primary.dark
-        900: "#0C4A6E",
+        50:  "#EEF2FF",
+        100: "#E0E7FF",
+        200: "#C7D2FE",
+        300: "#A5B4FC",
+        400: "#818CF8",
+        500: "#6366F1",
+        600: "#4F46E5",
+        700: "#4338CA",  // primary.main
+        800: "#3730A3",  // primary.dark
+        900: "#312E81",
     },
 
-    // Brand Secondary — Cyan (water usage charts, meter data)
+    // Brand Secondary — Purple/Lavender (derived from bg-image.jpg)
     secondary: {
-        400: "#22D3EE",
-        500: "#06B6D4",
-        600: "#0891B2",  // secondary.main
-        700: "#0E7490",
-        800: "#155E75",
+        400: "#C084FC",
+        500: "#A855F7",
+        600: "#9333EA",  // secondary.main
+        700: "#7E22CE",
+        800: "#6B21A8",
     },
 
     // Semantic — Success (ACTIVE, PAID, APPROVED)

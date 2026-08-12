@@ -98,11 +98,15 @@ function TopNavbar({ onMobileNavOpen }) {
             position="sticky"
             elevation={0}
             sx={{
-                bgcolor: "background.paper",
-                color: "text.primary",
+                backgroundImage: "url('/top-nav-bar.webp')",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+                color: "#ffffff",
                 boxShadow: "none",
                 borderBottom: "1px solid",
-                borderColor: "divider",
+                borderColor: "rgba(0, 0, 0, 0.45)",
+                borderRadius: "0px !important",
                 zIndex: (t) => t.zIndex.drawer - 1,
             }}
         >
@@ -122,8 +126,8 @@ function TopNavbar({ onMobileNavOpen }) {
                     sx={{
                         display: { md: "none" },
                         mr: 0.5,
-                        color: "text.secondary",
-                        "&:hover": { color: "text.primary" },
+                        color: "rgba(255, 255, 255, 0.8)",
+                        "&:hover": { color: "#ffffff", bgcolor: "rgba(255, 255, 255, 0.08)" },
                     }}
                 >
                     <MenuIcon sx={{ fontSize: "1.25rem" }} />
@@ -134,7 +138,7 @@ function TopNavbar({ onMobileNavOpen }) {
                     <Breadcrumbs
                         separator={
                             <NavigateNextIcon
-                                sx={{ fontSize: "0.875rem", color: "text.disabled" }}
+                                sx={{ fontSize: "0.875rem", color: "rgba(255, 255, 255, 0.4)" }}
                             />
                         }
                         aria-label="breadcrumb"
@@ -150,8 +154,8 @@ function TopNavbar({ onMobileNavOpen }) {
                             sx={{
                                 fontSize: "0.8125rem",
                                 fontWeight: 400,
-                                color: "text.secondary",
-                                "&:hover": { color: "text.primary" },
+                                color: "rgba(255, 255, 255, 0.6)",
+                                "&:hover": { color: "#ffffff" },
                             }}
                         >
                             Home
@@ -165,7 +169,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                     sx={{
                                         fontSize: "0.8125rem",
                                         fontWeight: 600,
-                                        color: "text.primary",
+                                        color: "rgba(255, 255, 255, 0.9)",
                                         lineHeight: 1.4,
                                     }}
                                 >
@@ -180,8 +184,8 @@ function TopNavbar({ onMobileNavOpen }) {
                                     sx={{
                                         fontSize: "0.8125rem",
                                         fontWeight: 400,
-                                        color: "text.secondary",
-                                        "&:hover": { color: "text.primary" },
+                                        color: "rgba(255, 255, 255, 0.6)",
+                                        "&:hover": { color: "#ffffff" },
                                     }}
                                 >
                                     {capitalize(value)}
@@ -193,7 +197,6 @@ function TopNavbar({ onMobileNavOpen }) {
 
                 {/* Mobile spacer */}
                 <Box sx={{ flexGrow: 1, display: { xs: "block", sm: "none" } }} />
-
                 {/* ── Right Side Actions ── */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
 
@@ -202,8 +205,9 @@ function TopNavbar({ onMobileNavOpen }) {
                         sx={{
                             display: { xs: "none", md: "flex" },
                             alignItems: "center",
-                            bgcolor: "action.hover",
-                            border: "1px solid transparent",
+                            bgcolor: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid",
+                            borderColor: "rgba(255, 255, 255, 0.15)",
                             borderRadius: "8px",
                             px: 1.5,
                             py: 0.5,
@@ -212,28 +216,28 @@ function TopNavbar({ onMobileNavOpen }) {
                             transition: "width 200ms ease, border-color 180ms ease, background-color 180ms ease",
                             "&:focus-within": {
                                 width: 280,
-                                bgcolor: "background.paper",
-                                borderColor: "divider",
-                                boxShadow: `0 0 0 3px ${theme.palette.primary.main}1A`,
+                                bgcolor: "rgba(255, 255, 255, 0.15)",
+                                borderColor: "rgba(255, 255, 255, 0.4)",
+                                boxShadow: `0 0 0 3px ${theme.palette.primary.main}33`,
                             },
                         }}
                     >
-                        <SearchIcon sx={{ color: "text.disabled", fontSize: "1rem", mr: 1, flexShrink: 0 }} />
+                        <SearchIcon sx={{ color: "rgba(255, 255, 255, 0.7)", fontSize: "1rem", mr: 1, flexShrink: 0 }} />
                         <InputBase
                             placeholder="Search…"
                             inputProps={{ "aria-label": "Global search" }}
                             sx={{
                                 width: "100%",
                                 fontSize: "0.8125rem",
-                                color: "text.primary",
-                                "& input::placeholder": { color: "text.disabled", opacity: 1 },
+                                color: "#ffffff",
+                                "& input::placeholder": { color: "rgba(255, 255, 255, 0.5)", opacity: 1 },
                             }}
                         />
                     </Box>
 
                     {/* Language Selector */}
                     <Box sx={{ mr: 1 }}>
-                        <LanguageSelector />
+                        <LanguageSelector isDark={true} />
                     </Box>
 
                     {/* Notifications */}
@@ -243,11 +247,17 @@ function TopNavbar({ onMobileNavOpen }) {
                             aria-label="Notifications"
                             onClick={handleNotificationsClick}
                             sx={{
-                                color: "text.secondary",
+                                color: "#ffffff",
                                 borderRadius: "8px",
+                                bgcolor: "rgba(255, 255, 255, 0.08)",
+                                border: "1px solid",
+                                borderColor: "rgba(255, 255, 255, 0.15)",
+                                transition: "all 150ms ease",
                                 "&:hover": {
-                                    bgcolor: "action.hover",
-                                    color: "text.primary",
+                                    bgcolor: "rgba(255, 255, 255, 0.16)",
+                                    borderColor: "rgba(255, 255, 255, 0.4)",
+                                    color: "#ffffff",
+                                    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.15)",
                                 },
                             }}
                         >
@@ -260,7 +270,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                         top: 2,
                                         right: 2,
                                         border: "2px solid",
-                                        borderColor: "background.paper",
+                                        borderColor: "#0f172a",
                                         padding: "0 4px",
                                         fontSize: "0.65rem",
                                         height: 16,
@@ -277,7 +287,7 @@ function TopNavbar({ onMobileNavOpen }) {
                     <Divider
                         orientation="vertical"
                         flexItem
-                        sx={{ mx: 0.5, my: 1.5, borderColor: "divider" }}
+                        sx={{ mx: 1.5, my: 1.5, borderColor: "rgba(255, 255, 255, 0.15)" }}
                     />
 
                     {/* User profile button */}
@@ -291,8 +301,14 @@ function TopNavbar({ onMobileNavOpen }) {
                             borderRadius: "8px",
                             py: 0.5,
                             px: 1,
-                            transition: "background-color 150ms ease",
-                            "&:hover": { bgcolor: "action.hover" },
+                            bgcolor: "rgba(255, 255, 255, 0.08)",
+                            border: "1px solid",
+                            borderColor: "rgba(255, 255, 255, 0.15)",
+                            transition: "all 150ms ease",
+                            "&:hover": {
+                                bgcolor: "rgba(255, 255, 255, 0.16)",
+                                borderColor: "rgba(255, 255, 255, 0.4)",
+                            },
                         }}
                         onClick={handleMenuClick}
                         role="button"
@@ -308,7 +324,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                     fontSize: "0.8125rem",
                                     fontWeight: 600,
                                     lineHeight: 1.3,
-                                    color: "text.primary",
+                                    color: "#ffffff",
                                     whiteSpace: "nowrap",
                                 }}
                             >
@@ -318,7 +334,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                 sx={{
                                     fontSize: "0.6875rem",
                                     fontWeight: 400,
-                                    color: "text.secondary",
+                                    color: "rgba(255, 255, 255, 0.6)",
                                     lineHeight: 1.3,
                                     whiteSpace: "nowrap",
                                     textTransform: "capitalize",
@@ -339,9 +355,7 @@ function TopNavbar({ onMobileNavOpen }) {
                                 fontWeight: 700,
                                 letterSpacing: "0.02em",
                                 border: "2px solid",
-                                borderColor: "background.paper",
-                                boxShadow: "0 0 0 1px",
-                                boxShadow: `0 0 0 2px ${theme.palette.divider}`,
+                                borderColor: "#0f172a",
                                 flexShrink: 0,
                             }}
                         >

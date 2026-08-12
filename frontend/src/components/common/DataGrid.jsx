@@ -5,6 +5,8 @@ import SkeletonTable from "./SkeletonTable";
 import EmptyState from "./EmptyState";
 import ErrorState from "./ErrorState";
 
+import { standardTableStyle } from "../../styles/tableStyles";
+
 /**
  * Reusable DataGrid wrapper with consistent design, row heights, loading, error, and empty states.
  */
@@ -17,7 +19,7 @@ const DataGrid = ({
     onRowClick,
     checkboxSelection = false,
     pageSize = 10,
-    autoHeight = false,
+    autoHeight = true,
     emptyTitle = "No Records Found",
     emptyMessage = "Try adjusting your filters or search terms.",
     getRowClassName,
@@ -31,9 +33,21 @@ const DataGrid = ({
         page: 0,
     });
 
+    const containerRef = React.useRef(null);
+
     React.useEffect(() => {
         setPaginationModel((prev) => ({ ...prev, page: 0 }));
     }, [rows.length]);
+
+    React.useEffect(() => {
+        if (autoHeight && containerRef.current) {
+            const parent = containerRef.current.parentElement;
+            if (parent) {
+                parent.style.height = "auto";
+                parent.style.minHeight = "unset";
+            }
+        }
+    }, [autoHeight, rows.length]);
 
     if (error) {
         return <ErrorState message={error} onRetry={onRetry} />;
@@ -45,92 +59,26 @@ const DataGrid = ({
 
     return (
         <Box
+            ref={containerRef}
             sx={{
-                height: "100%",
+                height: autoHeight ? "auto" : "100%",
                 width: "100%",
-                // Focus ring suppression
-                "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                    outline: "none",
+                ...standardTableStyle,
+                // Keep the dynamic heights functional by overriding them:
+                "& .MuiDataGrid-columnHeaders": {
+                    ...(standardTableStyle["& .MuiDataGrid-columnHeaders"] || {}),
+                    minHeight: `${columnHeaderHeight}px !important`,
+                    maxHeight: `${columnHeaderHeight}px !important`,
                 },
-                "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                    outline: "none",
+                "& .MuiDataGrid-row": {
+                    ...(standardTableStyle["& .MuiDataGrid-row"] || {}),
+                    minHeight: `${rowHeight}px !important`,
+                    maxHeight: `${rowHeight}px !important`,
                 },
                 // Row cursor
                 ...(onRowClick && {
                     "& .MuiDataGrid-row": { cursor: "pointer" },
                 }),
-                // ── Professional table styling ──────────────────────────────
-                // Column headers
-                "& .MuiDataGrid-columnHeaders": {
-                    bgcolor: "#F0F4F8",
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
-                    minHeight: `${columnHeaderHeight}px !important`,
-                    maxHeight: `${columnHeaderHeight}px !important`,
-                },
-                "& .MuiDataGrid-columnHeaderTitle": {
-                    fontWeight: 700,
-                    fontSize: "0.75rem",
-                    color: "text.secondary",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                },
-                // Rows
-                "& .MuiDataGrid-row": {
-                    minHeight: `${rowHeight}px !important`,
-                    maxHeight: `${rowHeight}px !important`,
-                    "&:hover": {
-                        bgcolor: "action.hover",
-                    },
-                    "&.Mui-selected": {
-                        bgcolor: "action.selected",
-                        "&:hover": { bgcolor: "action.selected" },
-                    },
-                },
-                // Cells
-                "& .MuiDataGrid-cell": {
-                    fontSize: "0.8125rem",
-                    color: "text.primary",
-                    borderBottom: "1px solid",
-                    borderColor: "divider",
-                    display: "flex",
-                    alignItems: "center",
-                    py: 0.5,
-                    overflow: "hidden",
-                },
-                // Last visible row border
-                "& .MuiDataGrid-row--lastVisible .MuiDataGrid-cell": {
-                    borderBottom: "none",
-                },
-                // Pagination
-                "& .MuiDataGrid-footerContainer": {
-                    borderTop: "1px solid",
-                    borderColor: "divider",
-                    minHeight: 48,
-                    bgcolor: "background.paper",
-                },
-                "& .MuiTablePagination-toolbar": {
-                    fontSize: "0.8125rem",
-                    color: "text.secondary",
-                },
-                "& .MuiTablePagination-displayedRows, & .MuiTablePagination-selectLabel": {
-                    fontSize: "0.8125rem",
-                    color: "text.secondary",
-                    margin: 0,
-                },
-                // Sort icon
-                "& .MuiDataGrid-sortIcon": {
-                    fontSize: "1rem",
-                    color: "text.secondary",
-                },
-                // Column separator
-                "& .MuiDataGrid-columnSeparator": {
-                    display: "none",
-                },
-                // No border on the grid itself
-                "& .MuiDataGrid-root": {
-                    border: "none",
-                },
                 ...sx,
             }}
         >
@@ -162,8 +110,22 @@ const DataGrid = ({
                     borderRadius: 0,
                     "--DataGrid-rowBorderColor": "transparent",
                     "& .MuiDataGrid-virtualScroller": {
-                        bgcolor: "background.paper",
+                        backgroundColor: "transparent !important",
                     },
+                    // When autoHeight is active: force the virtualScroller to size
+                    // from its content (rows) instead of filling the parent flex space.
+                    // MUI v9 sets height:100% on the scroller unconditionally, which
+                    // prevents genuine shrink-to-content behaviour in autoHeight mode.
+                    ...(autoHeight && {
+                        "&.MuiDataGrid-autoHeight .MuiDataGrid-virtualScroller": {
+                            height: "auto !important",
+                            minHeight: "unset !important",
+                        },
+                        "&.MuiDataGrid-autoHeight .MuiDataGrid-main": {
+                            height: "auto !important",
+                        },
+                    }),
+                    ...sx,
                 }}
                 {...rest}
             />

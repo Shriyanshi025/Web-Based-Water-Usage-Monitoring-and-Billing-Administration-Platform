@@ -21,6 +21,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 
 import DashboardLayout from "../../components/layout/DashboardLayout";
+import PageHeader from "../../components/common/PageHeader";
 import PageSummaryHeader from "../../components/common/PageSummaryHeader";
 import CommunityOpsService from "../../services/CommunityOpsService";
 import { useNotification } from "../../context/NotificationContext";
@@ -337,10 +338,10 @@ export default function ReportsAnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <Box sx={{ p: { xs: 2, md: 3 }, background: "#F0F4F8", minHeight: "100vh" }}>
-        {/* ── Page Header ── */}
+      <Box sx={{ p: { xs: 2, md: 3 }, background: "transparent", minHeight: "100vh" }}>
+        {/* ── Page Summary Header ── */}
         <PageSummaryHeader
-          title="Community Reports & Enterprise Analytics"
+          title="Reports & Analytics"
           subtitle="Unified operational analytics platform combining executive indicators, revenue realization, water balance, and peer benchmarking."
           icon={<AssessmentIcon sx={{ fontSize: 32, color: "primary.main" }} />}
           action={

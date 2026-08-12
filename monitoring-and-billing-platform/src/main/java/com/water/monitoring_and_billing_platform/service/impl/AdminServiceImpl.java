@@ -161,6 +161,30 @@ public class AdminServiceImpl implements AdminService {
                 .setParameter("userId", userId)
                 .executeUpdate();
 
+        entityManager.createQuery("DELETE FROM EmailPreference ep WHERE ep.user.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM MeterResetLog mrl WHERE mrl.resetBy.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM SupportTicketReply str WHERE str.ticket.id IN (SELECT st.id FROM SupportTicket st WHERE st.createdBy.id = :userId)")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM SupportTicketReply str WHERE str.sender.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createQuery("DELETE FROM SupportTicket st WHERE st.createdBy.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
+        entityManager.createQuery("UPDATE SupportTicket st SET st.assignedTo = null WHERE st.assignedTo.id = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+
         if (user.getRole() == Role.USER) {
             ResidentProfile profile = residentProfileRepository.findByUserId(userId).orElse(null);
             if (profile != null) {

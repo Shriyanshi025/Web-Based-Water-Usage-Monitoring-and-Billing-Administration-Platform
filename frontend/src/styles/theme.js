@@ -78,8 +78,8 @@ const theme = createTheme({
         },
 
         background: {
-            default: "#F0F4F8", // Cool blue-grey canvas — not pure white, not warm grey
-            paper:   COLORS.white,
+            default: "rgba(240, 244, 248, 0)",
+            paper:   "rgba(255, 255, 255, 0.9)",
         },
 
         text: {
@@ -219,7 +219,12 @@ const theme = createTheme({
                     MozOsxFontSmoothing: "grayscale",
                 },
                 body: {
-                    backgroundColor: "#F0F4F8",
+                    backgroundImage: 'url("/bg-image.jpg")',
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundAttachment: "fixed",
+                    backgroundRepeat: "no-repeat",
+                    backgroundColor: "#EEF2FF",
                     color:           COLORS.neutral[900],
                     minHeight:       "100vh",
                     fontFamily:      FONT_FAMILY.sans,
@@ -260,7 +265,6 @@ const theme = createTheme({
                     lineHeight:    1.5,
                     transition:    TRANSITION.fast,
                     letterSpacing: "0",
-                    // NO translateY — vertical movement is a consumer/gaming pattern
                     "&:hover": {
                         transform: "none",
                     },
@@ -270,18 +274,103 @@ const theme = createTheme({
                     "&.Mui-disabled": {
                         opacity: 0.45,
                     },
-                },
-                // contained variant: solid fill
-                contained: {
-                    "&:hover": {
-                        boxShadow: SHADOW.sm,
+                    // High-specificity class overrides
+                    "&.MuiButton-containedPrimary, &.MuiButton-contained.MuiButton-colorPrimary": {
+                        background: "#0369A1 !important",
+                        backgroundImage: "none !important",
+                        color: "#ffffff !important",
+                        border: "none !important",
+                        "&:hover": {
+                            background: "#075985 !important",
+                            boxShadow: "none !important",
+                        },
+                        "&:active": {
+                            background: "#0c4a6e !important",
+                        },
+                        ".dashboard-layout &": {
+                            background: "#46CBFC !important",
+                            backgroundImage: "none !important",
+                            color: "#0a1d37 !important",
+                            "&:hover": {
+                                background: "#0ea5e9 !important",
+                                boxShadow: "0 4px 12px rgba(70, 203, 252, 0.3) !important",
+                            },
+                            "&:active": {
+                                background: "#0284c7 !important",
+                            }
+                        }
                     },
-                },
-                // outlined variant: border, transparent background
-                outlined: {
-                    borderWidth: "1.5px",
-                    "&:hover": {
-                        borderWidth: "1.5px",
+                    "&.MuiButton-containedSecondary, &.MuiButton-contained.MuiButton-colorSecondary": {
+                        background: `${COLORS.secondary[600]} !important`,
+                        color: "#ffffff !important",
+                        "&:hover": {
+                            background: `${COLORS.secondary[700]} !important`,
+                        },
+                        ".dashboard-layout &": {
+                            background: "#bb00ff !important",
+                            color: "#ffffff !important",
+                            border: "1px solid rgba(255, 255, 255, 0.15) !important",
+                            "&:hover": {
+                                background: "#a600e0 !important",
+                                boxShadow: "0 4px 12px rgba(187, 0, 255, 0.2) !important",
+                            },
+                            "&:active": {
+                                background: "#9100c7 !important",
+                            }
+                        }
+                    },
+                    "&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary": {
+                        borderColor: `${COLORS.primary[700]} !important`,
+                        color: `${COLORS.primary[700]} !important`,
+                        "&:hover": {
+                            background: `${COLORS.primary[50]} !important`,
+                        },
+                        ".dashboard-layout &": {
+                            borderColor: "#bb00ff !important",
+                            color: "#bb00ff !important",
+                            background: "rgba(187, 0, 255, 0.04) !important",
+                            "&:hover": {
+                                borderColor: "#d946ef !important",
+                                color: "#d946ef !important",
+                                background: "rgba(187, 0, 255, 0.1) !important",
+                            },
+                            "&:active": {
+                                background: "rgba(187, 0, 255, 0.15) !important",
+                            }
+                        }
+                    },
+                    "&.MuiButton-outlinedSecondary, &.MuiButton-outlined.MuiButton-colorSecondary": {
+                        borderColor: `${COLORS.secondary[600]} !important`,
+                        color: `${COLORS.secondary[600]} !important`,
+                        "&:hover": {
+                            background: `${COLORS.secondary[50]} !important`,
+                        },
+                        ".dashboard-layout &": {
+                            borderColor: "#05a1f5 !important",
+                            color: "#05a1f5 !important",
+                            background: "rgba(5, 161, 245, 0.04) !important",
+                            "&:hover": {
+                                borderColor: "#38bdf8 !important",
+                                color: "#38bdf8 !important",
+                                background: "rgba(5, 161, 245, 0.1) !important",
+                            },
+                            "&:active": {
+                                background: "rgba(5, 161, 245, 0.15) !important",
+                            }
+                        }
+                    },
+                    "&.MuiButton-textPrimary, &.MuiButton-text.MuiButton-colorPrimary": {
+                        color: `${COLORS.primary[700]} !important`,
+                        "&:hover": {
+                            background: "rgba(3, 105, 161, 0.04) !important",
+                        },
+                        ".dashboard-layout &": {
+                            color: "#bb00ff !important",
+                            "&:hover": {
+                                background: "rgba(187, 0, 255, 0.08) !important",
+                                color: "#d946ef !important",
+                            }
+                        }
                     },
                 },
                 // small size
@@ -311,6 +400,65 @@ const theme = createTheme({
                         backgroundColor: alpha(COLORS.primary[700], 0.10),
                         transform: "scale(0.95)",
                     },
+                    // Table action buttons styling standard
+                    ".MuiDataGrid-cell &, .MuiTableCell-root &": {
+                        width: "32px !important",
+                        height: "32px !important",
+                        borderRadius: "8px !important",
+                        border: "1px solid !important",
+                        borderColor: `${COLORS.neutral[200]} !important`,
+                        backgroundColor: "rgba(255, 255, 255, 0.9) !important",
+                        transition: "all 0.2s ease !important",
+                        padding: "0 !important",
+                        "& .MuiSvgIcon-root": {
+                            fontSize: "1.1rem !important",
+                        },
+                        "&.MuiIconButton-colorInfo": {
+                            color: `${COLORS.primary[500]} !important`,
+                            "&:hover": {
+                                backgroundColor: `${COLORS.primary[50]} !important`,
+                                borderColor: `${COLORS.primary[200]} !important`,
+                                color: `${COLORS.primary[800]} !important`,
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05) !important",
+                            }
+                        },
+                        "&.MuiIconButton-colorPrimary": {
+                            color: `${COLORS.primary[700]} !important`,
+                            "&:hover": {
+                                backgroundColor: `${COLORS.primary[50]} !important`,
+                                borderColor: `${COLORS.primary[200]} !important`,
+                                color: `${COLORS.primary[800]} !important`,
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05) !important",
+                            }
+                        },
+                        "&.MuiIconButton-colorWarning": {
+                            color: `${COLORS.warning[700]} !important`,
+                            "&:hover": {
+                                backgroundColor: `${COLORS.warning[50]} !important`,
+                                borderColor: `${COLORS.warning[100]} !important`,
+                                color: `${COLORS.warning[800]} !important`,
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05) !important",
+                            }
+                        },
+                        "&.MuiIconButton-colorSuccess": {
+                            color: `${COLORS.success[700]} !important`,
+                            "&:hover": {
+                                backgroundColor: `${COLORS.success[50]} !important`,
+                                borderColor: `${COLORS.success[100]} !important`,
+                                color: `${COLORS.success[800]} !important`,
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05) !important",
+                            }
+                        },
+                        "&.MuiIconButton-colorError": {
+                            color: `${COLORS.error[700]} !important`,
+                            "&:hover": {
+                                backgroundColor: `${COLORS.error[50]} !important`,
+                                borderColor: `${COLORS.error[100]} !important`,
+                                color: `${COLORS.error[800]} !important`,
+                                boxShadow: "0 2px 4px rgba(0, 0, 0, 0.05) !important",
+                            }
+                        }
+                    }
                 },
             },
         },
@@ -325,7 +473,8 @@ const theme = createTheme({
                     borderRadius:  RADIUS.md,          // 8px
                     border:        `1px solid ${COLORS.neutral[200]}`,
                     boxShadow:     SHADOW.sm,
-                    backgroundColor: COLORS.white,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    backdropFilter: "blur(12px)",
                     transition:    `box-shadow ${TRANSITION.fast}`,
                     // Shadow step-up on hover — NOT translateY (see design system spec)
                     "&:hover": {
@@ -357,6 +506,8 @@ const theme = createTheme({
                     borderRadius:  RADIUS.md,
                     border:        `1px solid ${COLORS.neutral[200]}`,
                     boxShadow:     SHADOW.sm,
+                    backgroundColor: "rgba(255, 255, 255, 0.9)",
+                    backdropFilter: "blur(12px)",
                     backgroundImage: "none", // Prevent MUI gradient overlay
                 },
                 // Elevation overrides — consistent with our shadow scale
@@ -689,7 +840,7 @@ const theme = createTheme({
         MuiTableHead: {
             styleOverrides: {
                 root: {
-                    backgroundColor: "#F0F4F8",
+                    backgroundColor: "#EAF3F8",
                 },
             },
         },
@@ -697,17 +848,18 @@ const theme = createTheme({
             styleOverrides: {
                 head: {
                     fontWeight:    FONT_WEIGHT.semiBold,
-                    fontSize:      FONT_SIZE.xs,   // 12px
-                    color:         COLORS.neutral[500],
-                    letterSpacing: "0.5px",
+                    fontSize:      "0.78rem",
+                    color:         COLORS.neutral[800],
+                    letterSpacing: "0.04em",
                     textTransform: "uppercase",
-                    borderBottom:  `1px solid ${COLORS.neutral[200]}`,
+                    borderBottom:  "2px solid #D9E2EA",
                     padding:       "12px 16px",
+                    backgroundColor: "#EAF3F8",
                 },
                 body: {
-                    fontSize:     FONT_SIZE.md,   // 14px
+                    fontSize:     "0.875rem",
                     color:        COLORS.neutral[900],
-                    borderBottom: `1px solid ${COLORS.neutral[100]}`,
+                    borderBottom: "1px solid #F1F5F9",
                     padding:      "14px 16px",
                 },
             },
@@ -715,12 +867,21 @@ const theme = createTheme({
         MuiTableRow: {
             styleOverrides: {
                 root: {
-                    transition: `background-color ${TRANSITION.instant}`,
+                    transition: "background-color 0.15s ease",
                     "&:hover": {
-                        backgroundColor: COLORS.neutral[50],
+                        backgroundColor: "#F1F5F9",
                     },
                     "&.Mui-selected": {
-                        backgroundColor: alpha(COLORS.primary[700], 0.06),
+                        backgroundColor: "#F0F9FF",
+                        "&:hover": {
+                            backgroundColor: "#E0F2FE",
+                        },
+                    },
+                    "&:nth-of-type(even)": {
+                        backgroundColor: "#F8FAFC",
+                        "&:hover": {
+                            backgroundColor: "#F1F5F9",
+                        },
                     },
                     "&:last-child td": {
                         borderBottom: "none",

@@ -208,8 +208,8 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public MainAdminDashboardResponse getMainAdminDashboardData() {
         long totalCommunities = communityRepository.count();
-        long totalCommunityAdmins = userRepository.countByRole(Role.COMMUNITY_ADMIN);
-        long pendingUsers = userRepository.countByRoleAndApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.PENDING);
+        long totalCommunityAdmins = communityAdminProfileRepository.count();
+        long pendingUsers = communityAdminProfileRepository.findByUserRoleAndUserApprovalStatus(Role.COMMUNITY_ADMIN, ApprovalStatus.PENDING).size();
         long totalResidents = residentProfileRepository.count();
 
         List<WaterUsage> allUsages = waterUsageRepository.findAll();
