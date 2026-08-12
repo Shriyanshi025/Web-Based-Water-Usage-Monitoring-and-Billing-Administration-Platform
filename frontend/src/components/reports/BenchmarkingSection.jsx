@@ -449,11 +449,11 @@ export default function BenchmarkingSection({
           <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
             Outlier Detection & Consumption vs Occupancy Scatter Plot
           </Typography>
-          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap", alignItems: "flex-start" }}>
             {/* Chart — takes 60% on wide screens, full width on narrow */}
-            <Box sx={{ flex: "1 1 380px", minWidth: 0, height: 420 }}>
-              <ResponsiveContainer width="99%" height={420} debounce={50}>
-                <ScatterChart margin={{ top: 20, right: 30, bottom: 55, left: 20 }}>
+            <Box sx={{ flex: "1.5 1 450px", minWidth: 0, height: 420 }}>
+              <ResponsiveContainer width="100%" height={420} debounce={50}>
+                <ScatterChart margin={{ top: 20, right: 30, bottom: 45, left: 35 }}>
                   <CartesianGrid strokeDasharray="3 3" opacity={0.5} />
                   <XAxis
                     type="number"
@@ -461,15 +461,26 @@ export default function BenchmarkingSection({
                     name="Occupancy"
                     unit=" pers"
                     dy={8}
-                    label={{ value: "Occupancy (residents)", position: "insideBottom", offset: -40, style: { fontSize: 12 } }}
+                    label={{
+                      value: "Occupancy (residents)",
+                      position: "insideBottom",
+                      offset: -20,
+                      style: { textAnchor: "middle", fill: "#666", fontSize: 12 }
+                    }}
                   />
                   <YAxis
                     type="number"
                     dataKey="consumption"
                     name="Consumption"
                     unit=" kL"
-                    width={70}
-                    label={{ value: "12-Month Total (kL)", angle: -90, position: "insideLeft", offset: 10, style: { fontSize: 12 } }}
+                    width={90}
+                    label={{
+                      value: "12-Month Total (kL)",
+                      angle: -90,
+                      position: "insideLeft",
+                      offset: 0,
+                      style: { textAnchor: "middle", fill: "#666", fontSize: 12 }
+                    }}
                   />
                   <RechartsTooltip
                     cursor={{ strokeDasharray: "3 3" }}
@@ -498,35 +509,79 @@ export default function BenchmarkingSection({
             </Box>
 
             {/* Legend / Stats — takes 35% on wide screens */}
-            <Box sx={{ flex: "0 1 260px" }}>
-              <Alert severity="info" sx={{ mb: 2 }}>
+            <Box sx={{ flex: "1 1 300px", maxWidth: { xs: "100%", md: 380 } }}>
+              <Alert severity="info" sx={{ mb: 2, borderRadius: 2 }}>
                 Outlier Detection: Red dots = households with 12-month total &gt;2.2x peer average (Leak / Overuse Suspected). Based on last 12 months of readings.
               </Alert>
-              <Stack spacing={2}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
-                  <Typography fontWeight={600}>0 – 60 kL / yr (Low)</Typography>
-                  <Typography fontWeight={700} color="success.main">
+              <Stack spacing={1.5}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 2,
+                    bgcolor: "action.hover",
+                    borderRadius: 2,
+                    border: "1px solid rgba(0,0,0,0.06)"
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600} color="text.primary">0 – 60 kL / yr (Low)</Typography>
+                  <Typography variant="body2" fontWeight={700} color="success.main">
                     {scatterPoints.filter((s) => s.consumption <= 60).length} Households
                   </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
-                  <Typography fontWeight={600}>60 – 180 kL / yr (Normal)</Typography>
-                  <Typography fontWeight={700} color="primary.main">
+                </Paper>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 2,
+                    bgcolor: "action.hover",
+                    borderRadius: 2,
+                    border: "1px solid rgba(0,0,0,0.06)"
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600} color="text.primary">60 – 180 kL / yr (Normal)</Typography>
+                  <Typography variant="body2" fontWeight={700} color="primary.main">
                     {scatterPoints.filter((s) => s.consumption > 60 && s.consumption <= 180).length} Households
                   </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
-                  <Typography fontWeight={600}>180+ kL / yr (High / Alert)</Typography>
-                  <Typography fontWeight={700} color="error.main">
+                </Paper>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 2,
+                    bgcolor: "action.hover",
+                    borderRadius: 2,
+                    border: "1px solid rgba(0,0,0,0.06)"
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600} color="text.primary">180+ kL / yr (High / Alert)</Typography>
+                  <Typography variant="body2" fontWeight={700} color="error.main">
                     {scatterPoints.filter((s) => s.consumption > 180).length} Households
                   </Typography>
-                </Box>
-                <Box sx={{ display: "flex", justifyContent: "space-between", p: 1.5, bgcolor: "action.hover", borderRadius: 2 }}>
-                  <Typography fontWeight={600}>⚠ Outliers Detected</Typography>
-                  <Typography fontWeight={700} color="error.main">
+                </Paper>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    p: 2,
+                    bgcolor: "action.hover",
+                    borderRadius: 2,
+                    border: "1px solid rgba(0,0,0,0.06)"
+                  }}
+                >
+                  <Typography variant="body2" fontWeight={600} color="text.primary">⚠ Outliers Detected</Typography>
+                  <Typography variant="body2" fontWeight={700} color="error.main">
                     {scatterPoints.filter((s) => s.leakSuspected).length} Households
                   </Typography>
-                </Box>
+                </Paper>
               </Stack>
             </Box>
           </Box>
