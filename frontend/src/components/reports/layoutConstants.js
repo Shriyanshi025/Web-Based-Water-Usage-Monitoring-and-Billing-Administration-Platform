@@ -21,8 +21,8 @@ export const LAYOUT_CONSTANTS = {
   PIE_CHART_HEIGHT: 340,
   
   // Border Radius & Elevational Styling
-  SECTION_RADIUS: "14px",
-  CARD_RADIUS: "12px",
+  SECTION_RADIUS: 3,
+  CARD_RADIUS: 3,
   
   // Global Grid Breakpoints & Minimum Widths
   KPI_MIN_WIDTH: 260,         // Min width for CSS Grid auto-fill KPI cards

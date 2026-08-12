@@ -3,7 +3,7 @@ import { Paper, Typography, Grid, FormControl, InputLabel, Select, MenuItem, But
 import CompareArrowsIcon from "@mui/icons-material/CompareArrows";
 import SectionCard from "./SectionCard";
 
-const CARD_BORDER_RADIUS = "12px";
+
 
 const fmtKL = (val) => {
   if (val == null || isNaN(val)) return "0 kL";
@@ -77,37 +77,33 @@ export default function HouseholdComparisonSection({
 
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined" sx={{ borderRadius: CARD_BORDER_RADIUS, bgcolor: "action.hover" }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight={700} color="primary.main">
-                    {comparisonData.householdA?.flatNumber} — {comparisonData.householdA?.residentName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">Block: {comparisonData.householdA?.blockName}</Typography>
-                  <Divider sx={{ my: 1.5 }} />
-                  <Stack spacing={1}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Period Consumption:</Typography><Typography fontWeight={700}>{fmtKL(comparisonData.householdA?.totalConsumption != null ? comparisonData.householdA.totalConsumption : comparisonData.householdA?.currentMonthUsage)}</Typography></Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Efficiency Score:</Typography><Typography fontWeight={700}>{comparisonData.householdA?.efficiencyScore} / 100</Typography></Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Community Rank:</Typography><Typography fontWeight={700}>#{comparisonData.householdA?.communityRank != null ? comparisonData.householdA.communityRank : comparisonData.householdA?.rank}</Typography></Box>
-                  </Stack>
-                </CardContent>
-              </Card>
+              <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "action.hover" }}>
+                <Typography variant="h6" fontWeight={700} color="primary.main">
+                  {comparisonData.householdA?.flatNumber} — {comparisonData.householdA?.residentName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">Block: {comparisonData.householdA?.blockName}</Typography>
+                <Divider sx={{ my: 1.5 }} />
+                <Stack spacing={1}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Period Consumption:</Typography><Typography fontWeight={700}>{fmtKL(comparisonData.householdA?.totalConsumption != null ? comparisonData.householdA.totalConsumption : comparisonData.householdA?.currentMonthUsage)}</Typography></Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Efficiency Score:</Typography><Typography fontWeight={700}>{comparisonData.householdA?.efficiencyScore} / 100</Typography></Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Community Rank:</Typography><Typography fontWeight={700}>#{comparisonData.householdA?.communityRank != null ? comparisonData.householdA.communityRank : comparisonData.householdA?.rank}</Typography></Box>
+                </Stack>
+              </Paper>
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Card variant="outlined" sx={{ borderRadius: CARD_BORDER_RADIUS, bgcolor: "action.hover" }}>
-                <CardContent>
-                  <Typography variant="h6" fontWeight={700} color="secondary.main">
-                    {comparisonData.householdB?.flatNumber} — {comparisonData.householdB?.residentName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">Block: {comparisonData.householdB?.blockName}</Typography>
-                  <Divider sx={{ my: 1.5 }} />
-                  <Stack spacing={1}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Period Consumption:</Typography><Typography fontWeight={700}>{fmtKL(comparisonData.householdB?.totalConsumption != null ? comparisonData.householdB.totalConsumption : comparisonData.householdB?.currentMonthUsage)}</Typography></Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Efficiency Score:</Typography><Typography fontWeight={700}>{comparisonData.householdB?.efficiencyScore} / 100</Typography></Box>
-                    <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Community Rank:</Typography><Typography fontWeight={700}>#{comparisonData.householdB?.communityRank != null ? comparisonData.householdB.communityRank : comparisonData.householdB?.rank}</Typography></Box>
-                  </Stack>
-                </CardContent>
-              </Card>
+              <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "action.hover" }}>
+                <Typography variant="h6" fontWeight={700} color="secondary.main">
+                  {comparisonData.householdB?.flatNumber} — {comparisonData.householdB?.residentName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">Block: {comparisonData.householdB?.blockName}</Typography>
+                <Divider sx={{ my: 1.5 }} />
+                <Stack spacing={1}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Period Consumption:</Typography><Typography fontWeight={700}>{fmtKL(comparisonData.householdB?.totalConsumption != null ? comparisonData.householdB.totalConsumption : comparisonData.householdB?.currentMonthUsage)}</Typography></Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Efficiency Score:</Typography><Typography fontWeight={700}>{comparisonData.householdB?.efficiencyScore} / 100</Typography></Box>
+                  <Box sx={{ display: "flex", justifyContent: "space-between" }}><Typography variant="body2">Community Rank:</Typography><Typography fontWeight={700}>#{comparisonData.householdB?.communityRank != null ? comparisonData.householdB.communityRank : comparisonData.householdB?.rank}</Typography></Box>
+                </Stack>
+              </Paper>
             </Grid>
           </Grid>
         </>

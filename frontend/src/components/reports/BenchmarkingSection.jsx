@@ -76,56 +76,44 @@ const fmtKL = (val) => {
   }).format(val)} kL`;
 };
 
-const KpiCard = ({ title, value, subtitle, icon, iconColor, iconBg, badgeText }) => (
-  <Card
-    variant="outlined"
+const KpiCard = ({ title, value, subtitle, icon, iconColor, badgeText }) => (
+  <Paper
+    elevation={0}
     sx={{
-      borderRadius: CARD_BORDER_RADIUS,
+      p: 2.5,
+      border: "1px solid rgba(0,0,0,0.08)",
+      borderLeft: `4px solid ${iconColor}`,
+      borderRadius: 3,
+      background: `linear-gradient(135deg, ${iconColor}0D 0%, #FFFFFF 60%)`,
       height: 165,
-      bgcolor: "background.paper",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
-      border: "1px solid",
-      borderColor: "divider",
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between"
     }}
   >
-    <CardContent sx={{ p: "20px 22px 16px", "&:last-child": { pb: "16px" } }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 1.5 }}>
-        <Box
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: "12px",
-            bgcolor: iconBg,
-            color: iconColor,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0
-          }}
-        >
-          {React.cloneElement(icon, { sx: { fontSize: 22 } })}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.78rem", mb: 0.4 }}>
-            {title}
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: "1.25rem", sm: "1.45rem" }, color: "text.primary" }}>
-            {value}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.73rem" }}>
-          {subtitle}
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+        {icon && (
+          <Box sx={{ color: iconColor, fontSize: 20, display: "flex", alignItems: "center" }}>
+            {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+          </Box>
+        )}
+        <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+          {title}
         </Typography>
-        {badgeText && <Chip size="small" label={badgeText} color="primary" variant="outlined" sx={{ fontSize: "0.68rem", height: 20 }} />}
       </Box>
-    </CardContent>
-  </Card>
+      <Typography variant="h5" fontWeight={800} sx={{ color: iconColor, lineHeight: 1.2, my: 0.5 }}>
+        {value}
+      </Typography>
+    </Box>
+
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.73rem" }}>
+        {subtitle}
+      </Typography>
+      {badgeText && <Chip size="small" label={badgeText} color="primary" variant="outlined" sx={{ fontSize: "0.68rem", height: 20 }} />}
+    </Box>
+  </Paper>
 );
 
 export default function BenchmarkingSection({
@@ -209,7 +197,7 @@ export default function BenchmarkingSection({
     >
       <Stack spacing={3.5}>
         {/* Filter Toolbar */}
-        <Paper variant="outlined" sx={{ p: 2, borderRadius: "12px", bgcolor: "background.paper" }}>
+        <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "background.paper" }}>
           <Box
             sx={{
               display: "grid",
@@ -279,13 +267,13 @@ export default function BenchmarkingSection({
         </KpiGrid>
 
         {/* 2. Block Benchmarking */}
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: CARD_BORDER_RADIUS }}>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "background.paper" }}>
           <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
             Block Benchmarking (Block vs Block Performance)
           </Typography>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1, fontWeight: 600 }}>
+            <Grid size={{ xs: 12 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>
                 Average Consumption by Block (kL)
               </Typography>
               <ResponsiveContainer width="100%" height={300}>
@@ -303,22 +291,25 @@ export default function BenchmarkingSection({
               </ResponsiveContainer>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TableContainer>
-                <Table size="small">
+            <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1.5, fontWeight: 600 }}>
+                Block Operations Performance Overview
+              </Typography>
+              <TableContainer sx={{ overflowX: { xs: "auto", md: "visible" }, width: "100%", border: "1px solid rgba(0,0,0,0.06)", borderRadius: "8px" }}>
+                <Table size="small" sx={{ width: "100%", tableLayout: "fixed" }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: "action.hover" }}>
-                      <TableCell sx={{ fontWeight: 700 }}>Block</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Households</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Avg Usage</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Avg Bill</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Collection %</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 700 }}>Efficiency</TableCell>
+                      <TableCell sx={{ fontWeight: 700, py: 1.5, width: "15%" }}>Block</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, width: "15%" }}>Households</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, width: "20%" }}>Avg Usage</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, width: "20%" }}>Avg Bill</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, width: "15%" }}>Collection %</TableCell>
+                      <TableCell align="right" sx={{ fontWeight: 700, width: "15%" }}>Efficiency</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {blockBenchmarking.map((row) => (
-                      <TableRow key={row.blockId} hover>
+                      <TableRow key={row.blockId} hover sx={{ "& td": { py: 1.2 } }}>
                         <TableCell sx={{ fontWeight: 600 }}>{row.blockName}</TableCell>
                         <TableCell align="right">{row.totalHouseholds}</TableCell>
                         <TableCell align="right">{fmtKL(row.avgConsumptionPerHousehold)}</TableCell>
@@ -341,7 +332,7 @@ export default function BenchmarkingSection({
         </Paper>
 
         {/* 3. Household Benchmark Rankings & Movement */}
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: CARD_BORDER_RADIUS }}>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "background.paper" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2, flexWrap: "wrap", gap: 2 }}>
             <Typography variant="h6" fontWeight={700}>
               Household Benchmark Rankings & Rank Movement
@@ -454,7 +445,7 @@ export default function BenchmarkingSection({
         </Paper>
 
         {/* 4. Outliers & Scatter Plot */}
-        <Paper variant="outlined" sx={{ p: 2.5, borderRadius: CARD_BORDER_RADIUS }}>
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "background.paper" }}>
           <Typography variant="h6" fontWeight={700} sx={{ mb: 2 }}>
             Outlier Detection & Consumption vs Occupancy Scatter Plot
           </Typography>

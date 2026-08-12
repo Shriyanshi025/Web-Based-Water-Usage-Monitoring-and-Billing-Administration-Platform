@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, Box, Typography, Divider, Skeleton } from "@mui/material";
+import { Paper, Box, Typography, Divider, Skeleton } from "@mui/material";
 import WaterDropIcon from "@mui/icons-material/WaterDrop";
 import OpacityIcon from "@mui/icons-material/Opacity";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
@@ -12,8 +12,6 @@ import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import AnalyticsIcon from "@mui/icons-material/Analytics";
 import SectionCard from "./SectionCard";
 import KpiGrid from "./KpiGrid";
-
-const CARD_BORDER_RADIUS = "14px";
 
 const fmtCurrency = (val) => {
   if (val == null || isNaN(val)) return "₹0";
@@ -55,16 +53,16 @@ const TrendBadge = ({ value, suffix = "", positiveIsGood = true }) => {
   );
 };
 
-const KpiCard = ({ title, value, subtitle, icon, iconColor, iconBg, trend, trendSuffix, positiveIsGood }) => (
-  <Card
-    variant="outlined"
+const KpiCard = ({ title, value, subtitle, icon, iconColor, trend, trendSuffix, positiveIsGood }) => (
+  <Paper
+    elevation={0}
     sx={{
-      borderRadius: CARD_BORDER_RADIUS,
+      p: 2.5,
+      border: "1px solid rgba(0,0,0,0.08)",
+      borderLeft: `4px solid ${iconColor}`,
+      borderRadius: 3,
+      background: `linear-gradient(135deg, ${iconColor}0D 0%, #FFFFFF 60%)`,
       height: 165,
-      bgcolor: "background.paper",
-      boxShadow: "0 2px 10px rgba(0,0,0,0.03)",
-      border: "1px solid",
-      borderColor: "divider",
       display: "flex",
       flexDirection: "column",
       justifyContent: "space-between",
@@ -75,43 +73,29 @@ const KpiCard = ({ title, value, subtitle, icon, iconColor, iconBg, trend, trend
       }
     }}
   >
-    <CardContent sx={{ p: "20px 22px 16px", "&:last-child": { pb: "16px" } }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 1.5 }}>
-        <Box
-          sx={{
-            width: 44,
-            height: 44,
-            borderRadius: "12px",
-            bgcolor: iconBg,
-            color: iconColor,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0
-          }}
-        >
-          {React.cloneElement(icon, { sx: { fontSize: 22 } })}
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600, fontSize: "0.78rem", mb: 0.4 }}>
-            {title}
-          </Typography>
-          <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: "1.25rem", sm: "1.45rem" }, lineHeight: 1.15, color: "text.primary", wordBreak: "break-all" }}>
-            {value}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Divider sx={{ mb: 1.2 }} />
-
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.5 }}>
-        <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.73rem" }}>
-          {subtitle}
+    <Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+        {icon && (
+          <Box sx={{ color: iconColor, fontSize: 20, display: "flex", alignItems: "center" }}>
+            {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+          </Box>
+        )}
+        <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
+          {title}
         </Typography>
-        {trend != null && <TrendBadge value={trend} suffix={trendSuffix} positiveIsGood={positiveIsGood} />}
       </Box>
-    </CardContent>
-  </Card>
+      <Typography variant="h5" fontWeight={800} sx={{ color: iconColor, lineHeight: 1.2, my: 0.5 }}>
+        {value}
+      </Typography>
+    </Box>
+
+    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 0.5 }}>
+      <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.73rem" }}>
+        {subtitle}
+      </Typography>
+      {trend != null && <TrendBadge value={trend} suffix={trendSuffix} positiveIsGood={positiveIsGood} />}
+    </Box>
+  </Paper>
 );
 
 export default function ExecutiveSummarySection({ data, loading }) {
@@ -124,7 +108,7 @@ export default function ExecutiveSummarySection({ data, loading }) {
       >
         <KpiGrid minWidth={260}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <Skeleton key={i} variant="rounded" height={165} sx={{ borderRadius: CARD_BORDER_RADIUS }} />
+            <Skeleton key={i} variant="rounded" height={165} sx={{ borderRadius: 3 }} />
           ))}
         </KpiGrid>
       </SectionCard>

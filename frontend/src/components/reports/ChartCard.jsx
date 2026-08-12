@@ -5,15 +5,16 @@ import { LAYOUT_CONSTANTS } from "./layoutConstants";
 export default function ChartCard({ title, subtitle, children, height = LAYOUT_CONSTANTS.CHART_CONTAINER_HEIGHT, action }) {
   return (
     <Paper
-      variant="outlined"
+      elevation={0}
       sx={{
         p: LAYOUT_CONSTANTS.CONTAINER_PADDING,
         borderRadius: LAYOUT_CONSTANTS.CARD_RADIUS,
+        border: "1px solid rgba(0,0,0,0.08)",
         height: "100%",
         display: "flex",
         flexDirection: "column",
         bgcolor: "background.paper",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.03)"
+        boxShadow: "none"
       }}
     >
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>

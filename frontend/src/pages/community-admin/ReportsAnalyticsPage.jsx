@@ -37,7 +37,7 @@ import HouseholdDrawer from "../../components/reports/HouseholdDrawer";
 import MethodologyDialog from "../../components/reports/MethodologyDialog";
 import { exportCommunityReportCSV, exportCommunityReportPDF } from "../../helpers/reportExportHelper";
 
-const CARD_BORDER_RADIUS = "14px";
+
 
 export default function ReportsAnalyticsPage() {
   const { showNotification } = useNotification();
@@ -337,7 +337,7 @@ export default function ReportsAnalyticsPage() {
 
   return (
     <DashboardLayout>
-      <Box sx={{ width: "100%", maxWidth: 1600, mx: "auto", p: { xs: 2, sm: 2.5, md: 3 }, pb: 6 }}>
+      <Box sx={{ p: { xs: 2, md: 3 }, background: "#F0F4F8", minHeight: "100vh" }}>
         {/* ── Page Header ── */}
         <PageSummaryHeader
           title="Community Reports & Enterprise Analytics"
@@ -359,24 +359,21 @@ export default function ReportsAnalyticsPage() {
         />
 
         {/* ── Toolbar / Global Filter Bar ── */}
-        <Paper variant="outlined" sx={{ p: 2.5, mb: 4, borderRadius: CARD_BORDER_RADIUS, bgcolor: "background.paper", boxShadow: "0 2px 12px rgba(0,0,0,0.04)" }}>
+        <Paper elevation={0} sx={{ p: 2.5, mb: 4, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", bgcolor: "background.paper" }}>
           <Typography variant="subtitle2" fontWeight={700} color="text.secondary" sx={{ mb: 2, display: "flex", alignItems: "center", gap: 1 }}>
             <FilterListIcon fontSize="small" /> Operational Report Filters
           </Typography>
 
           <Box
             sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, minmax(180px, 1fr)) repeat(2, minmax(200px, 1.2fr)) auto"
-              },
+              display: "flex",
+              flexWrap: "wrap",
               gap: 2,
-              alignItems: "center"
+              alignItems: "center",
+              width: "100%"
             }}
           >
-            <FormControl fullWidth size="small" sx={{ minWidth: 170 }}>
+            <FormControl fullWidth size="small" sx={{ minWidth: 150, flex: "1 1 200px" }}>
               <InputLabel id="billing-cycle-label">Billing Cycle</InputLabel>
               <Select labelId="billing-cycle-label" value={selectedCycle} label="Billing Cycle" onChange={(e) => setSelectedCycle(e.target.value)}>
                 <MenuItem value="">All Cycles</MenuItem>
@@ -386,7 +383,7 @@ export default function ReportsAnalyticsPage() {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth size="small" sx={{ minWidth: 170 }}>
+            <FormControl fullWidth size="small" sx={{ minWidth: 150, flex: "1 1 200px" }}>
               <InputLabel id="report-month-label">Month</InputLabel>
               <Select labelId="report-month-label" value={selectedMonth} label="Month" onChange={(e) => setSelectedMonth(e.target.value)}>
                 <MenuItem value="">All Months</MenuItem>
@@ -401,7 +398,7 @@ export default function ReportsAnalyticsPage() {
               </Select>
             </FormControl>
 
-            <FormControl fullWidth size="small" sx={{ minWidth: 170 }}>
+            <FormControl fullWidth size="small" sx={{ minWidth: 150, flex: "1 1 200px" }}>
               <InputLabel id="report-year-label">Year</InputLabel>
               <Select labelId="report-year-label" value={selectedYear} label="Year" onChange={(e) => setSelectedYear(e.target.value)}>
                 <MenuItem value="">All Years</MenuItem>
@@ -411,10 +408,10 @@ export default function ReportsAnalyticsPage() {
               </Select>
             </FormControl>
 
-            <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
-            <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField fullWidth size="small" type="date" label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150, flex: "1 1 200px" }} />
+            <TextField fullWidth size="small" type="date" label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 150, flex: "1 1 200px" }} />
 
-            <Box sx={{ display: "flex", gap: 1 }}>
+            <Box sx={{ display: "flex", gap: 1, flex: "1 1 auto", justifyContent: { xs: "stretch", sm: "flex-end" } }}>
               <Button variant="contained" color="primary" onClick={handleApplyReportsFilters} sx={{ fontWeight: 600, px: 3, height: 40 }}>
                 Apply
               </Button>
