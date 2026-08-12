@@ -11,20 +11,20 @@ import LanguageSelector from '../common/LanguageSelector';
 const FeatureItem = ({ icon, title, description }) => (
     <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', mb: 4 }}>
         <Box sx={{
-            color: 'primary.main',
-            bgcolor: 'rgba(255,255,255,0.9)',
+            color: '#38bdf8',
+            bgcolor: 'rgba(255, 255, 255, 0.08)',
             p: 1.5,
             borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             display: 'flex'
         }}>
             {icon}
         </Box>
         <Box>
-            <Typography variant="h6" fontWeight="700" color="white" gutterBottom sx={{ textShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
+            <Typography variant="h6" fontWeight="700" gutterBottom sx={{ color: '#ffffff', fontSize: '1.1rem', mb: 0.5 }}>
                 {title}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)' }}>
+            <Typography variant="body2" sx={{ color: '#C4C0C3', lineHeight: 1.6 }}>
                 {description}
             </Typography>
         </Box>
@@ -46,56 +46,58 @@ const AuthLayout = ({ children, title, subtitle, alignTop = false }) => {
             <Box sx={{ flex: 1, display: 'flex', flexDirection: { xs: 'column', md: 'row' } }}>
                 {/* Left Side: Branding & Features (Hidden on mobile) */}
                 {!isMobile && (
-                    <Box sx={{ width: { md: '41.666%', lg: '50%' }, position: 'relative', overflow: 'hidden' }}>
-                        {/* Animated Background */}
-                        <Box sx={{
-                            position: 'absolute', inset: 0,
-                            background: 'linear-gradient(135deg, #0288d1 0%, #01579b 100%)',
-                            zIndex: 0
-                        }}>
-                            {/* Abstract Blobs */}
-                            <motion.div
-                                animate={{
-                                    scale: [1, 1.2, 1],
-                                    rotate: [0, 90, 0],
-                                    borderRadius: ["30% 70% 70% 30% / 30% 30% 70% 70%", "50% 50% 30% 70% / 50% 50% 70% 30%", "30% 70% 70% 30% / 30% 30% 70% 70%"]
-                                }}
-                                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                                style={{
-                                    position: 'absolute', top: '-10%', left: '-20%', width: '70%', height: '70%',
-                                    background: 'rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(10px)', zIndex: 1
-                                }}
-                            />
-                            <motion.div
-                                animate={{
-                                    scale: [1, 1.3, 1],
-                                    rotate: [0, -90, 0],
-                                    borderRadius: ["50% 50% 30% 70% / 50% 50% 70% 30%", "30% 70% 70% 30% / 30% 30% 70% 70%", "50% 50% 30% 70% / 50% 50% 70% 30%"]
-                                }}
-                                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                                style={{
-                                    position: 'absolute', bottom: '-20%', right: '-10%', width: '80%', height: '80%',
-                                    background: 'rgba(255, 255, 255, 0.03)', backdropFilter: 'blur(10px)', zIndex: 1
-                                }}
-                            />
+                    <Box sx={{ width: { md: '41.666%', lg: '50%' }, position: 'relative', overflow: 'hidden', bgcolor: '#030712' }}>
+                        {/* Cinematic Liquid Water Video Background */}
+                        <Box
+                            component="video"
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                filter: 'brightness(0.52) contrast(1.18)',
+                                zIndex: 0
+                            }}
+                        >
+                            <source src="/liquid-water-hero.mp4" type="video/mp4" />
                         </Box>
+
+                        {/* Layered Cinematic Vignettes & Radial Dark Overlays */}
+                        <Box
+                            sx={{
+                                position: 'absolute',
+                                inset: 0,
+                                background: `
+                                    linear-gradient(180deg, rgba(3, 7, 18, 0.75) 0%, rgba(3, 7, 18, 0.25) 45%, rgba(3, 7, 18, 0.9) 100%),
+                                    linear-gradient(90deg, rgba(3, 7, 18, 0.5) 0%, transparent 50%),
+                                    radial-gradient(ellipse 80% 60% at 50% 40%, rgba(2, 132, 199, 0.14) 0%, transparent 80%)
+                                `,
+                                zIndex: 1
+                            }}
+                        />
 
                         {/* Content */}
                         <Box sx={{ position: 'relative', zIndex: 2, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', p: { md: 6, lg: 8 } }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 8 }}>
-                                <Box sx={{ p: 1.5, bgcolor: 'white', borderRadius: 3, display: 'flex', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
-                                    <WaterDropIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+                                <Box sx={{ p: 1.5, bgcolor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 3, display: 'flex', boxShadow: '0 8px 32px rgba(0,0,0,0.1)' }}>
+                                    <WaterDropIcon sx={{ fontSize: 32, color: '#38bdf8' }} />
                                 </Box>
-                                <Typography variant="h4" fontWeight="800" color="white" sx={{ letterSpacing: '-0.5px' }}>
+                                <Typography variant="h4" fontWeight="800" sx={{ color: '#ffffff', letterSpacing: '-0.5px' }}>
                                     HydroSync
                                 </Typography>
                             </Box>
 
                             <Box sx={{ mb: 6 }}>
-                                <Typography variant="h3" fontWeight="800" color="white" gutterBottom sx={{ lineHeight: 1.2, letterSpacing: '-1px' }}>
+                                <Typography variant="h3" fontWeight="800" gutterBottom sx={{ color: '#ffffff', lineHeight: 1.2, letterSpacing: '-1px' }}>
                                     Smart Water Management
                                 </Typography>
-                                <Typography variant="h6" sx={{ color: 'rgba(255,255,255,0.8)', fontWeight: 400, maxWidth: 480 }}>
+                                <Typography variant="h6" sx={{ color: '#C4C0C3', fontWeight: 400, maxWidth: 480, fontSize: '1.05rem', lineHeight: 1.6 }}>
                                     Empowering communities with real-time tracking, transparent billing, and intelligent analytics.
                                 </Typography>
                             </Box>

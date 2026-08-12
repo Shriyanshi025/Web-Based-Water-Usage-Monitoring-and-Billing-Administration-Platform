@@ -107,10 +107,10 @@ function PaymentHistoryPage() {
     const filteredPayments = useMemo(() => {
         const term = search.toLowerCase();
         return payments.filter((p) =>
-            p.paymentNumber?.toLowerCase().includes(term) ||
-            p.razorpayPaymentId?.toLowerCase().includes(term) ||
-            p.bill?.billNumber?.toLowerCase().includes(term) ||
-            p.invoiceNumber?.toLowerCase().includes(term)
+            p.paymentNumber?.toLowerCase()?.includes(term) ||
+            p.razorpayPaymentId?.toLowerCase()?.includes(term) ||
+            p.billNumber?.toLowerCase()?.includes(term) ||
+            p.invoiceNumber?.toLowerCase()?.includes(term)
         );
     }, [payments, search]);
 

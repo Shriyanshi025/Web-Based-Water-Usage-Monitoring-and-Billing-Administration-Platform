@@ -1,362 +1,331 @@
 import React from 'react';
-import { Box, Container, Typography, Button, Stack, Grid, Paper, Chip } from '@mui/material';
+import { Box, Container, Typography, Button, Stack } from '@mui/material';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
-import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import ApartmentIcon from '@mui/icons-material/Apartment';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import SpeedIcon from '@mui/icons-material/Speed';
-import ShieldCheckIcon from '@mui/icons-material/Shield';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+
+function RealisticWaterDroplet() {
+    return (
+        <Box
+            sx={{
+                width: '100%',
+                height: '100%',
+                minHeight: { xs: 380, md: 500 },
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden', // Dedicated overflow-hidden clipping area
+                p: 0 // No padding to allow full vertical containment and natural boundary clipping
+            }}
+        >
+            {/* Very Dim Ambient Volumetric Blue Glow Behind Droplet (Slow Pulsing/Glow/Dim Animation) */}
+            <Box
+                component={motion.div}
+                animate={{
+                    opacity: [0.05, 0.15, 0.05],
+                    scale: [0.96, 1.04, 0.96]
+                }}
+                transition={{
+                    duration: 6.0,
+                    repeat: Infinity,
+                    ease: "easeInOut"
+                }}
+                sx={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: { xs: 240, md: 320 },
+                    height: { xs: 240, md: 320 },
+                    borderRadius: '50%',
+                    bgcolor: 'rgba(56, 189, 248, 0.15)',
+                    filter: 'blur(75px)',
+                    pointerEvents: 'none'
+                }}
+            />
+
+            {/* Suspended Droplet Container (Completely Static - No Y Motion) */}
+            <Box
+                sx={{
+                    position: 'relative',
+                    zIndex: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    py: 2
+                }}
+            >
+                {/* Large Photorealistic Standalone Water Droplet (True Transparent PNG Background - Static Position) */}
+                <Box
+                    component={motion.img}
+                    src="/realistic-water-drop.png"
+                    alt="HydroSync Water Droplet"
+                    animate={{
+                        filter: [
+                            'drop-shadow(0 0 10px rgba(56, 189, 248, 0.1)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.75))',
+                            'drop-shadow(0 0 20px rgba(56, 189, 248, 0.24)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.75))',
+                            'drop-shadow(0 0 10px rgba(56, 189, 248, 0.1)) drop-shadow(0 15px 30px rgba(0, 0, 0, 0.75))'
+                        ]
+                    }}
+                    transition={{
+                        duration: 6.0,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }}
+                    sx={{
+                        width: 'auto',
+                        height: '90%',
+                        maxHeight: { xs: 360, sm: 420, md: 475 },
+                        objectFit: 'contain',
+                        userSelect: 'none',
+                        pointerEvents: 'none'
+                    }}
+                />
+
+                {/* Subtle Realistic Water Ripple Reflection Beneath Droplet */}
+                <Box
+                    sx={{
+                        mt: -1.5,
+                        width: { xs: 150, md: 190 },
+                        height: 20,
+                        borderRadius: '50%',
+                        background: 'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.25) 0%, rgba(2, 132, 199, 0.1) 50%, transparent 80%)',
+                        filter: 'blur(5px)',
+                        transform: 'scaleY(0.4)',
+                        pointerEvents: 'none'
+                    }}
+                />
+            </Box>
+        </Box>
+    );
+}
 
 export default function HeroSection() {
     const navigate = useNavigate();
 
     const fadeUp = {
-        hidden: { opacity: 0, y: 25 },
+        hidden: { opacity: 0, y: 20 },
         visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
     };
 
     const staggerContainer = {
         hidden: { opacity: 0 },
-        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        visible: { opacity: 1, transition: { staggerChildren: 0.12 } }
     };
 
-    const pillars = [
-        { label: 'Smart Water Monitoring', icon: <WaterDropIcon sx={{ fontSize: 22 }} />, color: '#7dd3fc', bg: 'rgba(125, 211, 252, 0.12)' },
-        { label: 'Fair Billing', icon: <ReceiptLongIcon sx={{ fontSize: 22 }} />, color: '#6ee7b7', bg: 'rgba(110, 231, 183, 0.12)' },
-        { label: 'Leak Detection', icon: <WarningAmberIcon sx={{ fontSize: 22 }} />, color: '#fde047', bg: 'rgba(253, 224, 71, 0.12)' },
-        { label: 'Community Management', icon: <ApartmentIcon sx={{ fontSize: 22 }} />, color: '#c4b5fd', bg: 'rgba(196, 181, 253, 0.12)' }
-    ];
-
-    const timeLabels = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'];
-
     return (
-        <Box sx={{
-            position: 'relative',
-            background: 'linear-gradient(180deg, #0f172a 0%, #0369a1 100%)',
-            color: 'white',
-            pt: { xs: 18, md: 24 },
-            pb: { xs: 16, md: 22 },
-            overflow: 'hidden'
-        }}>
-            {/* Ambient Background Glow */}
-            <Box sx={{
-                position: 'absolute',
-                top: '-10%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                width: 750,
-                height: 750,
-                borderRadius: '50%',
-                background: 'radial-gradient(circle, rgba(56,189,248,0.18) 0%, rgba(0,0,0,0) 70%)',
-                filter: 'blur(80px)',
-                pointerEvents: 'none'
-            }} />
-
-            <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-                {/* Hero Header Content */}
-                <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
-                    <Box textAlign="center" sx={{ maxWidth: 920, mx: 'auto', mb: 8 }}>
-                        <motion.div variants={fadeUp}>
-                            <Chip
-                                label="🚀 HydroSync Platform v2.0 Live"
-                                sx={{
-                                    bgcolor: 'rgba(255, 255, 255, 0.12)',
-                                    color: '#7dd3fc',
-                                    fontWeight: 600,
-                                    backdropFilter: 'blur(8px)',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    mb: 3.5,
-                                    px: 1.5,
-                                    py: 0.5,
-                                    fontSize: '0.85rem'
-                                }}
-                            />
-                        </motion.div>
-
-                        <motion.div variants={fadeUp}>
-                            <Typography
-                                variant="h1"
-                                fontWeight="900"
-                                sx={{
-                                    fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4.2rem' },
-                                    lineHeight: 1.15,
-                                    letterSpacing: '-1.8px',
-                                    mb: 3.5,
-                                    background: 'linear-gradient(180deg, #ffffff 0%, #cbd5e1 100%)',
-                                    WebkitBackgroundClip: 'text',
-                                    WebkitTextFillColor: 'transparent'
-                                }}
-                            >
-                                Smart Water Monitoring & Fair Billing Platform.
-                            </Typography>
-                        </motion.div>
-
-                        <motion.div variants={fadeUp}>
-                            <Typography
-                                variant="h6"
-                                sx={{
-                                    color: '#e2e8f0',
-                                    fontWeight: 400,
-                                    lineHeight: 1.7,
-                                    mb: 5,
-                                    maxWidth: 780,
-                                    mx: 'auto',
-                                    fontSize: { xs: '1.05rem', md: '1.25rem' }
-                                }}
-                            >
-                                Automated smart meter tracking, transparent tier billing, instant leak alerts, and comprehensive community management in one intelligent platform.
-                            </Typography>
-                        </motion.div>
-
-                        {/* Centered CTA Buttons */}
-                        <motion.div variants={fadeUp}>
-                            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2.5} justifyContent="center" alignItems="center" sx={{ mb: 7 }}>
-                                <Button
-                                    variant="contained"
-                                    size="large"
-                                    endIcon={<ArrowForwardIcon />}
-                                    sx={{
-                                        px: 4.5,
-                                        py: 1.8,
-                                        borderRadius: 3,
-                                        fontWeight: 700,
-                                        fontSize: '1.05rem',
-                                        textTransform: 'none',
-                                        bgcolor: '#38bdf8',
-                                        color: '#0f172a',
-                                        boxShadow: '0 12px 28px rgba(56, 189, 248, 0.35)',
-                                        transition: 'all 0.3s ease',
-                                        '&:hover': {
-                                            bgcolor: '#7dd3fc',
-                                            transform: 'translateY(-2px)'
-                                        }
-                                    }}
-                                    onClick={() => navigate('/register')}
-                                >
-                                    Get Started Free
-                                </Button>
-
-                                <Button
-                                    variant="outlined"
-                                    size="large"
-                                    sx={{
-                                        px: 4.5,
-                                        py: 1.8,
-                                        borderRadius: 3,
-                                        fontWeight: 600,
-                                        fontSize: '1.05rem',
-                                        textTransform: 'none',
-                                        color: 'white',
-                                        borderColor: 'rgba(255, 255, 255, 0.35)',
-                                        backdropFilter: 'blur(6px)',
-                                        transition: 'all 0.3s ease',
-                                        '&:hover': {
-                                            borderColor: 'white',
-                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                            transform: 'translateY(-2px)'
-                                        }
-                                    }}
-                                    onClick={() => navigate('/login')}
-                                >
-                                    Sign In to Portal
-                                </Button>
-                            </Stack>
-                        </motion.div>
-
-                        {/* 4 Pillar Badges Grid */}
-                        <motion.div variants={fadeUp}>
-                            <Grid container spacing={2.5} justifyContent="center">
-                                {pillars.map((pillar, idx) => (
-                                    <Grid item xs={12} sm={6} md={3} key={idx}>
-                                        <Stack
-                                            direction="row"
-                                            alignItems="center"
-                                            justifyContent="center"
-                                            spacing={1.5}
-                                            sx={{
-                                                p: 1.75,
-                                                borderRadius: 3,
-                                                bgcolor: 'rgba(15, 23, 42, 0.75)',
-                                                border: '1px solid rgba(255, 255, 255, 0.15)',
-                                                backdropFilter: 'blur(10px)',
-                                                transition: 'all 0.3s ease',
-                                                '&:hover': {
-                                                    bgcolor: 'rgba(255, 255, 255, 0.12)',
-                                                    borderColor: pillar.color,
-                                                    transform: 'translateY(-2px)'
-                                                }
-                                            }}
-                                        >
-                                            <Box sx={{
-                                                p: 0.85,
-                                                borderRadius: 2,
-                                                bgcolor: pillar.bg,
-                                                color: pillar.color,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center'
-                                            }}>
-                                                {pillar.icon}
-                                            </Box>
-                                            <Typography variant="body2" fontWeight="600" color="#f8fafc" sx={{ fontSize: '0.95rem' }}>
-                                                {pillar.label}
-                                            </Typography>
-                                        </Stack>
-                                    </Grid>
-                                ))}
-                            </Grid>
-                        </motion.div>
-                    </Box>
-
-                    {/* Proportional Telemetry Dashboard Mockup Card Grid Layout (Photo 2 Fix) */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, delay: 0.3 }}
+        <Box
+            sx={{
+                minHeight: { xs: 'auto', md: '84vh' },
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center',
+                pt: '106px', // 68px navbar + 38px (approx 1 cm) gap
+                pb: { xs: 8, sm: 10, md: 12 },
+                px: { xs: 2, sm: 3, md: 4 }
+            }}
+        >
+            <Container
+                maxWidth="lg"
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={staggerContainer}
+                    style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+                >
+                    {/* UNIFIED 1:2 SPLIT FROSTED GLASS HERO CARD */}
+                    <Box
+                        sx={{
+                            width: '100%',
+                            position: 'relative',
+                            borderRadius: { xs: 4, sm: 5, md: 6 },
+                            bgcolor: 'rgba(10, 20, 42, 0.6)',
+                            backdropFilter: 'blur(24px)',
+                            WebkitBackdropFilter: 'blur(24px)',
+                            border: '1px solid rgba(255, 255, 255, 0.18)',
+                            boxShadow: `
+                                0 25px 60px -15px rgba(0, 0, 0, 0.8),
+                                0 0 50px rgba(56, 189, 248, 0.12),
+                                inset 0 1px 1px rgba(255, 255, 255, 0.25)
+                            `,
+                            overflow: 'hidden',
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' },
+                            alignItems: 'stretch',
+                            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                            '&:hover': {
+                                borderColor: 'rgba(56, 189, 248, 0.35)',
+                                boxShadow: `
+                                    0 30px 70px -15px rgba(0, 0, 0, 0.9),
+                                    0 0 60px rgba(56, 189, 248, 0.22),
+                                    inset 0 1px 1px rgba(255, 255, 255, 0.35)
+                                `
+                            }
+                        }}
                     >
-                        <Paper
-                            elevation={0}
+                        {/* LEFT 1/3 PANEL: REALISTIC SUSPENDED WATER DROPLET WITH CLIPPED BOUNDARIES */}
+                        <Box
                             sx={{
-                                maxWidth: 960,
-                                mx: 'auto',
-                                p: { xs: 3, md: 4 },
-                                borderRadius: 5,
-                                bgcolor: '#0f172a',
-                                border: '1px solid #334155',
-                                boxShadow: '0 25px 50px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(56, 189, 248, 0.12)',
-                                position: 'relative'
+                                borderRight: { md: '1px solid rgba(255, 255, 255, 0.14)' },
+                                borderBottom: { xs: '1px solid rgba(255, 255, 255, 0.14)', md: 'none' },
+                                bgcolor: 'rgba(15, 23, 42, 0.35)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden' // Left panel clipping overflow
                             }}
                         >
-                            {/* Window Header */}
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3.5} pb={2} sx={{ borderBottom: '1px solid #1e293b' }}>
-                                <Stack direction="row" spacing={1} alignItems="center">
-                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#ef4444' }} />
-                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#f59e0b' }} />
-                                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: '#10b981' }} />
-                                    <Typography variant="caption" color="#e2e8f0" sx={{ ml: 1.5, fontWeight: 600, fontSize: '0.85rem' }}>
-                                        HydroSync Telemetry Dashboard — Community Live View
-                                    </Typography>
+                            <RealisticWaterDroplet />
+                        </Box>
+
+                        {/* RIGHT 2/3 PANEL: EXISTING HYDROSYNC CONTENT */}
+                        <Box
+                            sx={{
+                                p: { xs: 4, sm: 5, md: 6, lg: 7 },
+                                display: 'flex',
+                                flexDirection: 'column',
+                                justifyContent: 'center',
+                                alignItems: { xs: 'center', md: 'flex-start' },
+                                textAlign: { xs: 'center', md: 'left' }
+                            }}
+                        >
+                            {/* Prominent Visual Focal Point: HydroSync */}
+                            <motion.div variants={fadeUp}>
+                                <Typography
+                                    variant="h1"
+                                    component="h1"
+                                    fontWeight="900"
+                                    sx={{
+                                        fontSize: { xs: '2.8rem', sm: '3.8rem', md: '4.6rem', lg: '5.2rem' },
+                                        lineHeight: 1.05,
+                                        letterSpacing: '-2px',
+                                        mb: 2,
+                                        background: 'linear-gradient(180deg, #ffffff 0%, #f0f9ff 60%, #bae6fd 100%)',
+                                        WebkitBackgroundClip: 'text',
+                                        WebkitTextFillColor: 'transparent',
+                                        textShadow: '0 4px 30px rgba(56, 189, 248, 0.3)',
+                                        filter: 'drop-shadow(0 4px 20px rgba(0, 0, 0, 0.5))'
+                                    }}
+                                >
+                                    HydroSync
+                                </Typography>
+                            </motion.div>
+
+                            {/* Existing Hero Title / Subheading */}
+                            <motion.div variants={fadeUp}>
+                                <Typography
+                                    variant="h2"
+                                    fontWeight="700"
+                                    sx={{
+                                        fontSize: { xs: '1.18rem', sm: '1.45rem', md: '1.65rem', lg: '1.85rem' },
+                                        lineHeight: 1.3,
+                                        color: '#38bdf8',
+                                        mb: 3,
+                                        letterSpacing: '-0.5px',
+                                        textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                                    }}
+                                >
+                                    Smart Water Monitoring & Fair Billing Platform
+                                </Typography>
+                            </motion.div>
+
+                            {/* Existing Hero Paragraph Description */}
+                            <motion.div variants={fadeUp}>
+                                <Typography
+                                    variant="body1"
+                                    sx={{
+                                        color: '#C4C0C3',
+                                        fontWeight: 400,
+                                        lineHeight: 1.7,
+                                        mb: 4.5,
+                                        maxWidth: 620,
+                                        fontSize: { xs: '0.98rem', sm: '1.05rem', md: '1.12rem' },
+                                        textShadow: '0 2px 8px rgba(0,0,0,0.6)'
+                                    }}
+                                >
+                                    Automated smart meter tracking, transparent tier billing, instant leak alerts, and comprehensive community management in one intelligent platform.
+                                </Typography>
+                            </motion.div>
+
+                            {/* CTA Buttons */}
+                            <motion.div variants={fadeUp}>
+                                <Stack
+                                    direction={{ xs: 'column', sm: 'row' }}
+                                    spacing={2.5}
+                                    alignItems="center"
+                                >
+                                    <Button
+                                        variant="contained"
+                                        size="large"
+                                        endIcon={<ArrowForwardIcon />}
+                                        onClick={() => navigate('/register')}
+                                        sx={{
+                                            px: 4,
+                                            py: 1.6,
+                                            borderRadius: '9999px',
+                                            fontWeight: 700,
+                                            fontSize: '1rem',
+                                            textTransform: 'none',
+                                            bgcolor: '#38bdf8',
+                                            color: '#090d16',
+                                            boxShadow: '0 0 25px rgba(56, 189, 248, 0.5), 0 4px 14px rgba(0, 0, 0, 0.4)',
+                                            transition: 'all 0.25s ease',
+                                            '&:hover': {
+                                                bgcolor: '#7dd3fc',
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: '0 0 35px rgba(56, 189, 248, 0.7), 0 6px 20px rgba(0, 0, 0, 0.5)'
+                                            }
+                                        }}
+                                    >
+                                        Get Started Free
+                                    </Button>
+
+                                    <Button
+                                        variant="outlined"
+                                        size="large"
+                                        startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important' }} />}
+                                        onClick={() => navigate('/login')}
+                                        sx={{
+                                            px: 3.5,
+                                            py: 1.6,
+                                            borderRadius: '9999px',
+                                            fontWeight: 600,
+                                            fontSize: '1rem',
+                                            textTransform: 'none',
+                                            color: '#ffffff',
+                                            borderColor: 'rgba(255, 255, 255, 0.3)',
+                                            bgcolor: 'rgba(255, 255, 255, 0.06)',
+                                            backdropFilter: 'blur(8px)',
+                                            WebkitBackdropFilter: 'blur(8px)',
+                                            transition: 'all 0.25s ease',
+                                            '&:hover': {
+                                                borderColor: 'rgba(255, 255, 255, 0.6)',
+                                                bgcolor: 'rgba(255, 255, 255, 0.14)',
+                                                transform: 'translateY(-2px)'
+                                            }
+                                        }}
+                                    >
+                                        Sign In to Portal
+                                    </Button>
                                 </Stack>
-                                <Chip
-                                    icon={<CheckCircleIcon sx={{ fontSize: '14px !important', color: '#6ee7b7 !important' }} />}
-                                    label="148 Smart Meters Online"
-                                    size="small"
-                                    sx={{ bgcolor: 'rgba(16, 185, 129, 0.12)', color: '#6ee7b7', fontWeight: 600, fontSize: '0.78rem', px: 0.75 }}
-                                />
-                            </Stack>
-
-                            {/* Inside Cards Grid: Row 1 = 3 cols (equal ratio 1:1:1), Row 2 = 1 col (Photo 2 Fix) */}
-                            <Grid container spacing={3}>
-                                {/* ROW 1: 3 COLUMNS EQUAL RATIO */}
-                                <Grid item xs={12} md={4}>
-                                    <Box sx={{ p: 2.75, borderRadius: 3.5, bgcolor: '#1e293b', border: '1px solid #334155', height: '100%' }}>
-                                        <Typography variant="caption" color="#e2e8f0" fontWeight="600" display="block" mb={0.75} sx={{ fontSize: '0.85rem' }}>
-                                            Current Flow Rate
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="800" color="#7dd3fc" mb={0.75} sx={{ letterSpacing: '-0.5px' }}>
-                                            42.5 L/min
-                                        </Typography>
-                                        <Typography variant="caption" color="#6ee7b7" fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
-                                            ⚡ 100% Real-Time Sync
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                <Grid item xs={12} md={4}>
-                                    <Box sx={{ p: 2.75, borderRadius: 3.5, bgcolor: '#1e293b', border: '1px solid #334155', height: '100%' }}>
-                                        <Typography variant="caption" color="#e2e8f0" fontWeight="600" display="block" mb={0.75} sx={{ fontSize: '0.85rem' }}>
-                                            Monthly Community Usage
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="800" color="#6ee7b7" mb={0.75} sx={{ letterSpacing: '-0.5px' }}>
-                                            14,280 L
-                                        </Typography>
-                                        <Typography variant="caption" color="#e2e8f0" fontWeight="500" sx={{ fontSize: '0.8rem' }}>
-                                            Slab Tier 1 (Optimal Range)
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                <Grid item xs={12} md={4}>
-                                    <Box sx={{ p: 2.75, borderRadius: 3.5, bgcolor: '#1e293b', border: '1px solid #334155', height: '100%' }}>
-                                        <Typography variant="caption" color="#e2e8f0" fontWeight="600" display="block" mb={0.75} sx={{ fontSize: '0.85rem' }}>
-                                            Active Leak Alerts
-                                        </Typography>
-                                        <Typography variant="h4" fontWeight="800" color="#c4b5fd" mb={0.75} sx={{ letterSpacing: '-0.5px' }}>
-                                            0 Detected
-                                        </Typography>
-                                        <Typography variant="caption" color="#6ee7b7" fontWeight="600" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.8rem' }}>
-                                            <ShieldCheckIcon sx={{ fontSize: 15 }} /> All Systems Normal
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-
-                                {/* ROW 2: 1 COLUMN SPANNING ALL 3 COLUMNS */}
-                                <Grid item xs={12}>
-                                    <Box sx={{ p: 3, borderRadius: 3.5, bgcolor: '#1e293b', border: '1px solid #334155' }}>
-                                        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5}>
-                                            <Typography variant="subtitle2" color="#f8fafc" fontWeight="700" sx={{ fontSize: '0.95rem' }}>
-                                                24-Hour Community Water Telemetry (Liters / Hour)
-                                            </Typography>
-                                            <Stack direction="row" spacing={1} alignItems="center">
-                                                <SpeedIcon sx={{ color: '#7dd3fc', fontSize: 18 }} />
-                                                <Typography variant="caption" color="#e2e8f0" fontWeight="500">Updated Just Now</Typography>
-                                            </Stack>
-                                        </Stack>
-
-                                        {/* Bar Visualizer */}
-                                        <Stack direction="row" spacing={1.5} alignItems="flex-end" sx={{ height: 110, pt: 1, pb: 1 }}>
-                                            {[35, 45, 60, 40, 75, 95, 70, 55, 40, 65, 80, 50].map((val, idx) => (
-                                                <Box
-                                                    key={idx}
-                                                    sx={{
-                                                        flex: 1,
-                                                        height: `${val}%`,
-                                                        bgcolor: idx === 5 ? '#38bdf8' : idx === 4 ? '#0284c7' : 'rgba(56, 189, 248, 0.25)',
-                                                        borderRadius: '6px 6px 0 0',
-                                                        transition: 'all 0.3s ease',
-                                                        '&:hover': { bgcolor: '#38bdf8', transform: 'scaleY(1.05)' }
-                                                    }}
-                                                />
-                                            ))}
-                                        </Stack>
-
-                                        {/* Discrete Properly Spaced Light Time Axis Labels */}
-                                        <Box sx={{ pt: 1.5, mt: 1, borderTop: '1px solid #334155' }}>
-                                            <Grid container justifyContent="space-between" alignItems="center">
-                                                {timeLabels.map((time, i) => (
-                                                    <Grid item key={i} sx={{ textAlign: 'center' }}>
-                                                        <Typography variant="caption" color="#e2e8f0" fontWeight="600" sx={{ fontSize: '0.8rem' }}>
-                                                            {time}
-                                                        </Typography>
-                                                    </Grid>
-                                                ))}
-                                            </Grid>
-                                        </Box>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </motion.div>
+                            </motion.div>
+                        </Box>
+                    </Box>
                 </motion.div>
             </Container>
-
-            {/* Bottom Wave Divider */}
-            <Box sx={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                lineHeight: 0,
-                overflow: 'hidden'
-            }}>
-                <svg viewBox="0 0 1200 120" preserveAspectRatio="none" style={{ width: '100%', height: '54px', display: 'block' }}>
-                    <path d="M0,0 C150,90 350,-40 500,40 C650,120 900,10 1200,40 L1200,120 L0,120 Z" fill="#ffffff"></path>
-                </svg>
-            </Box>
         </Box>
     );
 }

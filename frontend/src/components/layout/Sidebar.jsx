@@ -269,174 +269,224 @@ function Sidebar({ mobileOpen, onMobileClose }) {
                 height: "100%",
                 display: "flex",
                 flexDirection: "column",
-                bgcolor: sidebarBg,
+                position: "relative",
+                bgcolor: "#030712",
                 overflow: "hidden",
             }}
         >
-            {/* ── Logo / Brand Header ── */}
+            {/* Cinematic Liquid Water Video Background for Sidebar */}
             <Box
+                component="video"
+                autoPlay
+                loop
+                muted
+                playsInline
                 sx={{
-                    height: 64,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: effectiveCollapsed ? "center" : "space-between",
-                    px: effectiveCollapsed ? 1.5 : 2.5,
-                    flexShrink: 0,
-                    borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    position: "absolute",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    filter: "brightness(0.38) contrast(1.15)",
+                    zIndex: 0,
+                    pointerEvents: "none"
                 }}
             >
-                {(!effectiveCollapsed || isMobile) && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                        {/* Water drop mark */}
+                <source src="/liquid-water-hero.mp4" type="video/mp4" />
+            </Box>
+
+            {/* Dark Gradient Overlay for Sidebar */}
+            <Box
+                sx={{
+                    position: "absolute",
+                    inset: 0,
+                    background: `
+                        linear-gradient(180deg, rgba(3, 7, 18, 0.7) 0%, rgba(3, 7, 18, 0.3) 45%, rgba(3, 7, 18, 0.85) 100%),
+                        radial-gradient(ellipse at 50% 40%, rgba(2, 132, 199, 0.08) 0%, transparent 80%)
+                    `,
+                    zIndex: 1,
+                    pointerEvents: "none"
+                }}
+            />
+
+            {/* Inner Content Area */}
+            <Box
+                sx={{
+                    position: "relative",
+                    zIndex: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    height: "100%",
+                    width: "100%",
+                    bgcolor: "transparent"
+                }}
+            >
+                {/* ── Logo / Brand Header ── */}
+                <Box
+                    sx={{
+                        height: 64,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: effectiveCollapsed ? "center" : "space-between",
+                        px: effectiveCollapsed ? 1.5 : 2.5,
+                        flexShrink: 0,
+                        borderBottom: "1px solid rgba(255,255,255,0.06)",
+                    }}
+                >
+                    {(!effectiveCollapsed || isMobile) && (
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                            {/* Water drop mark */}
+                            <Box
+                                sx={{
+                                    width: 28,
+                                    height: 28,
+                                    borderRadius: "8px",
+                                    bgcolor: theme.palette.primary.main,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                }}
+                            >
+                                <WaterDropIcon sx={{ fontSize: "1rem", color: "#fff" }} />
+                            </Box>
+                            <Typography
+                                variant="h6"
+                                sx={{
+                                    fontWeight: 700,
+                                    fontSize: "0.9375rem",
+                                    letterSpacing: "-0.3px",
+                                    color: "#fff",
+                                    lineHeight: 1,
+                                }}
+                            >
+                                HydroSync
+                            </Typography>
+                        </Box>
+                    )}
+
+                    {effectiveCollapsed && (
                         <Box
                             sx={{
-                                width: 28,
-                                height: 28,
+                                width: 32,
+                                height: 32,
                                 borderRadius: "8px",
                                 bgcolor: theme.palette.primary.main,
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
-                                flexShrink: 0,
                             }}
                         >
-                            <WaterDropIcon sx={{ fontSize: "1rem", color: "#fff" }} />
+                            <WaterDropIcon sx={{ fontSize: "1.125rem", color: "#fff" }} />
                         </Box>
+                    )}
+
+                    {!isMobile && (
+                        <Tooltip
+                            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                            placement="right"
+                            arrow
+                        >
+                            <IconButton
+                                onClick={toggleCollapse}
+                                size="small"
+                                aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                                sx={{
+                                    color: "rgba(148, 163, 184, 0.7)",
+                                    borderRadius: "6px",
+                                    "&:hover": {
+                                        bgcolor: "rgba(255,255,255,0.08)",
+                                        color: "#fff",
+                                    },
+                                }}
+                            >
+                                {isCollapsed ? (
+                                    <MenuIcon sx={{ fontSize: "1.125rem" }} />
+                                ) : (
+                                    <MenuOpenIcon sx={{ fontSize: "1.125rem" }} />
+                                )}
+                            </IconButton>
+                        </Tooltip>
+                    )}
+                </Box>
+
+                {/* ── Navigation List ── */}
+                <Box
+                    sx={{
+                        flexGrow: 1,
+                        overflowY: "auto",
+                        overflowX: "hidden",
+                        py: 1.5,
+                        // Custom scrollbar for dark sidebar
+                        "&::-webkit-scrollbar": { width: "4px" },
+                        "&::-webkit-scrollbar-track": { background: "transparent" },
+                        "&::-webkit-scrollbar-thumb": {
+                            background: "rgba(255,255,255,0.1)",
+                            borderRadius: "9999px",
+                        },
+                        "&::-webkit-scrollbar-thumb:hover": {
+                            background: "rgba(255,255,255,0.18)",
+                        },
+                    }}
+                >
+                    <List sx={{ pt: 0, pb: 0 }} disablePadding>
+                        {navItems.map((item, index) => (
+                            <NavItem
+                                key={index}
+                                item={item}
+                                isCollapsed={effectiveCollapsed}
+                                isActive={
+                                    location.pathname === item.path ||
+                                    (item.children &&
+                                        item.children.some((c) => location.pathname === c.path))
+                                }
+                            />
+                        ))}
+                    </List>
+                </Box>
+
+                {/* ── User Role Footer ── */}
+                {!effectiveCollapsed && user && (
+                    <Box
+                        sx={{
+                            px: 2.5,
+                            py: 1.5,
+                            borderTop: "1px solid rgba(255,255,255,0.06)",
+                            flexShrink: 0,
+                        }}
+                    >
                         <Typography
-                            variant="h6"
+                            variant="caption"
                             sx={{
-                                fontWeight: 700,
-                                fontSize: "0.9375rem",
-                                letterSpacing: "-0.3px",
-                                color: "#fff",
-                                lineHeight: 1,
+                                display: "block",
+                                fontSize: "0.6875rem",
+                                fontWeight: 500,
+                                color: "rgba(148, 163, 184, 0.5)",
+                                textTransform: "uppercase",
+                                letterSpacing: "0.06em",
+                                lineHeight: 1.2,
                             }}
                         >
-                            HydroSync
+                            Signed in as
+                        </Typography>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                mt: 0.25,
+                                fontSize: "0.8125rem",
+                                fontWeight: 500,
+                                color: "rgba(226, 232, 240, 0.85)",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                            }}
+                        >
+                            {user.fullName || user.email || "User"}
                         </Typography>
                     </Box>
                 )}
-
-                {effectiveCollapsed && (
-                    <Box
-                        sx={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: "8px",
-                            bgcolor: theme.palette.primary.main,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <WaterDropIcon sx={{ fontSize: "1.125rem", color: "#fff" }} />
-                    </Box>
-                )}
-
-                {!isMobile && (
-                    <Tooltip
-                        title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                        placement="right"
-                        arrow
-                    >
-                        <IconButton
-                            onClick={toggleCollapse}
-                            size="small"
-                            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-                            sx={{
-                                color: "rgba(148, 163, 184, 0.7)",
-                                borderRadius: "6px",
-                                "&:hover": {
-                                    bgcolor: "rgba(255,255,255,0.08)",
-                                    color: "#fff",
-                                },
-                            }}
-                        >
-                            {isCollapsed ? (
-                                <MenuIcon sx={{ fontSize: "1.125rem" }} />
-                            ) : (
-                                <MenuOpenIcon sx={{ fontSize: "1.125rem" }} />
-                            )}
-                        </IconButton>
-                    </Tooltip>
-                )}
             </Box>
-
-            {/* ── Navigation List ── */}
-            <Box
-                sx={{
-                    flexGrow: 1,
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    py: 1.5,
-                    // Custom scrollbar for dark sidebar
-                    "&::-webkit-scrollbar": { width: "4px" },
-                    "&::-webkit-scrollbar-track": { background: "transparent" },
-                    "&::-webkit-scrollbar-thumb": {
-                        background: "rgba(255,255,255,0.1)",
-                        borderRadius: "9999px",
-                    },
-                    "&::-webkit-scrollbar-thumb:hover": {
-                        background: "rgba(255,255,255,0.18)",
-                    },
-                }}
-            >
-                <List sx={{ pt: 0, pb: 0 }} disablePadding>
-                    {navItems.map((item, index) => (
-                        <NavItem
-                            key={index}
-                            item={item}
-                            isCollapsed={effectiveCollapsed}
-                            isActive={
-                                location.pathname === item.path ||
-                                (item.children &&
-                                    item.children.some((c) => location.pathname === c.path))
-                            }
-                        />
-                    ))}
-                </List>
-            </Box>
-
-            {/* ── User Role Footer ── */}
-            {!effectiveCollapsed && user && (
-                <Box
-                    sx={{
-                        px: 2.5,
-                        py: 1.5,
-                        borderTop: "1px solid rgba(255,255,255,0.06)",
-                        flexShrink: 0,
-                    }}
-                >
-                    <Typography
-                        variant="caption"
-                        sx={{
-                            display: "block",
-                            fontSize: "0.6875rem",
-                            fontWeight: 500,
-                            color: "rgba(148, 163, 184, 0.5)",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.06em",
-                            lineHeight: 1.2,
-                        }}
-                    >
-                        Signed in as
-                    </Typography>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            mt: 0.25,
-                            fontSize: "0.8125rem",
-                            fontWeight: 500,
-                            color: "rgba(226, 232, 240, 0.85)",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                        }}
-                    >
-                        {user.fullName || user.email || "User"}
-                    </Typography>
-                </Box>
-            )}
         </Box>
     );
 

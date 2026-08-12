@@ -117,11 +117,13 @@ function getActiveLanguageCode() {
     return localStorage.getItem(STORAGE_KEY) || "en";
 }
 
-export default function LanguageSelector({ variant = "navbar" }) {
+export default function LanguageSelector({ variant = "navbar", isDark = false }) {
     const theme = useTheme();
     const [anchorEl, setAnchorEl] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCode, setSelectedCode] = useState(() => getActiveLanguageCode());
+
+    const isDarkMode = isDark || variant === "dark";
 
     // Keep selectedCode strictly synced with cookie / localStorage on mount & focus
     useEffect(() => {
@@ -135,32 +137,29 @@ export default function LanguageSelector({ variant = "navbar" }) {
         return () => window.removeEventListener("focus", syncActiveLang);
     }, []);
 
-    const handleOpen = (e) => {
-        setAnchorEl(e.currentTarget);
-    };
-
+    const handleOpen = (e) => setAnchorEl(e.currentTarget);
     const handleClose = () => {
         setAnchorEl(null);
         setSearchQuery("");
     };
 
-    const handleSelectLanguage = (langCode) => {
-        setSelectedCode(langCode);
-        setGoogleTranslateLanguage(langCode);
+    const handleSelectLanguage = (code) => {
+        setSelectedCode(code);
+        setGoogleTranslateLanguage(code);
         handleClose();
     };
 
+    const filterLangs = (langs) => {
+        if (!searchQuery.trim()) return langs;
+        const q = searchQuery.toLowerCase();
+        return langs.filter((l) => l.name.toLowerCase().includes(q) || l.code.toLowerCase().includes(q));
+    };
+
+    const recommendedLangs = filterLangs(LANGUAGES.filter((l) => l.group === "RECOMMENDED"));
+    const indianLangs = filterLangs(LANGUAGES.filter((l) => l.group === "INDIAN"));
+    const globalLangs = filterLangs(LANGUAGES.filter((l) => l.group === "GLOBAL"));
+
     const selectedLangObj = LANGUAGES.find((l) => l.code === selectedCode) || LANGUAGES[0];
-
-    const filteredLanguages = LANGUAGES.filter(
-        (l) =>
-            l.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            l.code.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const recommendedLangs = filteredLanguages.filter((l) => l.group === "RECOMMENDED");
-    const indianLangs = filteredLanguages.filter((l) => l.group === "INDIAN");
-    const globalLangs = filteredLanguages.filter((l) => l.group === "GLOBAL");
 
     const renderMenuItem = (lang) => {
         const isSelected = selectedCode === lang.code;
@@ -175,19 +174,23 @@ export default function LanguageSelector({ variant = "navbar" }) {
                     px: 1.5,
                     fontSize: "0.8125rem",
                     fontWeight: isSelected ? 700 : 500,
-                    bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : "transparent",
-                    color: isSelected ? "primary.main" : "text.primary",
+                    bgcolor: isSelected
+                        ? (isDarkMode ? "rgba(56, 189, 248, 0.2)" : alpha(theme.palette.primary.main, 0.1))
+                        : "transparent",
+                    color: isSelected
+                        ? (isDarkMode ? "#38bdf8" : "primary.main")
+                        : (isDarkMode ? "#f8fafc" : "text.primary"),
                     transition: "all 0.15s ease",
                     "&:hover": {
                         bgcolor: isSelected
-                            ? alpha(theme.palette.primary.main, 0.15)
-                            : alpha(theme.palette.primary.main, 0.05),
+                            ? (isDarkMode ? "rgba(56, 189, 248, 0.25)" : alpha(theme.palette.primary.main, 0.15))
+                            : (isDarkMode ? "rgba(255, 255, 255, 0.08)" : alpha(theme.palette.primary.main, 0.05)),
                     },
                 }}
             >
                 <ListItemIcon sx={{ minWidth: 32, fontSize: "1.1rem" }}>{lang.flag}</ListItemIcon>
                 <Box sx={{ flexGrow: 1 }}>{lang.name}</Box>
-                {isSelected && <CheckIcon color="primary" sx={{ fontSize: "1.1rem", ml: 1 }} />}
+                {isSelected && <CheckIcon color={isDarkMode ? "info" : "primary"} sx={{ fontSize: "1.1rem", ml: 1, color: isDarkMode ? "#38bdf8" : undefined }} />}
             </MenuItem>
         );
     };
@@ -199,23 +202,25 @@ export default function LanguageSelector({ variant = "navbar" }) {
                     onClick={handleOpen}
                     variant="outlined"
                     size="small"
-                    startIcon={<LanguageIcon sx={{ fontSize: "1.25rem !important", color: "primary.main" }} />}
-                    endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", color: "text.secondary" }} />}
+                    startIcon={<LanguageIcon sx={{ fontSize: "1.25rem !important", color: isDarkMode ? "#38bdf8 !important" : "primary.main" }} />}
+                    endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", color: isDarkMode ? "rgba(255, 255, 255, 0.7) !important" : "text.secondary" }} />}
                     sx={{
                         textTransform: "none",
                         fontWeight: 600,
                         fontSize: "0.8125rem",
-                        color: "text.primary",
-                        borderColor: "divider",
-                        borderRadius: "8px",
-                        px: 1.5,
+                        color: isDarkMode ? "#ffffff" : "text.primary",
+                        borderColor: isDarkMode ? "rgba(255, 255, 255, 0.2)" : "divider",
+                        borderRadius: isDarkMode ? "9999px" : "8px",
+                        px: 1.75,
                         py: 0.6,
                         minWidth: 130,
-                        bgcolor: "background.paper",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+                        bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.08)" : "background.paper",
+                        backdropFilter: isDarkMode ? "blur(8px)" : undefined,
+                        WebkitBackdropFilter: isDarkMode ? "blur(8px)" : undefined,
+                        boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.04)",
                         "&:hover": {
-                            bgcolor: alpha(theme.palette.primary.main, 0.04),
-                            borderColor: "primary.main",
+                            bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.16)" : alpha(theme.palette.primary.main, 0.04),
+                            borderColor: isDarkMode ? "rgba(255, 255, 255, 0.4)" : "primary.main",
                         },
                     }}
                 >
@@ -236,9 +241,12 @@ export default function LanguageSelector({ variant = "navbar" }) {
                             width: 290,
                             maxHeight: 420,
                             borderRadius: 3,
-                            boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+                            boxShadow: isDarkMode ? "0 20px 40px rgba(0,0,0,0.6)" : "0 10px 30px rgba(0,0,0,0.12)",
                             mt: 1,
                             p: 1,
+                            bgcolor: isDarkMode ? "#0f172a" : "background.paper",
+                            color: isDarkMode ? "#ffffff" : "text.primary",
+                            border: isDarkMode ? "1px solid rgba(255, 255, 255, 0.15)" : undefined,
                         },
                     },
                 }}
