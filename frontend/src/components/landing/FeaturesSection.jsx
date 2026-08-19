@@ -33,8 +33,8 @@ const features = [
     {
         title: 'Email Notifications',
         icon: <EmailIcon sx={{ fontSize: 30 }} />,
-        color: '#a78bfa',
-        bg: 'rgba(167, 139, 250, 0.15)',
+        color: '#0ea5e9',
+        bg: 'rgba(14, 165, 233, 0.15)',
         desc: 'Automated email dispatching for monthly bill statements, payment receipts, and critical leak alert notifications.'
     },
     {

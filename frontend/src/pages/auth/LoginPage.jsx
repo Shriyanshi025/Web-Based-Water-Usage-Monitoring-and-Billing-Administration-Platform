@@ -177,16 +177,50 @@ export default function LoginPage() {
                 />
 
                 <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
-                    <FormControlLabel control={<Checkbox color="primary" />} label={<Typography variant="body2">Remember Me</Typography>} />
-                    <Link component={RouterLink} to="#" variant="body2" sx={{ fontWeight: 600 }}>Forgot Password?</Link>
+                    <FormControlLabel 
+                        control={
+                            <Checkbox 
+                                sx={{ 
+                                    color: '#0369A1', 
+                                    '&.Mui-checked': { color: '#0369A1' } 
+                                }} 
+                            />
+                        } 
+                        label={<Typography variant="body2">Remember Me</Typography>} 
+                    />
+                    <Link 
+                        component={RouterLink} 
+                        to="#" 
+                        variant="body2" 
+                        sx={{ 
+                            fontWeight: 600, 
+                            color: '#0369A1', 
+                            textDecoration: 'none',
+                            '&:hover': { color: '#075985', textDecoration: 'underline' } 
+                        }}
+                    >
+                        Forgot Password?
+                    </Link>
                 </Stack>
-
+ 
                 <Button type="submit" variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.5 }}>
                     {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
-
+ 
                 <Typography variant="body2" color="text.secondary" align="center">
-                    Don't have an account? <Link component={RouterLink} to="/register" sx={{ fontWeight: 600 }}>Create an account</Link>
+                    Don't have an account?{' '}
+                    <Link 
+                        component={RouterLink} 
+                        to="/register" 
+                        sx={{ 
+                            fontWeight: 600, 
+                            color: '#0369A1', 
+                            textDecoration: 'none',
+                            '&:hover': { color: '#075985', textDecoration: 'underline' } 
+                        }}
+                    >
+                        Create an account
+                    </Link>
                 </Typography>
             </Stack>
         </AuthLayout>

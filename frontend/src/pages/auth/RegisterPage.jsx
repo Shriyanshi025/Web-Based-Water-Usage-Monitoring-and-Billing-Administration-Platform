@@ -166,7 +166,16 @@ export default function RegisterPage() {
     return (
         <AuthLayout title="Create Account" subtitle="Join HydroSync and manage your water footprint." alignTop>
             <Box sx={{ mb: 3 }}>
-                <Stepper activeStep={activeStep} alternativeLabel>
+                <Stepper 
+                    activeStep={activeStep} 
+                    alternativeLabel
+                    sx={{
+                        '& .MuiStepIcon-root.Mui-active': { color: '#0369A1' },
+                        '& .MuiStepIcon-root.Mui-completed': { color: '#0369A1' },
+                        '& .MuiStepLabel-label.Mui-active': { color: '#0369A1', fontWeight: 'bold' },
+                        '& .MuiStepLabel-label.Mui-completed': { color: '#0369A1' },
+                    }}
+                >
                     {STEPS.map((label, index) => (
                         <Step key={label}>
                             <StepLabel>{label}</StepLabel>
@@ -174,7 +183,7 @@ export default function RegisterPage() {
                     ))}
                 </Stepper>
             </Box>
-
+ 
             {globalError && (
                 <Alert 
                     severity="error" 
@@ -192,7 +201,7 @@ export default function RegisterPage() {
                     </Typography>
                 </Alert>
             )}
-
+ 
             <FormProvider {...methods}>
                 <Box sx={{ minHeight: 300, position: 'relative' }}>
                     <AnimatePresence mode="wait">
@@ -213,25 +222,69 @@ export default function RegisterPage() {
                         </motion.div>
                     </AnimatePresence>
                 </Box>
-
+ 
                 <Stack direction="row" spacing={2} sx={{ mt: 4, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
-                    <Button disabled={activeStep === 0 || isSubmitting} onClick={handleBack} variant="outlined">
+                    <Button 
+                        disabled={activeStep === 0 || isSubmitting} 
+                        onClick={handleBack} 
+                        variant="outlined"
+                        sx={{ 
+                            color: '#0369A1', 
+                            borderColor: '#0369A1', 
+                            '&:hover': { 
+                                borderColor: '#075985', 
+                                bgcolor: 'rgba(3, 105, 161, 0.04)' 
+                            } 
+                        }}
+                    >
                         Back
                     </Button>
                     <Box sx={{ flex: 1 }} />
                     {activeStep === STEPS.length - 1 ? (
-                        <Button variant="contained" onClick={onSubmit} disabled={isSubmitting}>
+                        <Button 
+                            variant="contained" 
+                            onClick={onSubmit} 
+                            disabled={isSubmitting}
+                            sx={{
+                                bgcolor: '#0369A1',
+                                color: '#ffffff',
+                                '&:hover': { bgcolor: '#075985' }
+                            }}
+                        >
                             {isSubmitting ? "Submitting…" : "Complete Registration"}
                         </Button>
                     ) : (
-                        <Button variant="contained" onClick={handleNext}>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleNext}
+                            sx={{
+                                bgcolor: '#0369A1',
+                                color: '#ffffff',
+                                '&:hover': { bgcolor: '#075985' }
+                            }}
+                        >
                             Continue
                         </Button>
                     )}
                 </Stack>
                 <Box sx={{ mt: 3, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
-                        Already have an account? <Button variant="text" size="small" onClick={() => navigate('/login')}>Sign in</Button>
+                        Already have an account?{' '}
+                        <Button 
+                            variant="text" 
+                            size="small" 
+                            onClick={() => navigate('/login')}
+                            sx={{ 
+                                color: '#0369A1', 
+                                fontWeight: 600, 
+                                '&:hover': { 
+                                    color: '#075985', 
+                                    bgcolor: 'rgba(3, 105, 161, 0.04)' 
+                                } 
+                            }}
+                        >
+                            Sign in
+                        </Button>
                     </Typography>
                 </Box>
             </FormProvider>

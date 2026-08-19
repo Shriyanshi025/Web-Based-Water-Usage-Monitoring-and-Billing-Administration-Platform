@@ -19,8 +19,8 @@ const steps = [
         num: '02',
         title: 'Usage Analysis',
         icon: <AnalyticsIcon sx={{ fontSize: 28 }} />,
-        color: '#a78bfa',
-        bg: 'rgba(167, 139, 250, 0.15)',
+        color: '#0ea5e9',
+        bg: 'rgba(14, 165, 233, 0.15)',
         desc: 'HydroSync engine analyzes consumption trends, checks tariff slabs, and screens for continuous flow leaks.'
     },
     {
