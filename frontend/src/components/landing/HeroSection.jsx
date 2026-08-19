@@ -305,22 +305,24 @@ export default function HeroSection() {
                                             fontWeight: 600,
                                             fontSize: '1rem',
                                             textTransform: 'none',
-                                            color: '#0369A1 !important',
-                                            border: '1.5px solid #0369A1 !important',
-                                            backgroundColor: 'transparent !important',
                                             transition: 'all 0.25s ease',
-                                            '&:hover': {
+                                            '&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary': {
+                                                color: '#0369A1 !important',
+                                                border: '1.5px solid #0369A1 !important',
+                                                backgroundColor: 'transparent !important',
+                                            },
+                                            '&.MuiButton-outlinedPrimary:hover, &.MuiButton-outlined.MuiButton-colorPrimary:hover': {
                                                 color: '#075985 !important',
                                                 borderColor: '#075985 !important',
                                                 backgroundColor: 'rgba(3, 105, 161, 0.08) !important',
-                                                transform: 'translateY(-2px)'
+                                                transform: 'translateY(-2px) !important'
                                             },
-                                            '&:focus': {
+                                            '&.MuiButton-outlinedPrimary:focus, &.MuiButton-outlined.MuiButton-colorPrimary:focus': {
                                                 color: '#075985 !important',
                                                 borderColor: '#075985 !important',
                                                 backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
                                             },
-                                            '&:active': {
+                                            '&.MuiButton-outlinedPrimary:active, &.MuiButton-outlined.MuiButton-colorPrimary:active': {
                                                 color: '#075985 !important',
                                                 borderColor: '#075985 !important',
                                                 backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
