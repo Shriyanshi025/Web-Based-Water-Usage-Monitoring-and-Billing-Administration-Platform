@@ -448,9 +448,9 @@ export default function LandingPage() {
                                     variant="outlined"
                                     size="large"
                                     sx={{
-                                        borderColor: '#0369A1 !important',
                                         color: '#0369A1 !important',
-                                        bgcolor: 'transparent !important',
+                                        border: '1.5px solid #0369A1 !important',
+                                        backgroundColor: 'transparent !important',
                                         fontWeight: 600,
                                         px: 3.5,
                                         py: 1.8,
@@ -459,15 +459,20 @@ export default function LandingPage() {
                                         textTransform: 'none',
                                         transition: 'all 0.25s ease',
                                         '&:hover': {
-                                            borderColor: '#075985 !important',
                                             color: '#075985 !important',
-                                            bgcolor: 'rgba(3, 105, 161, 0.08) !important',
+                                            borderColor: '#075985 !important',
+                                            backgroundColor: 'rgba(3, 105, 161, 0.08) !important',
                                             transform: 'translateY(-2px)'
                                         },
                                         '&:focus': {
-                                            borderColor: '#0369A1 !important',
-                                            color: '#0369A1 !important',
-                                            bgcolor: 'transparent !important'
+                                            color: '#075985 !important',
+                                            borderColor: '#075985 !important',
+                                            backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
+                                        },
+                                        '&:active': {
+                                            color: '#075985 !important',
+                                            borderColor: '#075985 !important',
+                                            backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
                                         }
                                     }}
                                     onClick={() => navigate('/login')}
