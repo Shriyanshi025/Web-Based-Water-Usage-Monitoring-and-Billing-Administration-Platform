@@ -450,21 +450,24 @@ export default function LandingPage() {
                                     sx={{
                                         borderColor: '#0369A1 !important',
                                         color: '#0369A1 !important',
-                                        bgcolor: 'rgba(255, 255, 255, 0.06) !important',
+                                        bgcolor: 'transparent !important',
                                         fontWeight: 600,
                                         px: 3.5,
                                         py: 1.8,
                                         borderRadius: '9999px',
                                         fontSize: '1.05rem',
                                         textTransform: 'none',
-                                        backdropFilter: 'blur(8px)',
-                                        WebkitBackdropFilter: 'blur(8px)',
                                         transition: 'all 0.25s ease',
                                         '&:hover': {
                                             borderColor: '#075985 !important',
                                             color: '#075985 !important',
-                                            bgcolor: 'rgba(3, 105, 161, 0.06) !important',
+                                            bgcolor: 'rgba(3, 105, 161, 0.08) !important',
                                             transform: 'translateY(-2px)'
+                                        },
+                                        '&:focus': {
+                                            borderColor: '#0369A1 !important',
+                                            color: '#0369A1 !important',
+                                            bgcolor: 'transparent !important'
                                         }
                                     }}
                                     onClick={() => navigate('/login')}

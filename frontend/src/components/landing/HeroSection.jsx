@@ -307,15 +307,18 @@ export default function HeroSection() {
                                             textTransform: 'none',
                                             borderColor: '#0369A1 !important',
                                             color: '#0369A1 !important',
-                                            bgcolor: 'rgba(255, 255, 255, 0.06) !important',
-                                            backdropFilter: 'blur(8px)',
-                                            WebkitBackdropFilter: 'blur(8px)',
+                                            bgcolor: 'transparent !important',
                                             transition: 'all 0.25s ease',
                                             '&:hover': {
                                                 borderColor: '#075985 !important',
                                                 color: '#075985 !important',
-                                                bgcolor: 'rgba(3, 105, 161, 0.06) !important',
+                                                bgcolor: 'rgba(3, 105, 161, 0.08) !important',
                                                 transform: 'translateY(-2px)'
+                                            },
+                                            '&:focus': {
+                                                borderColor: '#0369A1 !important',
+                                                color: '#0369A1 !important',
+                                                bgcolor: 'transparent !important'
                                             }
                                         }}
                                     >
