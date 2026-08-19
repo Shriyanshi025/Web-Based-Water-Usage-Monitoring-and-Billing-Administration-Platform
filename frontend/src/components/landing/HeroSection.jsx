@@ -294,9 +294,9 @@ export default function HeroSection() {
                                     </Button>
 
                                     <Button
-                                        variant="contained"
+                                        variant="outlined"
                                         size="large"
-                                        startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important' }} />}
+                                        startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important', color: '#0369A1 !important' }} />}
                                         onClick={() => navigate('/login')}
                                         sx={{
                                             px: 3.5,
@@ -305,14 +305,17 @@ export default function HeroSection() {
                                             fontWeight: 600,
                                             fontSize: '1rem',
                                             textTransform: 'none',
-                                            bgcolor: '#0369A1 !important',
-                                            color: '#ffffff !important',
+                                            borderColor: '#0369A1 !important',
+                                            color: '#0369A1 !important',
+                                            bgcolor: 'rgba(255, 255, 255, 0.06) !important',
+                                            backdropFilter: 'blur(8px)',
+                                            WebkitBackdropFilter: 'blur(8px)',
                                             transition: 'all 0.25s ease',
-                                            boxShadow: '0 4px 14px rgba(3, 105, 161, 0.4)',
                                             '&:hover': {
-                                                bgcolor: '#075985 !important',
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: '0 6px 20px rgba(3, 105, 161, 0.6)'
+                                                borderColor: '#075985 !important',
+                                                color: '#075985 !important',
+                                                bgcolor: 'rgba(3, 105, 161, 0.06) !important',
+                                                transform: 'translateY(-2px)'
                                             }
                                         }}
                                     >
