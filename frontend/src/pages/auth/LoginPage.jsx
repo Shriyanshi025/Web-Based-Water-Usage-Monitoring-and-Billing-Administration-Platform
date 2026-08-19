@@ -11,8 +11,9 @@ import { login as apiLogin } from '../../services/AuthService';
 import { loginSchema } from '../../utils/schemas';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+import theme from '../../styles/theme';
 
-const authTheme = createTheme({
+const authTheme = createTheme(theme, {
     palette: {
         primary: {
             main: '#0369A1',

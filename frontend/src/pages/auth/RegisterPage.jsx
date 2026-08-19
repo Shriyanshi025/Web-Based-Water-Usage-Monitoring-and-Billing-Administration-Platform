@@ -7,8 +7,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import AuthLayout from '../../components/layout/AuthLayout';
 import { registerResident, registerCommunityAdmin, validateInvitationToken } from '../../services/AuthService';
+import theme from '../../styles/theme';
 
-const authTheme = createTheme({
+const authTheme = createTheme(theme, {
     palette: {
         primary: {
             main: '#0369A1',

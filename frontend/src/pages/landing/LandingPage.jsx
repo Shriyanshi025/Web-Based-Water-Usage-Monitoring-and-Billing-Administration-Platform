@@ -12,8 +12,9 @@ import StatsSection from '../../components/landing/StatsSection';
 import Footer from '../../components/landing/Footer';
 import LanguageSelector from '../../components/common/LanguageSelector';
 import { ContactService } from '../../services/ContactService';
+import theme from '../../styles/theme';
 
-const landingTheme = createTheme({
+const landingTheme = createTheme(theme, {
     palette: {
         primary: {
             main: '#0369A1',
@@ -475,6 +476,7 @@ export default function LandingPage() {
                 </Box>
 
                 {/* Contact Us Section */}
+                <ThemeProvider theme={theme}>
                 <Box
                     id="contact"
                     sx={{
@@ -720,6 +722,7 @@ export default function LandingPage() {
                         </Box>
                     </Container>
                 </Box>
+                </ThemeProvider>
 
                 {/* Footer */}
                 <Footer />
