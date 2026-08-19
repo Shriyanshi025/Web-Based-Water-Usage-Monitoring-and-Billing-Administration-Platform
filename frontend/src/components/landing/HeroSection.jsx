@@ -294,7 +294,7 @@ export default function HeroSection() {
                                     </Button>
 
                                     <Button
-                                        variant="outlined"
+                                        variant="contained"
                                         size="large"
                                         startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important' }} />}
                                         onClick={() => navigate('/login')}
@@ -305,16 +305,14 @@ export default function HeroSection() {
                                             fontWeight: 600,
                                             fontSize: '1rem',
                                             textTransform: 'none',
-                                            color: '#ffffff',
-                                            borderColor: 'rgba(255, 255, 255, 0.3)',
-                                            bgcolor: 'rgba(255, 255, 255, 0.06)',
-                                            backdropFilter: 'blur(8px)',
-                                            WebkitBackdropFilter: 'blur(8px)',
+                                            bgcolor: '#0369A1 !important',
+                                            color: '#ffffff !important',
                                             transition: 'all 0.25s ease',
+                                            boxShadow: '0 4px 14px rgba(3, 105, 161, 0.4)',
                                             '&:hover': {
-                                                borderColor: 'rgba(255, 255, 255, 0.6)',
-                                                bgcolor: 'rgba(255, 255, 255, 0.14)',
-                                                transform: 'translateY(-2px)'
+                                                bgcolor: '#075985 !important',
+                                                transform: 'translateY(-2px)',
+                                                boxShadow: '0 6px 20px rgba(3, 105, 161, 0.6)'
                                             }
                                         }}
                                     >

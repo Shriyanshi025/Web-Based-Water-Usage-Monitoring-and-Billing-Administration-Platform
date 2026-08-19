@@ -444,26 +444,24 @@ export default function LandingPage() {
                                 >
                                     Register Your Community
                                 </Button>
-                                <Button
-                                    variant="outlined"
+                                 <Button
+                                    variant="contained"
                                     size="large"
                                     sx={{
-                                        borderColor: 'rgba(255, 255, 255, 0.3)',
-                                        bgcolor: 'rgba(255, 255, 255, 0.06)',
-                                        color: 'white',
+                                        bgcolor: '#0369A1 !important',
+                                        color: '#ffffff !important',
                                         fontWeight: 600,
                                         px: 3.5,
                                         py: 1.8,
                                         borderRadius: '9999px',
                                         fontSize: '1.05rem',
                                         textTransform: 'none',
-                                        backdropFilter: 'blur(8px)',
-                                        WebkitBackdropFilter: 'blur(8px)',
                                         transition: 'all 0.25s ease',
+                                        boxShadow: '0 4px 14px rgba(3, 105, 161, 0.4)',
                                         '&:hover': {
-                                            borderColor: 'white',
-                                            bgcolor: 'rgba(255, 255, 255, 0.14)',
-                                            transform: 'translateY(-2px)'
+                                            bgcolor: '#075985 !important',
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: '0 6px 20px rgba(3, 105, 161, 0.6)'
                                         }
                                     }}
                                     onClick={() => navigate('/login')}
