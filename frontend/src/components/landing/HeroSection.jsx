@@ -305,27 +305,30 @@ export default function HeroSection() {
                                             fontWeight: 600,
                                             fontSize: '1rem',
                                             textTransform: 'none',
-                                            transition: 'all 0.25s ease',
+                                            transition: 'all 200ms ease',
                                             '&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary': {
                                                 color: '#0369A1 !important',
                                                 border: '1.5px solid #0369A1 !important',
                                                 backgroundColor: 'transparent !important',
                                             },
                                             '&.MuiButton-outlinedPrimary:hover, &.MuiButton-outlined.MuiButton-colorPrimary:hover': {
-                                                color: '#075985 !important',
-                                                borderColor: '#075985 !important',
-                                                backgroundColor: 'rgba(3, 105, 161, 0.08) !important',
-                                                transform: 'translateY(-2px) !important'
+                                                color: '#38BDF8 !important',
+                                                borderColor: '#38BDF8 !important',
+                                                backgroundColor: 'rgba(14, 165, 233, 0.18) !important',
+                                                transform: 'translateY(-2px) !important',
+                                                boxShadow: '0 0 16px rgba(56, 189, 248, 0.28) !important'
                                             },
                                             '&.MuiButton-outlinedPrimary:focus, &.MuiButton-outlined.MuiButton-colorPrimary:focus': {
-                                                color: '#075985 !important',
-                                                borderColor: '#075985 !important',
-                                                backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
+                                                color: '#38BDF8 !important',
+                                                borderColor: '#38BDF8 !important',
+                                                backgroundColor: 'rgba(14, 165, 233, 0.18) !important',
+                                                boxShadow: '0 0 16px rgba(56, 189, 248, 0.28) !important'
                                             },
                                             '&.MuiButton-outlinedPrimary:active, &.MuiButton-outlined.MuiButton-colorPrimary:active': {
-                                                color: '#075985 !important',
-                                                borderColor: '#075985 !important',
-                                                backgroundColor: 'rgba(3, 105, 161, 0.08) !important'
+                                                color: '#38BDF8 !important',
+                                                borderColor: '#38BDF8 !important',
+                                                backgroundColor: 'rgba(14, 165, 233, 0.18) !important',
+                                                boxShadow: '0 0 16px rgba(56, 189, 248, 0.28) !important'
                                             }
                                         }}
                                     >
