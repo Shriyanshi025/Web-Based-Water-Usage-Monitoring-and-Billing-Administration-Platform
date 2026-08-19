@@ -216,6 +216,7 @@ export default function FloatingChatbot() {
                             location.pathname.startsWith("/community-admin") ||
                             location.pathname.startsWith("/resident") ||
                             location.pathname.startsWith("/chatbot");
+    const isPublicPage = !isDashboardPath;
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -825,7 +826,9 @@ export default function FloatingChatbot() {
                                             sx={{
                                                 width: 28,
                                                 height: 28,
-                                                bgcolor: msg.sender === "user" ? theme.palette.secondary.main : theme.palette.primary.main,
+                                                bgcolor: msg.sender === "user" 
+                                                    ? (isPublicPage ? "#0ea5e9" : theme.palette.secondary.main) 
+                                                    : (isPublicPage ? "#0369A1" : theme.palette.primary.main),
                                                 fontSize: "0.8rem"
                                             }}
                                         >
@@ -837,7 +840,9 @@ export default function FloatingChatbot() {
                                                 sx={{
                                                     p: 1.5,
                                                     borderRadius: msg.sender === "user" ? "16px 4px 16px 16px" : "4px 16px 16px 16px",
-                                                    bgcolor: msg.sender === "user" ? theme.palette.primary.main : "white",
+                                                    bgcolor: msg.sender === "user" 
+                                                        ? (isPublicPage ? "#0369A1" : theme.palette.primary.main) 
+                                                        : "white",
                                                     color: msg.sender === "user" ? "white" : "text.primary",
                                                     border: msg.sender === "user" ? "none" : "1px solid rgba(224, 224, 224, 0.5)"
                                                 }}
@@ -866,7 +871,7 @@ export default function FloatingChatbot() {
                                                             sx={{
                                                                 p: 0.25,
                                                                 color: speakingMessageId === msg.id ? "error.main" : "text.secondary",
-                                                                "&:hover": { color: theme.palette.primary.main }
+                                                                "&:hover": { color: isPublicPage ? "#0369A1" : theme.palette.primary.main }
                                                             }}
                                                         >
                                                             {speakingMessageId === msg.id ? <StopIcon sx={{ fontSize: 14 }} /> : <VolumeUpIcon sx={{ fontSize: 14 }} />}
@@ -882,7 +887,7 @@ export default function FloatingChatbot() {
                             {loading && (
                                 <ListItem sx={{ p: 0, display: "flex", justifyContent: "flex-start" }}>
                                     <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                        <Avatar sx={{ width: 28, height: 28, bgcolor: theme.palette.primary.main }}>
+                                        <Avatar sx={{ width: 28, height: 28, bgcolor: isPublicPage ? "#0369A1" : theme.palette.primary.main }}>
                                             <BotIcon sx={{ fontSize: 16 }} />
                                         </Avatar>
                                         <Paper
@@ -963,9 +968,9 @@ export default function FloatingChatbot() {
                             color="primary"
                             disabled={!message.trim() || loading}
                             sx={{
-                                bgcolor: theme.palette.primary.main,
+                                bgcolor: isPublicPage ? "#0369A1" : theme.palette.primary.main,
                                 color: "white",
-                                "&:hover": { bgcolor: theme.palette.primary.dark },
+                                "&:hover": { bgcolor: isPublicPage ? "#075985" : theme.palette.primary.dark },
                                 "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.3)" },
                                 ...(isDashboardPath ? {
                                     background: "#46CBFC !important",
@@ -1009,7 +1014,14 @@ export default function FloatingChatbot() {
                             "&:hover": {
                                 background: "#0ea5e9 !important",
                             }
-                        } : {})
+                        } : {
+                            background: "#0369A1 !important",
+                            backgroundImage: "none !important",
+                            color: "#ffffff !important",
+                            "&:hover": {
+                                background: "#075985 !important",
+                            }
+                        })
                     }}
                 >
                     {open ? <CloseIcon /> : <ChatIcon />}

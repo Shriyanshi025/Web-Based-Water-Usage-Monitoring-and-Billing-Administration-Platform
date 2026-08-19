@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
     Box,
     Button,
@@ -119,6 +120,13 @@ function getActiveLanguageCode() {
 
 export default function LanguageSelector({ variant = "navbar", isDark = false }) {
     const theme = useTheme();
+    const location = useLocation();
+    const isPublicPage = !(
+        location.pathname.startsWith("/main-admin") ||
+        location.pathname.startsWith("/community-admin") ||
+        location.pathname.startsWith("/resident") ||
+        location.pathname.startsWith("/chatbot")
+    );
     const [anchorEl, setAnchorEl] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [selectedCode, setSelectedCode] = useState(() => getActiveLanguageCode());
@@ -175,22 +183,22 @@ export default function LanguageSelector({ variant = "navbar", isDark = false })
                     fontSize: "0.8125rem",
                     fontWeight: isSelected ? 700 : 500,
                     bgcolor: isSelected
-                        ? (isDarkMode ? "rgba(56, 189, 248, 0.2)" : alpha(theme.palette.primary.main, 0.1))
+                        ? (isDarkMode ? "rgba(56, 189, 248, 0.2)" : alpha(isPublicPage ? "#0369A1" : theme.palette.primary.main, 0.1))
                         : "transparent",
                     color: isSelected
-                        ? (isDarkMode ? "#38bdf8" : "primary.main")
+                        ? (isDarkMode ? "#38bdf8" : (isPublicPage ? "#0369A1" : "primary.main"))
                         : (isDarkMode ? "#f8fafc" : "text.primary"),
                     transition: "all 0.15s ease",
                     "&:hover": {
                         bgcolor: isSelected
-                            ? (isDarkMode ? "rgba(56, 189, 248, 0.25)" : alpha(theme.palette.primary.main, 0.15))
-                            : (isDarkMode ? "rgba(255, 255, 255, 0.08)" : alpha(theme.palette.primary.main, 0.05)),
+                            ? (isDarkMode ? "rgba(56, 189, 248, 0.25)" : alpha(isPublicPage ? "#0369A1" : theme.palette.primary.main, 0.15))
+                            : (isDarkMode ? "rgba(255, 255, 255, 0.08)" : alpha(isPublicPage ? "#0369A1" : theme.palette.primary.main, 0.05)),
                     },
                 }}
             >
                 <ListItemIcon sx={{ minWidth: 32, fontSize: "1.1rem" }}>{lang.flag}</ListItemIcon>
                 <Box sx={{ flexGrow: 1 }}>{lang.name}</Box>
-                {isSelected && <CheckIcon color={isDarkMode ? "info" : "primary"} sx={{ fontSize: "1.1rem", ml: 1, color: isDarkMode ? "#38bdf8" : undefined }} />}
+                {isSelected && <CheckIcon color={isDarkMode ? "info" : (isPublicPage ? undefined : "primary")} sx={{ fontSize: "1.1rem", ml: 1, color: isDarkMode ? "#38bdf8" : (isPublicPage ? "#0369A1" : undefined) }} />}
             </MenuItem>
         );
     };
@@ -202,7 +210,7 @@ export default function LanguageSelector({ variant = "navbar", isDark = false })
                     onClick={handleOpen}
                     variant="outlined"
                     size="small"
-                    startIcon={<LanguageIcon sx={{ fontSize: "1.25rem !important", color: isDarkMode ? "#38bdf8 !important" : "primary.main" }} />}
+                    startIcon={<LanguageIcon sx={{ fontSize: "1.25rem !important", color: isDarkMode ? "#38bdf8 !important" : (isPublicPage ? "#0369A1 !important" : "primary.main") }} />}
                     endIcon={<ExpandMoreIcon sx={{ fontSize: "1rem !important", color: isDarkMode ? "rgba(255, 255, 255, 0.7) !important" : "text.secondary" }} />}
                     sx={{
                         textTransform: "none",
@@ -219,8 +227,8 @@ export default function LanguageSelector({ variant = "navbar", isDark = false })
                         WebkitBackdropFilter: isDarkMode ? "blur(8px)" : undefined,
                         boxShadow: isDarkMode ? "0 2px 8px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.04)",
                         "&:hover": {
-                            bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.16)" : alpha(theme.palette.primary.main, 0.04),
-                            borderColor: isDarkMode ? "rgba(255, 255, 255, 0.4)" : "primary.main",
+                            bgcolor: isDarkMode ? "rgba(255, 255, 255, 0.16)" : alpha(isPublicPage ? "#0369A1" : theme.palette.primary.main, 0.04),
+                            borderColor: isDarkMode ? "rgba(255, 255, 255, 0.4)" : (isPublicPage ? "#0369A1" : "primary.main"),
                         },
                     }}
                 >

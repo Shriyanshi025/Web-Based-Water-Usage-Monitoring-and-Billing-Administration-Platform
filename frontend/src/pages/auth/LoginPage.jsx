@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, TextField, Typography, Alert, Stack, FormControlLabel, Checkbox, Link, InputAdornment, IconButton, Divider } from '@mui/material';
+import { Box, Button, TextField, Typography, Alert, Stack, FormControlLabel, Checkbox, Link, InputAdornment, IconButton, Divider, createTheme, ThemeProvider } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
@@ -11,6 +11,74 @@ import { login as apiLogin } from '../../services/AuthService';
 import { loginSchema } from '../../utils/schemas';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
+
+const authTheme = createTheme({
+    palette: {
+        primary: {
+            main: '#0369A1',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+        secondary: {
+            main: '#0284c7',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    '&.MuiButton-textPrimary, &.MuiButton-text.MuiButton-colorPrimary': {
+                        color: '#0369A1 !important',
+                        '&:hover': {
+                            color: '#075985 !important',
+                            background: 'rgba(3, 105, 161, 0.04) !important',
+                        },
+                    },
+                    '&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary': {
+                        borderColor: '#0369A1 !important',
+                        color: '#0369A1 !important',
+                        '&:hover': {
+                            borderColor: '#075985 !important',
+                            color: '#075985 !important',
+                            background: 'rgba(3, 105, 161, 0.04) !important',
+                        },
+                    },
+                    '&.MuiButton-containedPrimary, &.MuiButton-contained.MuiButton-colorPrimary': {
+                        background: '#0369A1 !important',
+                        color: '#ffffff !important',
+                        '&:hover': {
+                            background: '#075985 !important',
+                        },
+                    },
+                },
+            },
+        },
+        MuiLink: {
+            styleOverrides: {
+                root: {
+                    color: '#0369A1 !important',
+                    '&:hover': {
+                        color: '#075985 !important',
+                    },
+                },
+            },
+        },
+        MuiCheckbox: {
+            styleOverrides: {
+                root: {
+                    color: '#0369A1 !important',
+                    '&.Mui-checked': {
+                        color: '#0369A1 !important',
+                    },
+                },
+            },
+        },
+    },
+});
 
 import { ROUTES } from '../../constants/routes';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
@@ -131,7 +199,8 @@ export default function LoginPage() {
     };
 
     return (
-        <AuthLayout title="Welcome Back" subtitle="Sign in to your account to continue">
+        <ThemeProvider theme={authTheme}>
+            <AuthLayout title="Welcome Back" subtitle="Sign in to your account to continue">
             <Stack spacing={3}>
                 <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                     <div id="googleBtn" style={{ minHeight: '40px', width: '100%', display: 'flex', justifyContent: 'center' }}></div>
@@ -181,8 +250,8 @@ export default function LoginPage() {
                         control={
                             <Checkbox 
                                 sx={{ 
-                                    color: '#0369A1', 
-                                    '&.Mui-checked': { color: '#0369A1' } 
+                                    color: '#0369A1 !important', 
+                                    '&.Mui-checked': { color: '#0369A1 !important' } 
                                 }} 
                             />
                         } 
@@ -194,16 +263,27 @@ export default function LoginPage() {
                         variant="body2" 
                         sx={{ 
                             fontWeight: 600, 
-                            color: '#0369A1', 
+                            color: '#0369A1 !important', 
                             textDecoration: 'none',
-                            '&:hover': { color: '#075985', textDecoration: 'underline' } 
+                            '&:hover': { color: '#075985 !important', textDecoration: 'underline' } 
                         }}
                     >
                         Forgot Password?
                     </Link>
                 </Stack>
  
-                <Button type="submit" variant="contained" size="large" disabled={isSubmitting} sx={{ py: 1.5 }}>
+                <Button 
+                    type="submit" 
+                    variant="contained" 
+                    size="large" 
+                    disabled={isSubmitting} 
+                    sx={{ 
+                        py: 1.5,
+                        bgcolor: '#0369A1 !important',
+                        color: '#ffffff !important',
+                        '&:hover': { bgcolor: '#075985 !important' }
+                    }}
+                >
                     {isSubmitting ? "Signing in..." : "Sign In"}
                 </Button>
  
@@ -214,9 +294,9 @@ export default function LoginPage() {
                         to="/register" 
                         sx={{ 
                             fontWeight: 600, 
-                            color: '#0369A1', 
+                            color: '#0369A1 !important', 
                             textDecoration: 'none',
-                            '&:hover': { color: '#075985', textDecoration: 'underline' } 
+                            '&:hover': { color: '#075985 !important', textDecoration: 'underline' } 
                         }}
                     >
                         Create an account
@@ -224,5 +304,6 @@ export default function LoginPage() {
                 </Typography>
             </Stack>
         </AuthLayout>
+        </ThemeProvider>
     );
 }

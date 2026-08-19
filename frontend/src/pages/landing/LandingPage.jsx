@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Stack, Typography, Button, TextField, Alert } from '@mui/material';
+import { Box, Container, Stack, Typography, Button, TextField, Alert, createTheme, ThemeProvider } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -12,6 +12,57 @@ import StatsSection from '../../components/landing/StatsSection';
 import Footer from '../../components/landing/Footer';
 import LanguageSelector from '../../components/common/LanguageSelector';
 import { ContactService } from '../../services/ContactService';
+
+const landingTheme = createTheme({
+    palette: {
+        primary: {
+            main: '#0369A1',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+        secondary: {
+            main: '#0284c7',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    '&.MuiButton-textPrimary, &.MuiButton-text.MuiButton-colorPrimary': {
+                        color: 'rgba(226, 232, 240, 0.65) !important',
+                        '&:hover': {
+                            color: '#38bdf8 !important',
+                            background: 'rgba(255, 255, 255, 0.08) !important',
+                        },
+                        '&:focus': {
+                            color: '#38bdf8 !important',
+                        }
+                    },
+                    '&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary': {
+                        borderColor: 'rgba(255, 255, 255, 0.3) !important',
+                        color: '#ffffff !important',
+                        background: 'rgba(255, 255, 255, 0.06) !important',
+                        '&:hover': {
+                            borderColor: 'rgba(255, 255, 255, 0.6) !important',
+                            bgcolor: 'rgba(255, 255, 255, 0.14) !important',
+                        },
+                    },
+                    '&.MuiButton-containedPrimary, &.MuiButton-contained.MuiButton-colorPrimary': {
+                        background: '#38bdf8 !important',
+                        color: '#090d16 !important',
+                        '&:hover': {
+                            background: '#7dd3fc !important',
+                        },
+                    },
+                },
+            },
+        },
+    },
+});
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -93,7 +144,8 @@ export default function LandingPage() {
     };
 
     return (
-        <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: '#09090b', overflowX: 'hidden' }}>
+        <ThemeProvider theme={landingTheme}>
+            <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: '#09090b', overflowX: 'hidden' }}>
             {/* 1. STATIC FIXED BACKGROUND LAYER (Fixed Canvas That Never Moves or Restarts on Scroll) */}
             <Box
                 sx={{
@@ -228,7 +280,7 @@ export default function LandingPage() {
                                 variant="text"
                                 onClick={() => scrollToSection(nav.id)}
                                 sx={{
-                                    color: 'rgba(226, 232, 240, 0.65)',
+                                    color: 'rgba(226, 232, 240, 0.65) !important',
                                     fontWeight: 500,
                                     fontSize: '0.95rem',
                                     textTransform: 'none',
@@ -237,8 +289,11 @@ export default function LandingPage() {
                                     borderRadius: 2,
                                     transition: 'all 0.25s ease',
                                     '&:hover': {
-                                        color: '#ffffff',
+                                        color: '#38bdf8 !important',
                                         bgcolor: 'rgba(255, 255, 255, 0.08)'
+                                    },
+                                    '&:focus': {
+                                        color: '#38bdf8 !important'
                                     }
                                 }}
                             >
@@ -246,7 +301,7 @@ export default function LandingPage() {
                             </Button>
                         ))}
                     </Stack>
-
+ 
                     {/* Right: Action Buttons */}
                     <Stack direction="row" spacing={1.5} alignItems="center">
                         <LanguageSelector isDark={true} />
@@ -254,14 +309,15 @@ export default function LandingPage() {
                             variant="text"
                             startIcon={<LockOutlinedIcon sx={{ fontSize: '18px !important' }} />}
                             sx={{
-                                color: 'rgba(248, 250, 252, 0.85)',
+                                color: 'rgba(248, 250, 252, 0.85) !important',
                                 fontWeight: 600,
                                 px: 2.2,
                                 py: 0.9,
                                 borderRadius: 2.5,
                                 fontSize: '0.9rem',
                                 textTransform: 'none',
-                                '&:hover': { color: '#ffffff', bgcolor: 'rgba(255, 255, 255, 0.12)' }
+                                '&:hover': { color: '#38bdf8 !important', bgcolor: 'rgba(255, 255, 255, 0.12)' },
+                                '&:focus': { color: '#38bdf8 !important' }
                             }}
                             onClick={() => navigate('/login')}
                         >
@@ -669,5 +725,6 @@ export default function LandingPage() {
                 <Footer />
             </Box>
         </Box>
+        </ThemeProvider>
     );
 }

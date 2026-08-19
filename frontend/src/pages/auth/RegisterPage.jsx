@@ -1,12 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, Stack, Stepper, Step, StepLabel, Alert, Typography } from '@mui/material';
+import { Box, Button, Stack, Stepper, Step, StepLabel, Alert, Typography, Link, createTheme, ThemeProvider } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import AuthLayout from '../../components/layout/AuthLayout';
 import { registerResident, registerCommunityAdmin, validateInvitationToken } from '../../services/AuthService';
+
+const authTheme = createTheme({
+    palette: {
+        primary: {
+            main: '#0369A1',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+        secondary: {
+            main: '#0284c7',
+            light: '#38bdf8',
+            dark: '#075985',
+            contrastText: '#ffffff',
+        },
+    },
+    components: {
+        MuiButton: {
+            styleOverrides: {
+                root: {
+                    '&.MuiButton-textPrimary, &.MuiButton-text.MuiButton-colorPrimary': {
+                        color: '#0369A1 !important',
+                        '&:hover': {
+                            color: '#075985 !important',
+                            background: 'rgba(3, 105, 161, 0.04) !important',
+                        },
+                    },
+                    '&.MuiButton-outlinedPrimary, &.MuiButton-outlined.MuiButton-colorPrimary': {
+                        borderColor: '#0369A1 !important',
+                        color: '#0369A1 !important',
+                        '&:hover': {
+                            borderColor: '#075985 !important',
+                            color: '#075985 !important',
+                            background: 'rgba(3, 105, 161, 0.04) !important',
+                        },
+                    },
+                    '&.MuiButton-containedPrimary, &.MuiButton-contained.MuiButton-colorPrimary': {
+                        background: '#0369A1 !important',
+                        color: '#ffffff !important',
+                        '&:hover': {
+                            background: '#075985 !important',
+                        },
+                    },
+                },
+            },
+        },
+        MuiLink: {
+            styleOverrides: {
+                root: {
+                    color: '#0369A1 !important',
+                    '&:hover': {
+                        color: '#075985 !important',
+                    },
+                },
+            },
+        },
+        MuiStepIcon: {
+            styleOverrides: {
+                root: {
+                    '&.Mui-active': {
+                        color: '#0369A1 !important',
+                    },
+                    '&.Mui-completed': {
+                        color: '#0369A1 !important',
+                    },
+                },
+            },
+        },
+        MuiStepLabel: {
+            styleOverrides: {
+                label: {
+                    '&.Mui-active': {
+                        color: '#0369A1 !important',
+                        fontWeight: 'bold',
+                    },
+                    '&.Mui-completed': {
+                        color: '#0369A1 !important',
+                    },
+                },
+            },
+        },
+    },
+});
 import { 
     wizardStep1BasicSchema, wizardStep3ResidentSchema, wizardStep3AdminSchema, wizardStep4CredentialsSchema 
 } from '../../utils/schemas';
@@ -164,16 +247,17 @@ export default function RegisterPage() {
     };
 
     return (
-        <AuthLayout title="Create Account" subtitle="Join HydroSync and manage your water footprint." alignTop>
+        <ThemeProvider theme={authTheme}>
+            <AuthLayout title="Create Account" subtitle="Join HydroSync and manage your water footprint." alignTop>
             <Box sx={{ mb: 3 }}>
                 <Stepper 
                     activeStep={activeStep} 
                     alternativeLabel
                     sx={{
-                        '& .MuiStepIcon-root.Mui-active': { color: '#0369A1' },
-                        '& .MuiStepIcon-root.Mui-completed': { color: '#0369A1' },
-                        '& .MuiStepLabel-label.Mui-active': { color: '#0369A1', fontWeight: 'bold' },
-                        '& .MuiStepLabel-label.Mui-completed': { color: '#0369A1' },
+                        '& .MuiStepIcon-root.Mui-active': { color: '#0369A1 !important' },
+                        '& .MuiStepIcon-root.Mui-completed': { color: '#0369A1 !important' },
+                        '& .MuiStepLabel-label.Mui-active': { color: '#0369A1 !important', fontWeight: 'bold' },
+                        '& .MuiStepLabel-label.Mui-completed': { color: '#0369A1 !important' },
                     }}
                 >
                     {STEPS.map((label, index) => (
@@ -229,11 +313,11 @@ export default function RegisterPage() {
                         onClick={handleBack} 
                         variant="outlined"
                         sx={{ 
-                            color: '#0369A1', 
-                            borderColor: '#0369A1', 
+                            color: '#0369A1 !important', 
+                            borderColor: '#0369A1 !important', 
                             '&:hover': { 
-                                borderColor: '#075985', 
-                                bgcolor: 'rgba(3, 105, 161, 0.04)' 
+                                borderColor: '#075985 !important', 
+                                bgcolor: 'rgba(3, 105, 161, 0.04) !important' 
                             } 
                         }}
                     >
@@ -246,9 +330,9 @@ export default function RegisterPage() {
                             onClick={onSubmit} 
                             disabled={isSubmitting}
                             sx={{
-                                bgcolor: '#0369A1',
-                                color: '#ffffff',
-                                '&:hover': { bgcolor: '#075985' }
+                                bgcolor: '#0369A1 !important',
+                                color: '#ffffff !important',
+                                '&:hover': { bgcolor: '#075985 !important' }
                             }}
                         >
                             {isSubmitting ? "Submitting…" : "Complete Registration"}
@@ -258,9 +342,9 @@ export default function RegisterPage() {
                             variant="contained" 
                             onClick={handleNext}
                             sx={{
-                                bgcolor: '#0369A1',
-                                color: '#ffffff',
-                                '&:hover': { bgcolor: '#075985' }
+                                bgcolor: '#0369A1 !important',
+                                color: '#ffffff !important',
+                                '&:hover': { bgcolor: '#075985 !important' }
                             }}
                         >
                             Continue
@@ -270,24 +354,26 @@ export default function RegisterPage() {
                 <Box sx={{ mt: 3, textAlign: 'center' }}>
                     <Typography variant="body2" color="text.secondary">
                         Already have an account?{' '}
-                        <Button 
-                            variant="text" 
-                            size="small" 
-                            onClick={() => navigate('/login')}
+                        <Link 
+                            component={RouterLink}
+                            to="/login"
                             sx={{ 
-                                color: '#0369A1', 
+                                color: '#0369A1 !important', 
                                 fontWeight: 600, 
+                                textDecoration: 'none',
+                                cursor: 'pointer',
                                 '&:hover': { 
-                                    color: '#075985', 
-                                    bgcolor: 'rgba(3, 105, 161, 0.04)' 
+                                    color: '#075985 !important',
+                                    textDecoration: 'underline'
                                 } 
                             }}
                         >
-                            Sign in
-                        </Button>
+                            Sign In
+                        </Link>
                     </Typography>
                 </Box>
             </FormProvider>
         </AuthLayout>
+        </ThemeProvider>
     );
 }
