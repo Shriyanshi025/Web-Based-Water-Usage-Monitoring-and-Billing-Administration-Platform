@@ -37,6 +37,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponse> googleLogin(
+            @Valid @RequestBody com.water.monitoring_and_billing_platform.dto.GoogleLoginRequest request) {
+        AuthResponse response = userService.googleLogin(request);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/me")
     public ResponseEntity<UserMeResponse> getCurrentUser(
             @AuthenticationPrincipal UserDetails userDetails) {

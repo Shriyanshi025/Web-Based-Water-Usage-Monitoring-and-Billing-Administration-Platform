@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Box, Button, TextField, Typography, Alert, Stack, FormControlLabel, Checkbox, Link, InputAdornment, IconButton } from '@mui/material';
+import { Box, Button, TextField, Typography, Alert, Stack, FormControlLabel, Checkbox, Link, InputAdornment, IconButton, Divider } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
@@ -10,6 +10,7 @@ import AuthLayout from '../../components/layout/AuthLayout';
 import { login as apiLogin } from '../../services/AuthService';
 import { loginSchema } from '../../utils/schemas';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 
 import { ROUTES } from '../../constants/routes';
 import { STORAGE_KEYS } from '../../constants/storageKeys';
@@ -22,6 +23,73 @@ export default function LoginPage() {
     const [globalError, setGlobalError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    const handleGoogleCredentialResponse = async (response) => {
+        setGlobalError("");
+        setIsSubmitting(true);
+        try {
+            const res = await api.post("/auth/google", { idToken: response.credential });
+            const data = res.data;
+            
+            if (data.message === "NEW_USER") {
+                // Pre-fill sign up state and navigate to register
+                navigate('/register', { 
+                    state: { 
+                        prefill: { 
+                            email: data.email, 
+                            fullName: data.fullName, 
+                            googleIdToken: response.credential 
+                        } 
+                    } 
+                });
+                return;
+            }
+
+            // Set standard local storage values matching previous behavior
+            storageHelper.setLocal(STORAGE_KEYS.USER_ROLE, data.role);
+            storageHelper.setLocal(STORAGE_KEYS.USER_NAME, data.fullName);
+            storageHelper.setLocal(STORAGE_KEYS.USER_EMAIL, data.email);
+            storageHelper.setLocal(STORAGE_KEYS.USER_DETAILS, data);
+            
+            // Re-sync global auth context (this properly sets AUTH_TOKEN and calls refreshCurrentUser)
+            await contextLogin(data.token);
+
+            if (data.role === "MAIN_ADMIN") {
+                navigate(ROUTES.MAIN_ADMIN_DASHBOARD);
+            } else if (data.role === "COMMUNITY_ADMIN") {
+                navigate(ROUTES.COMMUNITY_ADMIN_DASHBOARD);
+            } else {
+                navigate(ROUTES.RESIDENT_DASHBOARD);
+            }
+        } catch (err) {
+            console.error("Google Login Error:", err);
+            setGlobalError(err.response?.data?.message || "Google Sign-In failed. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    useEffect(() => {
+        const initGoogle = () => {
+            if (typeof window !== 'undefined' && window.google) {
+                window.google.accounts.id.initialize({
+                    client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '1008719970978-hb24n2dstb40o45q4cmg24u54pcp146x.apps.googleusercontent.com',
+                    callback: handleGoogleCredentialResponse,
+                });
+                const googleBtn = document.getElementById("googleBtn");
+                if (googleBtn) {
+                    window.google.accounts.id.renderButton(
+                        googleBtn,
+                        { theme: "outline", size: "large", width: 400, text: "continue_with" }
+                    );
+                }
+            }
+        };
+
+        // Give a tiny timeout for client libraries to load fully if needed
+        const timer = setTimeout(initGoogle, 300);
+        return () => clearTimeout(timer);
+    }, []);
 
     const { register, handleSubmit, formState: { errors } } = useForm({
         resolver: zodResolver(loginSchema),
@@ -64,7 +132,14 @@ export default function LoginPage() {
 
     return (
         <AuthLayout title="Welcome Back" subtitle="Sign in to your account to continue">
-            <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} noValidate>
+            <Stack spacing={3}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                    <div id="googleBtn" style={{ minHeight: '40px', width: '100%', display: 'flex', justifyContent: 'center' }}></div>
+                </Box>
+                <Divider sx={{ my: 1, color: 'text.secondary', fontSize: '0.85rem' }}>or sign in with email</Divider>
+            </Stack>
+
+            <Stack component="form" spacing={3} onSubmit={handleSubmit(onSubmit)} noValidate sx={{ mt: 2 }}>
                 {globalError && <Alert severity="error" sx={{ borderRadius: 2 }}>{globalError}</Alert>}
 
                 <TextField

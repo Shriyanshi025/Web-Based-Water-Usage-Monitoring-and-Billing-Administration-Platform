@@ -32,11 +32,30 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final InvitationRepository invitationRepository;
     private final PasswordEncoder passwordEncoder;
     private final AlertService alertService;
+    private final com.water.monitoring_and_billing_platform.util.GoogleTokenVerifier googleTokenVerifier;
 
     @Override
     @Transactional
     public AuthResponse registerResident(ResidentRegistrationRequest request) {
-        String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        String normalizedEmail;
+        String passwordToEncode;
+        if (StringUtils.hasText(request.getGoogleIdToken())) {
+            java.util.Map<String, Object> claims = googleTokenVerifier.verifyToken(request.getGoogleIdToken());
+            normalizedEmail = ((String) claims.get("email")).trim().toLowerCase(Locale.ROOT);
+            passwordToEncode = java.util.UUID.randomUUID().toString();
+            request.setEmail(normalizedEmail);
+            if (claims.get("name") != null) {
+                request.setFullName((String) claims.get("name"));
+            }
+        } else {
+            if (!StringUtils.hasText(request.getPassword()) || 
+                request.getPassword().length() < 8 || 
+                request.getPassword().length() > 20) {
+                throw new IllegalArgumentException("Password must be between 8 and 20 characters.");
+            }
+            normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+            passwordToEncode = request.getPassword();
+        }
 
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new EmailAlreadyExistsException();
@@ -100,7 +119,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(normalizedEmail)
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(passwordToEncode))
                 .role(Role.USER)
                 .active(true)
                 .approvalStatus(ApprovalStatus.PENDING)
@@ -155,7 +174,25 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     @Transactional
     public AuthResponse registerCommunityAdmin(CommunityAdminRegistrationRequest request) {
-        String normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+        String normalizedEmail;
+        String passwordToEncode;
+        if (StringUtils.hasText(request.getGoogleIdToken())) {
+            java.util.Map<String, Object> claims = googleTokenVerifier.verifyToken(request.getGoogleIdToken());
+            normalizedEmail = ((String) claims.get("email")).trim().toLowerCase(Locale.ROOT);
+            passwordToEncode = java.util.UUID.randomUUID().toString();
+            request.setEmail(normalizedEmail);
+            if (claims.get("name") != null) {
+                request.setFullName((String) claims.get("name"));
+            }
+        } else {
+            if (!StringUtils.hasText(request.getPassword()) || 
+                request.getPassword().length() < 8 || 
+                request.getPassword().length() > 20) {
+                throw new IllegalArgumentException("Password must be between 8 and 20 characters.");
+            }
+            normalizedEmail = request.getEmail().trim().toLowerCase(Locale.ROOT);
+            passwordToEncode = request.getPassword();
+        }
 
         if (userRepository.existsByEmail(normalizedEmail)) {
             throw new EmailAlreadyExistsException();
@@ -178,7 +215,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         User user = User.builder()
                 .fullName(request.getFullName())
                 .email(normalizedEmail)
-                .password(passwordEncoder.encode(request.getPassword()))
+                .password(passwordEncoder.encode(passwordToEncode))
                 .role(Role.COMMUNITY_ADMIN)
                 .active(true)
                 .approvalStatus(ApprovalStatus.PENDING)

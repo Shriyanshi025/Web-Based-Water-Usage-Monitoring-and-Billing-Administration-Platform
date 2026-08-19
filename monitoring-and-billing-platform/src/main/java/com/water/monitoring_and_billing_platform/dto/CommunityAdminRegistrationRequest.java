@@ -16,8 +16,6 @@ public class CommunityAdminRegistrationRequest {
     @NotBlank
     private String email;
 
-    @NotBlank
-    @Size(min = 8, max = 20)
     private String password;
 
     @NotBlank
@@ -28,4 +26,5 @@ public class CommunityAdminRegistrationRequest {
 
     private String officeAddress;
 
+    private String googleIdToken;
 }

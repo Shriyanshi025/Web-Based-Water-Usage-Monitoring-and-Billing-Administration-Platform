@@ -34,3 +34,16 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         </ThemeProvider>
     </QueryClientProvider>
 );
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('HydroSync PWA Service Worker registered with scope:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('HydroSync PWA Service Worker registration failed:', error);
+            });
+    });
+}

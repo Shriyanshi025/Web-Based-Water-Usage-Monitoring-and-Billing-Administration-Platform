@@ -16,8 +16,6 @@ public class ResidentRegistrationRequest {
     @NotBlank
     private String email;
 
-    @NotBlank
-    @Size(min = 8, max = 20)
     private String password;
 
     @NotBlank
@@ -33,4 +31,6 @@ public class ResidentRegistrationRequest {
     private Long unitId;
 
     private String inviteToken;
+
+    private String googleIdToken;
 }

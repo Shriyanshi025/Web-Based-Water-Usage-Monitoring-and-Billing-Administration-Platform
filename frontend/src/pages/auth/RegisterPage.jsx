@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Box, Button, Stack, Stepper, Step, StepLabel, Alert, Typography } from '@mui/material';
@@ -17,10 +17,9 @@ import {
     WizardStep3Admin, WizardStep4Credentials, WizardStep5Review 
 } from './components/WizardSteps';
 
-const STEPS = ['Basic Details', 'Role', 'Location', 'Credentials', 'Review'];
-
 export default function RegisterPage() {
     const navigate = useNavigate();
+    const location = useLocation();
     const [activeStep, setActiveStep] = useState(0);
     const [globalError, setGlobalError] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +39,8 @@ export default function RegisterPage() {
             isInvitationLocked: false,
             password: '',
             confirmPassword: '',
-            termsAccepted: false
+            termsAccepted: false,
+            googleIdToken: ''
         }
     });
 
@@ -65,15 +65,42 @@ export default function RegisterPage() {
         }
     }, [methods]);
 
+    useEffect(() => {
+        if (location.state?.prefill) {
+            const prefill = location.state.prefill;
+            if (prefill.email) methods.setValue("email", prefill.email);
+            if (prefill.fullName) methods.setValue("fullName", prefill.fullName);
+            if (prefill.googleIdToken) {
+                methods.setValue("googleIdToken", prefill.googleIdToken);
+                methods.setValue("termsAccepted", true);
+            }
+        }
+    }, [location, methods]);
+
+    const googleIdToken = methods.watch("googleIdToken");
+    const isGoogleSignUp = !!googleIdToken;
+    const STEPS = isGoogleSignUp 
+        ? ['Basic Details', 'Role', 'Location', 'Review'] 
+        : ['Basic Details', 'Role', 'Location', 'Credentials', 'Review'];
+
     const role = methods.watch('requestedRole');
 
     const getStepSchema = (step) => {
-        switch (step) {
-            case 0: return wizardStep1BasicSchema;
-            case 1: return z.object({}); // Role requires no strict zod check as it defaults and sets via UI
-            case 2: return role === 'USER' ? wizardStep3ResidentSchema : wizardStep3AdminSchema;
-            case 3: return wizardStep4CredentialsSchema;
-            default: return z.object({});
+        if (isGoogleSignUp) {
+            switch (step) {
+                case 0: return wizardStep1BasicSchema;
+                case 1: return z.object({});
+                case 2: return role === 'USER' ? wizardStep3ResidentSchema : wizardStep3AdminSchema;
+                default: return z.object({});
+            }
+        } else {
+            switch (step) {
+                case 0: return wizardStep1BasicSchema;
+                case 1: return z.object({});
+                case 2: return role === 'USER' ? wizardStep3ResidentSchema : wizardStep3AdminSchema;
+                case 3: return wizardStep4CredentialsSchema;
+                default: return z.object({});
+            }
         }
     };
 
@@ -110,7 +137,8 @@ export default function RegisterPage() {
                     communityId: data.communityId || null,
                     blockId: data.blockId || null,
                     unitId: data.unitId || null,
-                    inviteToken: data.invitationToken || null
+                    inviteToken: data.invitationToken || null,
+                    googleIdToken: data.googleIdToken || null
                 });
             } else {
                 await registerCommunityAdmin({
@@ -119,7 +147,8 @@ export default function RegisterPage() {
                     password: data.password,
                     phoneNumber: data.phoneNumber,
                     communityId: data.communityId || null,
-                    officeAddress: data.professionalInfo || null
+                    officeAddress: data.professionalInfo || null,
+                    googleIdToken: data.googleIdToken || null
                 });
             }
             navigate("/pending-approval");
@@ -178,8 +207,9 @@ export default function RegisterPage() {
                             {activeStep === 1 && <WizardStep2Role />}
                             {activeStep === 2 && role === 'USER' && <WizardStep3Resident />}
                             {activeStep === 2 && role === 'COMMUNITY_ADMIN' && <WizardStep3Admin />}
-                            {activeStep === 3 && <WizardStep4Credentials />}
-                            {activeStep === 4 && <WizardStep5Review />}
+                            {!isGoogleSignUp && activeStep === 3 && <WizardStep4Credentials />}
+                            {isGoogleSignUp && activeStep === 3 && <WizardStep5Review />}
+                            {!isGoogleSignUp && activeStep === 4 && <WizardStep5Review />}
                         </motion.div>
                     </AnimatePresence>
                 </Box>

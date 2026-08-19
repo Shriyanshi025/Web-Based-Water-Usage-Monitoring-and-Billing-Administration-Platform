@@ -74,6 +74,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/system/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/contact").permitAll()
                         .requestMatchers("/api/v1/chatbot/chat").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/invitations/*").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/lookups/**").permitAll()

@@ -15,4 +15,5 @@ public interface UserService {
 
     void changePassword(String email, com.water.monitoring_and_billing_platform.dto.ChangePasswordRequest request);
 
+    AuthResponse googleLogin(com.water.monitoring_and_billing_platform.dto.GoogleLoginRequest request);
 }

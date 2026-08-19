@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class UserServiceImpl implements UserService {
     private final JwtService jwtService;
     private final CommunityAdminProfileRepository communityAdminProfileRepository;
     private final ResidentProfileRepository residentProfileRepository;
+    private final com.water.monitoring_and_billing_platform.util.GoogleTokenVerifier googleTokenVerifier;
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -149,5 +151,48 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+    }
+
+    @Override
+    public AuthResponse googleLogin(com.water.monitoring_and_billing_platform.dto.GoogleLoginRequest request) {
+        Map<String, Object> claims = googleTokenVerifier.verifyToken(request.getIdToken());
+        String email = ((String) claims.get("email")).trim().toLowerCase(java.util.Locale.ROOT);
+        String name = (String) claims.get("name");
+
+        java.util.Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            if (!user.isActive()) {
+                throw new IllegalStateException("Your account has been deactivated. Please contact administrator.");
+            }
+            if (user.getApprovalStatus() != ApprovalStatus.APPROVED) {
+                throw new IllegalStateException("Your registration is awaiting administrator approval.");
+            }
+
+            user.setLastLogin(LocalDateTime.now());
+            userRepository.save(user);
+
+            String token = jwtService.generateToken(user);
+            return new AuthResponse(
+                    "Login Successful",
+                    token,
+                    user.getId(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getApprovalStatus().name()
+            );
+        } else {
+            // New Google user, return with empty token and status "NEW_USER"
+            return new AuthResponse(
+                    "NEW_USER",
+                    null,
+                    null,
+                    name,
+                    email,
+                    null,
+                    null
+            );
+        }
     }
 }

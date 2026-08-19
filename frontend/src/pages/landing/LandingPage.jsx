@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Container, Stack, Typography, Button } from '@mui/material';
+import { Box, Container, Stack, Typography, Button, TextField, Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -11,6 +11,7 @@ import HowItWorksSection from '../../components/landing/HowItWorksSection';
 import StatsSection from '../../components/landing/StatsSection';
 import Footer from '../../components/landing/Footer';
 import LanguageSelector from '../../components/common/LanguageSelector';
+import { ContactService } from '../../services/ContactService';
 
 export default function LandingPage() {
     const navigate = useNavigate();
@@ -32,6 +33,62 @@ export default function LandingPage() {
         const elem = document.getElementById(id);
         if (elem) {
             elem.scrollIntoView({ behavior: 'smooth' });
+        }
+    };
+
+    // Contact Form State
+    const [contactForm, setContactForm] = useState({ name: '', email: '', subject: '', message: '' });
+    const [contactErrors, setContactErrors] = useState({});
+    const [contactSubmitting, setContactSubmitting] = useState(false);
+    const [contactStatus, setContactStatus] = useState({ type: '', message: '' });
+
+    const handleContactChange = (e) => {
+        const { name, value } = e.target;
+        setContactForm(prev => ({ ...prev, [name]: value }));
+        if (contactErrors[name]) {
+            setContactErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const validateContactForm = () => {
+        const errors = {};
+        if (!contactForm.name.trim()) errors.name = 'Name is required';
+        if (!contactForm.email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/\S+@\S+\.\S+/.test(contactForm.email)) {
+            errors.email = 'Please enter a valid email address';
+        }
+        if (!contactForm.subject.trim()) errors.subject = 'Subject is required';
+        if (!contactForm.message.trim()) errors.message = 'Message is required';
+        return errors;
+    };
+
+    const handleContactSubmit = async (e) => {
+        e.preventDefault();
+        const errors = validateContactForm();
+        if (Object.keys(errors).length > 0) {
+            setContactErrors(errors);
+            return;
+        }
+
+        setContactSubmitting(true);
+        setContactStatus({ type: '', message: '' });
+
+        try {
+            await ContactService.sendContactMessage(contactForm);
+            setContactStatus({
+                type: 'success',
+                message: 'Your message has been sent successfully! We will get back to you shortly.'
+            });
+            setContactForm({ name: '', email: '', subject: '', message: '' });
+        } catch (err) {
+            console.error(err);
+            setContactStatus({
+                type: 'error',
+                message: err.response?.data?.message || 'Failed to send your message. Please try again later.'
+            });
+        } finally {
+            setContactSubmitting(false);
         }
     };
 
@@ -356,6 +413,253 @@ export default function LandingPage() {
                                 >
                                     Sign In to Dashboard
                                 </Button>
+                            </Stack>
+                        </Box>
+                    </Container>
+                </Box>
+
+                {/* Contact Us Section */}
+                <Box
+                    id="contact"
+                    sx={{
+                        py: { xs: 10, md: 14 },
+                        color: 'white',
+                        position: 'relative',
+                        zIndex: 1,
+                        bgcolor: 'rgba(3, 7, 18, 0.4)',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+                    }}
+                >
+                    <Container maxWidth="md">
+                        <Box sx={{ textAlign: 'center', mb: 6 }}>
+                            <Typography
+                                variant="h3"
+                                fontWeight="800"
+                                sx={{
+                                    fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+                                    letterSpacing: '-1.2px',
+                                    mb: 2,
+                                    color: '#ffffff'
+                                }}
+                            >
+                                Contact Our Support Team
+                            </Typography>
+                            <Typography
+                                variant="body1"
+                                sx={{ color: '#94a3b8', maxWidth: 600, mx: 'auto', fontSize: '1.1rem' }}
+                            >
+                                Have any questions about HydroSync? Send us a message and our technical support team will get back to you shortly.
+                            </Typography>
+                        </Box>
+
+                        <Box
+                            component="form"
+                            onSubmit={handleContactSubmit}
+                            noValidate
+                            sx={{
+                                p: { xs: 4, sm: 6 },
+                                borderRadius: 5,
+                                bgcolor: 'rgba(15, 23, 42, 0.75)',
+                                backdropFilter: 'blur(20px)',
+                                WebkitBackdropFilter: 'blur(20px)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                            }}
+                        >
+                            {contactStatus.message && (
+                                <Alert
+                                    severity={contactStatus.type}
+                                    sx={{
+                                        mb: 4,
+                                        borderRadius: 2.5,
+                                        bgcolor: contactStatus.type === 'success' ? 'rgba(22, 163, 74, 0.15)' : 'rgba(220, 38, 38, 0.15)',
+                                        color: contactStatus.type === 'success' ? '#4ade80' : '#f87171',
+                                        border: `1px solid ${contactStatus.type === 'success' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(248, 113, 113, 0.2)'}`
+                                    }}
+                                >
+                                    {contactStatus.message}
+                                </Alert>
+                            )}
+
+                            <Stack spacing={3.5}>
+                                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3.5}>
+                                    <TextField
+                                        label="Name"
+                                        name="name"
+                                        value={contactForm.name}
+                                        onChange={handleContactChange}
+                                        error={!!contactErrors.name}
+                                        helperText={contactErrors.name}
+                                        fullWidth
+                                        variant="outlined"
+                                        sx={{
+                                            '& .MuiOutlinedInput-input': {
+                                                color: '#0C1929 !important',
+                                            },
+                                            '& .MuiOutlinedInput-input::placeholder': {
+                                                color: '#64748b !important',
+                                                opacity: 0.85
+                                            },
+                                            '& .MuiInputLabel-root': {
+                                                color: '#475569 !important',
+                                            },
+                                            '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+                                                color: '#94a3b8 !important',
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#38bdf8 !important',
+                                            },
+                                            '& .MuiInputLabel-root.Mui-error': {
+                                                color: '#ef4444 !important',
+                                            },
+                                            '& .MuiOutlinedInput-root': {
+                                                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                                '&:hover fieldset': { borderColor: '#38bdf8' },
+                                                '&.Mui-focused fieldset': { borderColor: '#38bdf8' }
+                                            }
+                                        }}
+                                    />
+                                    <TextField
+                                        label="Email Address"
+                                        name="email"
+                                        type="email"
+                                        value={contactForm.email}
+                                        onChange={handleContactChange}
+                                        error={!!contactErrors.email}
+                                        helperText={contactErrors.email}
+                                        fullWidth
+                                        variant="outlined"
+                                        sx={{
+                                            '& .MuiOutlinedInput-input': {
+                                                color: '#0C1929 !important',
+                                            },
+                                            '& .MuiOutlinedInput-input::placeholder': {
+                                                color: '#64748b !important',
+                                                opacity: 0.85
+                                            },
+                                            '& .MuiInputLabel-root': {
+                                                color: '#475569 !important',
+                                            },
+                                            '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+                                                color: '#94a3b8 !important',
+                                            },
+                                            '& .MuiInputLabel-root.Mui-focused': {
+                                                color: '#38bdf8 !important',
+                                            },
+                                            '& .MuiInputLabel-root.Mui-error': {
+                                                color: '#ef4444 !important',
+                                            },
+                                            '& .MuiOutlinedInput-root': {
+                                                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                                '&:hover fieldset': { borderColor: '#38bdf8' },
+                                                '&.Mui-focused fieldset': { borderColor: '#38bdf8' }
+                                            }
+                                        }}
+                                    />
+                                </Stack>
+                                <TextField
+                                    label="Subject"
+                                    name="subject"
+                                    value={contactForm.subject}
+                                    onChange={handleContactChange}
+                                    error={!!contactErrors.subject}
+                                    helperText={contactErrors.subject}
+                                    fullWidth
+                                    variant="outlined"
+                                    sx={{
+                                        '& .MuiOutlinedInput-input': {
+                                            color: '#0C1929 !important',
+                                        },
+                                        '& .MuiOutlinedInput-input::placeholder': {
+                                            color: '#64748b !important',
+                                            opacity: 0.85
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            color: '#475569 !important',
+                                        },
+                                        '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+                                            color: '#94a3b8 !important',
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#38bdf8 !important',
+                                        },
+                                        '& .MuiInputLabel-root.Mui-error': {
+                                            color: '#ef4444 !important',
+                                        },
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                            '&:hover fieldset': { borderColor: '#38bdf8' },
+                                            '&.Mui-focused fieldset': { borderColor: '#38bdf8' }
+                                        }
+                                    }}
+                                />
+                                <TextField
+                                    label="Message"
+                                    name="message"
+                                    value={contactForm.message}
+                                    onChange={handleContactChange}
+                                    error={!!contactErrors.message}
+                                    helperText={contactErrors.message}
+                                    fullWidth
+                                    multiline
+                                    rows={5}
+                                    variant="outlined"
+                                    sx={{
+                                        '& .MuiOutlinedInput-input': {
+                                            color: '#0C1929 !important',
+                                        },
+                                        '& .MuiOutlinedInput-input::placeholder': {
+                                            color: '#64748b !important',
+                                            opacity: 0.85
+                                        },
+                                        '& .MuiInputLabel-root': {
+                                            color: '#475569 !important',
+                                        },
+                                        '& .MuiInputLabel-root.MuiInputLabel-shrink': {
+                                            color: '#94a3b8 !important',
+                                        },
+                                        '& .MuiInputLabel-root.Mui-focused': {
+                                            color: '#38bdf8 !important',
+                                        },
+                                        '& .MuiInputLabel-root.Mui-error': {
+                                            color: '#ef4444 !important',
+                                        },
+                                        '& .MuiOutlinedInput-root': {
+                                            '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                                            '&:hover fieldset': { borderColor: '#38bdf8' },
+                                            '&.Mui-focused fieldset': { borderColor: '#38bdf8' }
+                                        }
+                                    }}
+                                />
+
+                                <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        disabled={contactSubmitting}
+                                        sx={{
+                                            bgcolor: '#38bdf8',
+                                            color: '#0f172a',
+                                            fontWeight: 700,
+                                            px: 5,
+                                            py: 1.6,
+                                            borderRadius: 3,
+                                            textTransform: 'none',
+                                            boxShadow: '0 4px 14px rgba(56, 189, 248, 0.35)',
+                                            transition: 'all 0.2s ease',
+                                            '&:hover': {
+                                                bgcolor: '#7dd3fc',
+                                                transform: 'translateY(-1px)'
+                                            },
+                                            '&:disabled': {
+                                                bgcolor: 'rgba(56, 189, 248, 0.3)',
+                                                color: 'rgba(15, 23, 42, 0.5)'
+                                            }
+                                        }}
+                                    >
+                                        {contactSubmitting ? 'Sending...' : 'Send Message'}
+                                    </Button>
+                                </Box>
                             </Stack>
                         </Box>
                     </Container>
